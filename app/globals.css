@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-syne: var(--font-syne);
+  
+  --color-neo-orange: #FF9B3F;
+  --color-neo-lime: #D0EE51;
+  --color-neo-purple: #C8A2C8;
+  --color-neo-yellow: #FFD23F;
+  --color-neo-cyan: #3FD2FF;
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: #000000;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-syne), sans-serif;
+  overflow-x: hidden;
+}
+
+/* Utilities */
+@layer utilities {
+  .neo-shadow {
+    box-shadow: 4px 4px 0px 0px #000000;
+  }
+  .neo-shadow-lg {
+    box-shadow: 8px 8px 0px 0px #000000;
+  }
+  .neo-border {
+    border: 3px solid #000000;
+  }
+  .animate-spin-slow {
+    animation: spin 10s linear infinite;
+  }
+  .animate-marquee {
+    animation: marquee 20s linear infinite;
+  }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
