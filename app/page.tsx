@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-[#FEFDF9] overflow-x-hidden flex flex-col w-full relative">
+    <div className="min-h-screen bg-[#EAE8E0] overflow-x-hidden flex flex-col w-full relative">
       
       {/* Global Noise Overlay */}
       <div 
@@ -20,7 +20,7 @@ export default function Home() {
 
       {/* Navbar */}
       <header
-        className="relative flex items-center px-6 shrink-0 bg-[#FEFDF9] z-30 border-b-4 border-black"
+        className="relative flex items-center px-6 shrink-0 bg-[#EAE8E0] z-30 border-b-4 border-black"
         style={{ height: "76px" }}
       >
         {/* Beta Bookmark */}
@@ -203,7 +203,7 @@ export default function Home() {
       </div>
       
       {/* Additional Sections */}
-      <section className="flex flex-col lg:flex-row items-center border-t-4 border-black shrink-0 bg-[#FEFDF9] py-16 px-6 lg:px-16 overflow-hidden relative min-h-[700px]">
+      <section className="flex flex-col lg:flex-row items-center border-t-4 border-black shrink-0 bg-[#EAE8E0] py-16 px-6 lg:px-16 overflow-hidden relative min-h-[700px]">
         
         {/* Background Dot Grid (subtle) */}
         <div
@@ -282,9 +282,379 @@ export default function Home() {
               </svg>
             </div>
           </div>
+
         </div>
 
       </section>
+
+      {/* ── Hackathon Section ── */}
+      <section className="relative border-t-4 border-black bg-neo-yellow overflow-hidden">
+
+        {/* Obvious Grid Background */}
+        <div 
+          className="absolute inset-0 pointer-events-none opacity-[0.12]" 
+          style={{ 
+            backgroundImage: "linear-gradient(#000 2px, transparent 2px), linear-gradient(90deg, #000 2px, transparent 2px)", 
+            backgroundSize: "64px 64px" 
+          }} 
+        />
+
+        {/* Section header */}
+        <div className="relative z-10 text-center pt-14 pb-2 px-6">
+          <div className="inline-flex items-center gap-3 mb-4">
+            <Image src="/injective-logo.svg" alt="Injective" width={22} height={22} className="object-contain" />
+            <span className="font-black text-[11px] uppercase tracking-[0.2em] text-black/50">Injective Solo AI Builder Sprint</span>
+          </div>
+          <h2 className="font-black uppercase text-4xl lg:text-[3.8rem] leading-[0.95] text-black tracking-tight">
+            Hodegos was built<br />
+            <span className="relative inline-block">
+              <span className="relative z-10">for this sprint.</span>
+              <div className="absolute bottom-1 left-0 right-0 h-4 lg:h-6 bg-white z-[-1]" />
+            </span>
+          </h2>
+
+        </div>
+
+        {/* ── Scatter arena ── */}
+        <div className="relative z-10 mx-auto w-full max-w-5xl" style={{ height: "680px" }}>
+
+          {/* ── Reading-order arrows — thick, orange, unmistakable ── */}
+          <svg className="absolute inset-0 w-full h-full pointer-events-none z-10" viewBox="0 0 1000 680" preserveAspectRatio="none">
+            <defs>
+              <marker id="arr" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+                <path d="M0,0 L10,5 L0,10 Z" fill="#FF9B3F" />
+              </marker>
+            </defs>
+            {/* 1 → 2 */}
+            <path d="M 230 100 Q 280 70 330 90" fill="none" stroke="#FF9B3F" strokeWidth="4" strokeDasharray="10 8" markerEnd="url(#arr)" strokeLinecap="round" />
+            {/* 2 → 3 */}
+            <path d="M 540 100 Q 650 60 760 90" fill="none" stroke="#FF9B3F" strokeWidth="4" strokeDasharray="10 8" markerEnd="url(#arr)" strokeLinecap="round" />
+            {/* 3 → 4 */}
+            <path d="M 850 180 Q 880 230 840 280" fill="none" stroke="#FF9B3F" strokeWidth="4" strokeDasharray="10 8" markerEnd="url(#arr)" strokeLinecap="round" />
+            {/* 4 → 5 */}
+            <path d="M 820 420 Q 750 480 670 510" fill="none" stroke="#FF9B3F" strokeWidth="4" strokeDasharray="10 8" markerEnd="url(#arr)" strokeLinecap="round" />
+            {/* 5 → 6 */}
+            <path d="M 490 550 Q 380 590 240 560" fill="none" stroke="#FF9B3F" strokeWidth="4" strokeDasharray="10 8" markerEnd="url(#arr)" strokeLinecap="round" />
+          </svg>
+
+          {/* ── CARD 1 — Sprint Goal (top-left) ── */}
+          <div className="absolute z-30" style={{ top: "8%", left: "-1%", transform: "rotate(4deg)" }}>
+            <div className="absolute -top-3 -left-3 w-6 h-6 bg-black text-white rounded-full flex items-center justify-center font-black text-[10px] z-40 border-2 border-black">1</div>
+            <div className="bg-white border-[3px] border-black neo-shadow p-4 w-48 hover:rotate-0 transition-transform duration-300 cursor-default">
+              <p className="font-black text-[9px] uppercase tracking-widest text-black/50 mb-1">The Mission</p>
+              <p className="font-bold text-[11px] leading-snug text-black">
+                Build something <span className="font-black">useful, ship it,</span> and make it usable by real users.
+              </p>
+            </div>
+          </div>
+
+          {/* ── CARD 2 — Hodegos Bridge (top-center-left) ── */}
+          <div className="absolute z-30" style={{ top: "7%", left: "33%", transform: "rotate(-3deg)" }}>
+            <div className="absolute -top-3 -left-3 w-6 h-6 bg-black text-white rounded-full flex items-center justify-center font-black text-[10px] z-40 border-2 border-black">2</div>
+            <div className="bg-neo-lime border-[3px] border-black neo-shadow-lg p-4 w-48 hover:rotate-0 transition-transform duration-300 cursor-default">
+              <p className="font-black text-[9px] uppercase tracking-widest text-black/50 mb-1">The Idea</p>
+              <p className="font-bold text-[11px] leading-snug text-black">
+                Hodegos is the <span className="font-black">bridge</span> from curiosity to your first on-chain trade.
+              </p>
+            </div>
+          </div>
+
+          {/* ── CARD 3 — Sprint Dates (top-right) ── */}
+          <div className="absolute z-30" style={{ top: "3%", right: "0%", transform: "rotate(5deg)" }}>
+            <div className="absolute -top-3 -left-3 w-6 h-6 bg-black text-white rounded-full flex items-center justify-center font-black text-[10px] z-40 border-2 border-black">3</div>
+            <div className="bg-neo-orange border-[3px] border-black neo-shadow-lg p-4 w-40 hover:rotate-0 transition-transform duration-300 cursor-default">
+              <p className="font-black text-[9px] uppercase tracking-widest text-black/50 mb-1">Sprint Window</p>
+              <p className="font-black text-base leading-tight">May 11 -<br />May 31, 2026</p>
+              <div className="mt-2 inline-block bg-black text-neo-lime px-2 py-0.5 font-black text-[8px] uppercase tracking-wider">ONLINE</div>
+            </div>
+          </div>
+
+          {/* ── Prize pool — mid-left big stat ── */}
+          <div className="absolute z-30" style={{ top: "32%", left: "-3%", transform: "rotate(-4deg)" }}>
+            <div className="bg-neo-orange border-[3px] border-black neo-shadow-lg p-5 w-36 hover:rotate-0 transition-transform duration-300 cursor-default">
+              <p className="font-black text-[9px] uppercase tracking-widest text-black/60 mb-1">Prize Pool</p>
+              <p className="font-black text-4xl leading-none">$500</p>
+              <p className="font-bold text-[10px] mt-1 opacity-80">USD Total</p>
+            </div>
+          </div>
+
+          {/* ── CARD 4 — AI Copilot (right-mid) ── */}
+          <div className="absolute z-30" style={{ top: "38%", right: "-1%", transform: "rotate(-3deg)" }}>
+            <div className="absolute -top-3 -left-3 w-6 h-6 bg-black text-white rounded-full flex items-center justify-center font-black text-[10px] z-40 border-2 border-black">4</div>
+            <div className="bg-white border-[3px] border-black neo-shadow-lg p-4 w-52 hover:rotate-0 transition-transform duration-300 cursor-default">
+              <p className="font-black text-[9px] uppercase tracking-widest text-black/50 mb-1">The Product</p>
+              <p className="font-bold text-[11px] leading-snug text-black">
+                An <span className="font-black">AI copilot</span> that walks newcomers through spot trades, step by step, with zero jargon.
+              </p>
+            </div>
+          </div>
+
+          {/* ── CARD 5 — Injective native (bottom-center-right) ── */}
+          <div className="absolute z-30" style={{ bottom: "14%", right: "29%", transform: "rotate(3deg)" }}>
+            <div className="absolute -top-3 -left-3 w-6 h-6 bg-black text-white rounded-full flex items-center justify-center font-black text-[10px] z-40 border-2 border-black">5</div>
+            <div className="bg-white border-[3px] border-black neo-shadow p-4 w-48 hover:rotate-0 transition-transform duration-300 cursor-default">
+              <p className="font-black text-[9px] uppercase tracking-widest text-black/50 mb-1">The Chain</p>
+              <p className="font-bold text-[11px] leading-snug text-black">
+                Built on <span className="font-black text-neo-orange">Injective</span> — lightning-fast execution and zero gas fees for users.
+              </p>
+            </div>
+          </div>
+
+          {/* ── CARD 6 — Evaluation (bottom-left) ── */}
+          <div className="absolute z-30" style={{ bottom: "8%", left: "0%", transform: "rotate(-4deg)" }}>
+            <div className="absolute -top-3 -left-3 w-6 h-6 bg-black text-white rounded-full flex items-center justify-center font-black text-[10px] z-40 border-2 border-black">6</div>
+            <div className="bg-neo-lime border-[3px] border-black neo-shadow p-4 w-48 hover:rotate-0 transition-transform duration-300 cursor-default">
+              <p className="font-black text-[9px] uppercase tracking-widest text-black/50 mb-1">Judged On</p>
+              <p className="font-bold text-[11px] leading-snug text-black">
+                <span className="font-black">Usefulness, execution quality</span> and real usability for everyday people.
+              </p>
+            </div>
+          </div>
+
+          {/* ── Category sticker — bottom-right ── */}
+          <div className="absolute z-30" style={{ bottom: "6%", right: "1%", transform: "rotate(4deg)" }}>
+            <div className="bg-black text-white border-[3px] border-black neo-shadow-lg p-4 w-40 hover:rotate-0 transition-transform duration-300 cursor-default">
+              <p className="font-black text-[9px] uppercase tracking-widest text-white/50 mb-1">Category</p>
+              <p className="font-black text-sm leading-tight uppercase">Consumer<br />AI App</p>
+              <p className="font-bold text-[9px] mt-1 text-neo-orange">+ AI Copilot / Trading</p>
+            </div>
+          </div>
+
+          {/* ── Decorative accents only ── */}
+          {/* 4-point star top-centre */}
+          <svg className="absolute" style={{ top: "6%", left: "46%", width: 16, opacity: 0.55 }} viewBox="0 0 24 24" fill="black">
+            <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41Z"/>
+          </svg>
+          {/* outline star right-upper */}
+          <svg className="absolute" style={{ top: "26%", right: "20%", width: 13, opacity: 0.35 }} viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2">
+            <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41Z"/>
+          </svg>
+          {/* small filled star bottom-left zone */}
+          <svg className="absolute" style={{ bottom: "32%", left: "26%", width: 11, opacity: 0.45 }} viewBox="0 0 24 24" fill="black">
+            <path d="M12 0L13.5 10.5L24 12L13.5 13.5L12 24L10.5 13.5L0 12L10.5 10.5Z"/>
+          </svg>
+          {/* Flower asterisk — far left */}
+          <svg className="absolute opacity-35" style={{ top: "60%", left: "3%", width: 20 }} viewBox="0 0 40 40" fill="none" stroke="black" strokeWidth="2.5" strokeLinecap="round">
+            <line x1="20" y1="2" x2="20" y2="38"/><line x1="2" y1="20" x2="38" y2="20"/>
+            <line x1="6" y1="6" x2="34" y2="34"/><line x1="34" y1="6" x2="6" y2="34"/>
+          </svg>
+          {/* Squiggly wave — bottom-left zone */}
+          <svg className="absolute opacity-40" style={{ bottom: "22%", left: "18%", width: 42 }} viewBox="0 0 100 40" fill="none" stroke="black" strokeWidth="3.5" strokeLinecap="round">
+            <path d="M0 20 Q 12.5 0,25 20 T 50 20 T 75 20 T 100 20"/>
+          </svg>
+          {/* small orange dot */}
+          <div className="absolute w-3 h-3 rounded-full bg-neo-orange border-2 border-black" style={{ bottom: "34%", right: "25%" }} />
+          {/* Plus — mid-left between card 1 and prize */}
+          <svg className="absolute opacity-35" style={{ top: "28%", left: "14%", width: 13 }} viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="3" strokeLinecap="round">
+            <path d="M12 5v14M5 12h14"/>
+          </svg>
+
+
+          {/* ── Central image ── */}
+          <div
+            className="absolute z-20"
+            style={{
+              top: "50%", left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: "min(420px, 56%)",
+            }}
+          >
+            {/* Red offset shadow block */}
+            <div
+              className="absolute inset-0"
+              style={{ background: "#FF2A00", border: "4px solid black", transform: "translate(12px,12px)", borderRadius: 0 }}
+            />
+            {/* Window frame */}
+            <div className="relative bg-[#EAE8E0] border-4 border-black flex flex-col">
+              {/* Window Title Bar */}
+              <div className="h-9 border-b-4 border-black bg-[#E5E5E5] flex items-center px-3 gap-2">
+                <div className="w-3.5 h-3.5 rounded-full border-[2.5px] border-black bg-white" />
+                <div className="w-3.5 h-3.5 rounded-full border-[2.5px] border-black bg-white" />
+                <div className="w-3.5 h-3.5 rounded-full border-[2.5px] border-black bg-white" />
+              </div>
+              <div className="p-3 bg-white">
+                <div className="border-[3px] border-black overflow-hidden relative">
+                  <Image
+                    src="/hack.png"
+                    alt="Injective Solo AI Builder Sprint"
+                    width={420}
+                    height={260}
+                    className="w-full h-auto block"
+                  />
+                  {/* Subtle inner shadow/border overlay on the image */}
+                  <div className="absolute inset-0 border border-black/10 pointer-events-none" />
+                </div>
+              </div>
+              {/* Injective logo circle badge on frame */}
+              <div
+                className="absolute -top-5 -left-5 w-14 h-14 bg-white border-[3px] border-black rounded-full flex items-center justify-center neo-shadow z-30"
+                style={{ transform: "rotate(-8deg)" }}
+              >
+                <Image src="/injective-logo.svg" alt="Injective" width={28} height={28} className="object-contain" />
+              </div>
+              {/* "We're in it" sticker */}
+              <div
+                className="absolute -bottom-4 -right-4 bg-neo-lime border-[3px] border-black px-3 py-1 font-black text-[10px] uppercase tracking-widest neo-shadow z-30"
+                style={{ transform: "rotate(3deg)" }}
+              >
+                ✦ We&apos;re in it
+              </div>
+            </div>
+          </div>
+
+          {/* Spinning circular badge — bottom of arena */}
+          <div
+            className="absolute bottom-4 right-[calc(50%-52px)] w-[104px] h-[104px] bg-black border-4 border-black rounded-full flex items-center justify-center neo-shadow-lg animate-spin-slow z-30"
+          >
+            <svg viewBox="0 0 100 100" width="100%" height="100%">
+              <path id="hbp2" d="M50,50 m-36,0 a36,36 0 1,1 72,0 a36,36 0 1,1 -72,0" fill="transparent"/>
+              <text fontSize="10.5" fontWeight="900" fill="#FFD23F" letterSpacing="1.5">
+                <textPath href="#hbp2">★ HACKATHON ★ 2026 ★</textPath>
+              </text>
+            </svg>
+          </div>
+        </div>
+
+        {/* View Hackathon CTA */}
+        <div className="relative z-10 flex justify-center pb-14">
+          <a
+            href="https://www.hackquest.io/hackathons/Injective-Solo-AI-Builder-Sprint"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 bg-neo-orange text-black border-[3px] border-black rounded-full px-8 py-3.5 shadow-[4px_4px_0px_0px_#000] font-black uppercase tracking-widest text-sm hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none transition-all"
+          >
+            <Image src="/injective-logo.svg" alt="Injective" width={18} height={18} className="object-contain" />
+            View Hackathon →
+          </a>
+        </div>
+
+        {/* Bottom marquee — hackathon-themed */}
+        <div className="border-t-4 border-black bg-black overflow-hidden flex whitespace-nowrap" style={{ paddingTop: "9px", paddingBottom: "9px" }}>
+          <div className="animate-marquee font-black uppercase flex items-center gap-10" style={{ fontSize: "11px", letterSpacing: "0.14em", color: "#FFD23F" }}>
+            {[
+              "\u2756 INJECTIVE SOLO AI BUILDER SPRINT","\u2756 $500 PRIZE POOL","\u2756 MAY 11-31 2026",
+              "\u2756 AI-POWERED ONCHAIN","\u2756 HODEGOS IS COMPETING","\u2756 BUILT ON INJECTIVE",
+              "\u2756 INJECTIVE SOLO AI BUILDER SPRINT","\u2756 $500 PRIZE POOL","\u2756 MAY 11-31 2026",
+              "\u2756 AI-POWERED ONCHAIN","\u2756 HODEGOS IS COMPETING","\u2756 BUILT ON INJECTIVE",
+            ].map((t, i) => <span key={i}>{t}</span>)}
+          </div>
+        </div>
+
+      </section>
+
+      {/* ── Footer ── */}
+      <footer className="border-t-4 border-black bg-[#EAE8E0] relative overflow-hidden">
+
+        {/* Subtle dot grid */}
+        <div
+          className="absolute inset-0 opacity-[0.07] pointer-events-none"
+          style={{ backgroundImage: "radial-gradient(circle, #000 1.5px, transparent 1.5px)", backgroundSize: "28px 28px" }}
+        />
+
+        {/* Main footer body */}
+        <div className="relative z-10 flex flex-col lg:flex-row gap-12 lg:gap-0 px-6 lg:px-16 py-14">
+
+          {/* Left — Project info */}
+          <div className="flex-1 flex flex-col justify-center lg:pr-20">
+            <Image src="/main.png" alt="Hodegos" width={140} height={28} className="object-contain mb-5" />
+
+            <p className="font-bold text-black/70 text-sm max-w-xs leading-relaxed mb-8">
+              This project was built by{" "}
+              <span className="font-black text-black">Samuel Oluwayomi</span> for the{" "}
+              <span className="font-black text-black">Injective Solo AI Builder Sprint 2026</span>.
+            </p>
+
+          </div>
+
+          {/* Right — Builder card */}
+          <div className="flex items-center justify-start lg:justify-end">
+            <div
+              className="bg-white border-[3px] border-black neo-shadow-lg p-6 flex items-center gap-6 max-w-sm w-full"
+            >
+              {/* Photo */}
+              <div className="shrink-0 relative">
+                <div className="w-20 h-20 rounded-full border-[3px] border-black overflow-hidden neo-shadow">
+                  <Image
+                    src="/me.png"
+                    alt="Samuel Oluwayomi"
+                    width={80}
+                    height={80}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                {/* Small lime dot */}
+                <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-neo-lime border-2 border-black rounded-full" />
+              </div>
+
+              {/* Info */}
+              <div className="flex flex-col gap-1">
+                {/* Label */}
+                <div className="inline-block bg-neo-orange border-2 border-black px-2 py-0.5 font-black text-[9px] uppercase tracking-widest self-start mb-1">
+                  Built by
+                </div>
+
+                <p className="font-black text-xl uppercase leading-tight tracking-tight text-black">
+                  Samuel<br />Oluwayomi
+                </p>
+
+                <div className="flex flex-col gap-1.5 mt-2">
+                  {/* GitHub */}
+                  <a
+                    href="https://github.com/SamuelOluwayomi"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 font-bold text-xs text-black hover:text-neo-orange transition-colors group"
+                  >
+                    <svg className="w-3.5 h-3.5 shrink-0 group-hover:scale-110 transition-transform" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
+                    </svg>
+                    github.com/SamuelOluwayomi
+                  </a>
+
+                  {/* X / Twitter */}
+                  <a
+                    href="https://x.com/The_devsam"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 font-bold text-xs text-black hover:text-neo-orange transition-colors group"
+                  >
+                    <svg className="w-3.5 h-3.5 shrink-0 group-hover:scale-110 transition-transform" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.258 5.63 5.906-5.63Zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                    </svg>
+                    @The_devsam
+                  </a>
+
+                  {/* Telegram */}
+                  <a
+                    href="https://t.me/DevSam01"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 font-bold text-xs text-black hover:text-neo-orange transition-colors group"
+                  >
+                    <svg className="w-3.5 h-3.5 shrink-0 group-hover:scale-110 transition-transform" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+                    </svg>
+                    @DevSam01
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div className="h-[3px] bg-black mx-6 lg:mx-16" />
+
+        {/* Bottom bar */}
+        <div className="relative z-10 flex flex-col sm:flex-row items-center justify-between px-6 lg:px-16 py-5 gap-3">
+          <p className="font-bold text-xs text-black/60 uppercase tracking-widest">
+            © 2026 Hodegos. Built on Injective.
+          </p>
+          <p className="font-black text-xs uppercase tracking-widest text-black">
+            Learn it. <span className="text-neo-orange">Simulate it.</span> Trade it.
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }
