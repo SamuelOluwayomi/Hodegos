@@ -30,7 +30,7 @@ export default function Home() {
             viewBox="0 0 28 90"
             fill="none"
           >
-            <path d="M1.5 0V87L14 75L26.5 87V0" fill="#C8A2C8" stroke="black" strokeWidth="2.5"/>
+            <path d="M1.5 0V87L14 75L26.5 87V0" fill="#FFD23F" stroke="black" strokeWidth="2.5"/>
             <text
               x="14" y="44"
               transform="rotate(90 14 44)"
@@ -42,15 +42,15 @@ export default function Home() {
         </div>
 
         {/* Logo Group */}
-        <div className="flex items-center gap-3 ml-12 shrink-0">
-          <Image src="/Hodegos.png" alt="Hodegos" width={115} height={30} className="object-contain" priority />
+        <div className="flex items-center gap-3 ml-20 shrink-0">
+          <Image src="/main.png" alt="Hodegos" width={150} height={30} className="object-contain" priority />
           <div className="h-6 w-[2px] bg-black" />
           <Image src="/injective-logo.svg" alt="Injective" width={26} height={26} className="object-contain" />
         </div>
 
         {/* Navigation Links */}
         <nav className="hidden md:flex items-center gap-4 absolute left-1/2 -translate-x-1/2 font-black text-xs uppercase tracking-widest whitespace-nowrap">
-          <Link href="#" className="border-2 border-black bg-white px-3 py-1 neo-shadow hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all">
+          <Link href="#" className="border-2 border-black bg-white rounded-full px-4 py-1.5 shadow-[2px_4px_0px_0px_#000] hover:translate-x-[2px] hover:translate-y-[4px] hover:shadow-none transition-all">
             Home
           </Link>
           <span className="text-black/40 font-thin">/</span>
@@ -60,7 +60,7 @@ export default function Home() {
         </nav>
 
         {/* Call to Action */}
-        <button className="ml-auto flex items-center gap-1 px-4 py-1.5 bg-neo-orange text-white neo-border neo-shadow font-black uppercase tracking-wider text-[11px] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all shrink-0 whitespace-nowrap">
+        <button className="ml-auto flex items-center gap-1 px-5 py-2 bg-neo-orange text-white border-2 border-black rounded-full shadow-[2px_4px_0px_0px_#000] font-black uppercase tracking-wider text-[11px] hover:translate-x-[2px] hover:translate-y-[4px] hover:shadow-none transition-all shrink-0 whitespace-nowrap">
           Get Started
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
             <path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>
@@ -117,8 +117,8 @@ export default function Home() {
 
           <div className="flex flex-wrap gap-3">
             <button
-              className="flex items-center gap-2 bg-neo-lime neo-border neo-shadow font-bold uppercase tracking-wider hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none transition-all"
-              style={{ fontSize: "clamp(0.6rem, 0.9vw, 0.8rem)", padding: "9px 18px" }}
+              className="flex items-center gap-2 bg-neo-lime border-2 border-black rounded-full shadow-[2px_4px_0px_0px_#000] font-bold uppercase tracking-wider hover:translate-x-[2px] hover:translate-y-[4px] hover:shadow-none transition-all"
+              style={{ fontSize: "clamp(0.6rem, 0.9vw, 0.8rem)", padding: "10px 22px" }}
             >
               Start Learning
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -126,8 +126,8 @@ export default function Home() {
               </svg>
             </button>
             <button
-              className="flex items-center bg-white neo-border neo-shadow font-bold uppercase tracking-wider hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none transition-all"
-              style={{ fontSize: "clamp(0.6rem, 0.9vw, 0.8rem)", padding: "9px 18px" }}
+              className="flex items-center bg-white border-2 border-black rounded-full shadow-[2px_4px_0px_0px_#000] font-bold uppercase tracking-wider hover:translate-x-[2px] hover:translate-y-[4px] hover:shadow-none transition-all"
+              style={{ fontSize: "clamp(0.6rem, 0.9vw, 0.8rem)", padding: "10px 22px" }}
             >
               Simulate Trade
             </button>
@@ -143,24 +143,33 @@ export default function Home() {
             style={{ backgroundImage: "radial-gradient(circle, #000 1.5px, transparent 1.5px)", backgroundSize: "26px 26px" }}
           />
           <div className="absolute -top-8 -right-8 w-36 h-36 border-2 border-dashed border-black/40 rounded-full pointer-events-none" />
-          <div className="absolute bottom-8 left-6 w-8 h-8 bg-neo-cyan neo-border rounded-full pointer-events-none" />
+          <div className="absolute bottom-8 left-6 w-8 h-8 bg-neo-yellow neo-border rounded-full pointer-events-none" />
           <svg className="absolute top-10 right-14 w-4 h-4 opacity-50" viewBox="0 0 24 24" fill="black">
             <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z"/>
           </svg>
 
-          {/* Arch Image */}
-          <div
-            className="relative z-10 neo-border neo-shadow-lg overflow-hidden"
-            style={{
-              width: "min(56%, 280px)",
-              height: "88%",
-              borderTopLeftRadius: "9999px",
-              borderTopRightRadius: "9999px",
-              background: "#C8A2C8",
-            }}
-          >
-            <img src="/hero-guide.png" alt="AI Guide" className="absolute inset-0 w-full h-full object-cover" />
-            <div className="absolute bottom-3 left-2 right-2 bg-white p-2 text-center" style={{ border: "2.5px solid black", boxShadow: "3px 3px 0 #000" }}>
+          {/* Arch Container */}
+          <div className="relative z-10 w-[min(56%,280px)] h-[88%]">
+            
+            {/* The Arch Background */}
+            <div
+              className="absolute inset-0 neo-border neo-shadow-lg"
+              style={{
+                borderTopLeftRadius: "9999px",
+                borderTopRightRadius: "9999px",
+                background: "#FF9B3F",
+              }}
+            ></div>
+            
+            {/* The Bot Image */}
+            <img 
+              src="/hero-guide.png" 
+              alt="AI Guide" 
+              className="absolute bottom-[5%] left-1/2 -translate-x-1/2 w-auto max-w-none h-[88%] z-20 pointer-events-none drop-shadow-md"
+            />
+
+            {/* The Label Box */}
+            <div className="absolute bottom-3 left-2 right-2 bg-white p-2 text-center z-30" style={{ border: "2.5px solid black", boxShadow: "3px 3px 0 #000" }}>
               <p className="font-black uppercase" style={{ fontSize: "9px", letterSpacing: "0.05em" }}>Meet your AI Guide</p>
               <p className="font-medium text-black/70 leading-tight mt-0.5" style={{ fontSize: "8px" }}>
                 "Have you traded before? Let's walk through your first spot trade."
@@ -194,62 +203,88 @@ export default function Home() {
       </div>
       
       {/* Additional Sections */}
-      <section className="flex flex-col lg:flex-row border-t-4 border-black shrink-0">
+      <section className="flex flex-col lg:flex-row items-center border-t-4 border-black shrink-0 bg-[#FEFDF9] py-16 px-6 lg:px-16 overflow-hidden relative min-h-[700px]">
         
+        {/* Background Dot Grid (subtle) */}
+        <div
+          className="absolute inset-0 opacity-[0.15] pointer-events-none"
+          style={{ backgroundImage: "radial-gradient(circle, #000 1.5px, transparent 1.5px)", backgroundSize: "32px 32px" }}
+        />
+
         {/* About Left */}
-        <div className="flex-1 bg-neo-cyan border-b-4 lg:border-b-0 lg:border-r-4 border-black p-10 lg:p-16 flex flex-col justify-center relative overflow-hidden">
-          <div className="absolute top-8 left-8 w-12 h-12 bg-white rounded-full neo-border"></div>
-          <svg className="absolute bottom-12 right-12 w-8 h-8 opacity-40" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="3">
-             <rect x="3" y="3" width="18" height="18" />
-          </svg>
-          <svg className="absolute top-[40%] right-[-10%] w-32 h-32 opacity-20 rotate-45" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2">
-            <path d="M12 2L2 22h20L12 2z" />
-          </svg>
+        <div className="flex-1 flex flex-col justify-center relative z-10 w-full lg:pr-10 pt-10 lg:pt-0">
           
-          <h2 className="font-black uppercase text-5xl lg:text-7xl mb-8 leading-[0.9] text-black">
-            The<br/>Missing<br/>Link
+          {/* Pills */}
+          <div className="flex flex-wrap gap-4 mb-8">
+            <div className="border-[3px] border-black bg-white px-4 py-1.5 font-black text-[11px] uppercase tracking-widest -rotate-3 neo-shadow-sm">
+              Zero Jargon
+            </div>
+            <div className="border-[3px] border-black bg-neo-lime px-4 py-1.5 font-black text-[11px] uppercase tracking-widest rotate-2 neo-shadow-sm">
+              AI Guided
+            </div>
+          </div>
+
+          <h2 className="font-black uppercase text-6xl lg:text-[5.5rem] leading-[0.9] text-black relative inline-block z-10 tracking-tight mb-8">
+            The<br/>Missing<br/>
+            <span className="relative inline-block">
+              <span className="relative z-10">Link.</span>
+              <div className="absolute bottom-2 left-[-2%] right-[-10%] h-5 lg:h-7 bg-neo-lime z-[-1]"></div>
+            </span>
           </h2>
-          <div className="w-24 h-3 bg-black mb-8 neo-shadow"></div>
-          <p className="font-bold text-lg lg:text-xl text-black max-w-md uppercase tracking-wide">
-            Every trading app assumes you already know what you're doing. We don't.
+          
+          <p className="font-bold text-base lg:text-lg text-black max-w-md leading-relaxed">
+            Every trading app assumes you already know what you're doing. We turn your curiosity into custom <span className="text-neo-orange font-black">learning, simulation, and execution</span> paths guided by an AI companion.
           </p>
+
+          <button className="mt-10 self-start bg-neo-orange text-white border-2 border-black rounded-full shadow-[2px_4px_0px_0px_#000] px-10 py-3.5 font-black uppercase tracking-widest text-sm hover:translate-x-[2px] hover:translate-y-[4px] hover:shadow-none transition-all">
+            Start My Baseline
+          </button>
         </div>
 
-        {/* About Right */}
-        <div className="flex-[1.2] bg-white p-10 lg:p-16 flex flex-col justify-center gap-8 relative overflow-hidden">
-          {/* Dot Grid */}
-          <div
-            className="absolute inset-0 opacity-10 pointer-events-none"
-            style={{ backgroundImage: "radial-gradient(circle, #000 1.5px, transparent 1.5px)", backgroundSize: "26px 26px" }}
-          />
+        {/* About Right - Scattered Cards */}
+        <div className="flex-[1.2] relative w-full min-h-[600px] mt-16 lg:mt-0 flex items-center justify-center">
+          
+          <div className="relative w-full max-w-[550px] h-[550px]">
+            {/* Learn Card - Orange Square */}
+            <div className="absolute top-[8%] left-[2%] w-[48%] bg-neo-orange border-[3px] border-black p-6 neo-shadow-lg -rotate-6 z-20 hover:rotate-0 hover:scale-105 transition-transform duration-300">
+              <div className="w-8 h-8 border-[3px] border-black rounded-full mb-3 flex items-center justify-center font-black text-sm bg-neo-yellow">1</div>
+              <h3 className="font-black uppercase text-xl mb-3 leading-tight">Learn Before You Touch</h3>
+              <p className="font-bold text-black/90 text-xs leading-snug">
+                Start with absolute basics. No intimidating charts. Just clear, AI-guided lessons.
+              </p>
+            </div>
 
-          {/* Learn Card */}
-          <div className="bg-neo-yellow p-6 lg:p-8 neo-border neo-shadow transition-all relative z-10 max-w-xl hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none cursor-default">
-            <h3 className="font-black uppercase text-2xl mb-3 tracking-wider">1. Learn Before You Touch</h3>
-            <p className="font-medium text-black/80 text-sm md:text-base leading-relaxed">
-              Start with the absolute basics. No jargon, no intimidating charts. Just clear, AI-guided lessons on how the crypto market actually works.
-            </p>
-          </div>
-          
-          {/* Simulate Card */}
-          <div className="bg-neo-purple p-6 lg:p-8 neo-border neo-shadow transition-all relative z-10 ml-0 lg:ml-12 max-w-xl hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none cursor-default">
-            <h3 className="font-black uppercase text-2xl mb-3 tracking-wider">2. Simulate & Practice</h3>
-            <p className="font-medium text-black/80 text-sm md:text-base leading-relaxed">
-              Practice in a safe, risk-free environment. Execute mock spot and perp trades, and see how they perform before you ever connect a real wallet.
-            </p>
-          </div>
-          
-          {/* Execute Card */}
-          <div className="bg-neo-lime p-6 lg:p-8 neo-border neo-shadow transition-all relative z-10 ml-0 lg:ml-24 max-w-xl hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none cursor-default">
-            <h3 className="font-black uppercase text-2xl mb-3 tracking-wider">3. Execute On-Chain</h3>
-            <p className="font-medium text-black/80 text-sm md:text-base leading-relaxed">
-              When you're ready, step into the real market. Hodegos is built on Injective, giving you lightning-fast, zero-intimidation trades with your AI companion right beside you.
-            </p>
+            {/* Simulate Card - White Box */}
+            <div className="absolute top-[0%] right-[2%] w-[48%] bg-white border-[3px] border-black p-6 neo-shadow-lg rotate-[5deg] z-10 hover:rotate-0 hover:scale-105 transition-transform duration-300">
+              <div className="w-8 h-8 border-[3px] border-black rounded-full mb-3 flex items-center justify-center font-black text-sm bg-neo-yellow">2</div>
+              <h3 className="font-black uppercase text-xl mb-3">Simulate & Practice</h3>
+              <p className="font-bold text-black/80 text-xs leading-snug">
+                Practice in a <span className="text-neo-orange">risk-free environment</span>. Execute mock spot and perp trades safely.
+              </p>
+            </div>
+
+            {/* Execute Card - White Box */}
+            <div className="absolute bottom-[10%] right-[6%] w-[55%] bg-white border-[3px] border-black p-6 neo-shadow-lg rotate-[-4deg] z-30 hover:rotate-0 hover:scale-105 transition-transform duration-300">
+              <div className="w-8 h-8 border-[3px] border-black rounded-full mb-3 flex items-center justify-center font-black text-sm bg-neo-lime">3</div>
+              <h3 className="font-black uppercase text-xl mb-3">Execute On-Chain</h3>
+              <p className="font-bold text-black/80 text-xs leading-snug">
+                Step into the real market. Built on <span className="text-neo-orange">Injective</span>, giving you fast, zero-intimidation trades.
+              </p>
+            </div>
+
+            {/* Circular Badge */}
+            <div className="absolute bottom-[15%] left-[10%] w-36 h-36 bg-neo-lime border-4 border-black rounded-full flex items-center justify-center z-40 rotate-12 neo-shadow-lg hover:rotate-180 transition-transform duration-700">
+              <svg viewBox="0 0 100 100" className="w-full h-full absolute inset-0 animate-spin-slow">
+                <path id="badgeTextPath" d="M 50, 50 m -35, 0 a 35,35 0 1,1 70,0 a 35,35 0 1,1 -70,0" fill="transparent"/>
+                <text fontSize="11" fontWeight="900" fill="black" letterSpacing="1">
+                  <textPath href="#badgeTextPath">★ 100% BEGINNER FRIENDLY</textPath>
+                </text>
+              </svg>
+            </div>
           </div>
         </div>
 
       </section>
-
     </div>
   );
 }
