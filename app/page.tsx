@@ -1,7 +1,24 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useWallet } from "@/lib/walletContext";
+import WalletConnectModal from "@/components/WalletConnectModal";
 
 export default function Home() {
+  const [walletModalOpen, setWalletModalOpen] = useState(false);
+  const { session } = useWallet();
+  const router = useRouter();
+
+  // If already connected (persisted session), skip landing page
+  useEffect(() => {
+    if (session) {
+      router.replace("/dashboard");
+    }
+  }, [session, router]);
+
   return (
     <div className="min-h-screen bg-[#EAE8E0] overflow-x-hidden flex flex-col w-full relative">
       
@@ -60,7 +77,10 @@ export default function Home() {
         </nav>
 
         {/* Call to Action */}
-        <button className="ml-auto flex items-center gap-1 px-5 py-2 bg-neo-orange text-white border-2 border-black rounded-full shadow-[2px_4px_0px_0px_#000] font-black uppercase tracking-wider text-[11px] hover:translate-x-[2px] hover:translate-y-[4px] hover:shadow-none transition-all shrink-0 whitespace-nowrap">
+        <button
+          onClick={() => setWalletModalOpen(true)}
+          className="ml-auto flex items-center gap-1 px-5 py-2 bg-neo-orange text-white border-2 border-black rounded-full shadow-[2px_4px_0px_0px_#000] font-black uppercase tracking-wider text-[11px] hover:translate-x-[2px] hover:translate-y-[4px] hover:shadow-none transition-all shrink-0 whitespace-nowrap"
+        >
           Get Started
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
             <path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>
@@ -655,6 +675,12 @@ export default function Home() {
           </p>
         </div>
       </footer>
+
+      {/* Wallet Connect Modal */}
+      <WalletConnectModal
+        open={walletModalOpen}
+        onClose={() => setWalletModalOpen(false)}
+      />
     </div>
   );
 }
