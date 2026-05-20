@@ -4,20 +4,20 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useWallet } from "@/lib/walletContext";
+import { useWallet } from "@/lib/useWallet";
 import WalletConnectModal from "@/components/WalletConnectModal";
 
 export default function Home() {
   const [walletModalOpen, setWalletModalOpen] = useState(false);
-  const { session } = useWallet();
+  const { isConnected, isInitialized } = useWallet();
   const router = useRouter();
 
   // If already connected (persisted session), skip landing page
   useEffect(() => {
-    if (session) {
+    if (isInitialized && isConnected) {
       router.replace("/dashboard");
     }
-  }, [session, router]);
+  }, [isInitialized, isConnected, router]);
 
   return (
     <div className="min-h-screen bg-[#EAE8E0] overflow-x-hidden flex flex-col w-full relative">

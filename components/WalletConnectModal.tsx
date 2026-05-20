@@ -1,24 +1,23 @@
 "use client";
 
 import { useEffect } from "react";
-import { Wallet } from "@injectivelabs/wallet-ts";
-import { useWallet } from "@/lib/walletContext";
+import { useWallet, WalletId } from "@/lib/useWallet";
 import { useRouter } from "next/navigation";
 
 // ── Wallet options shown in the modal ────────────────────────────────────────
 
 const WALLETS: {
-  id: Wallet;
+  id: WalletId;
   label: string;
   description: string;
-  color: string;
+  recommended?: boolean;
   icon: React.ReactNode;
 }[] = [
   {
-    id: Wallet.Keplr,
+    id: "keplr",
     label: "Keplr",
     description: "Cosmos native · Browser extension",
-    color: "#FF9B3F",
+    recommended: true,
     icon: (
       <svg viewBox="0 0 40 40" className="w-8 h-8" fill="none">
         <rect width="40" height="40" rx="8" fill="#2B2B2B" />
@@ -28,10 +27,9 @@ const WALLETS: {
     ),
   },
   {
-    id: Wallet.Leap,
+    id: "leap",
     label: "Leap",
-    description: "Injective native · Browser extension",
-    color: "#C6F135",
+    description: "Cosmos native · Browser extension",
     icon: (
       <svg viewBox="0 0 40 40" className="w-8 h-8" fill="none">
         <rect width="40" height="40" rx="8" fill="#1A1A1A" />
@@ -41,10 +39,21 @@ const WALLETS: {
     ),
   },
   {
-    id: Wallet.Metamask,
+    id: "ninji",
+    label: "Ninji",
+    description: "Injective native · Browser extension",
+    icon: (
+      <svg viewBox="0 0 40 40" className="w-8 h-8" fill="none">
+        <rect width="40" height="40" rx="8" fill="#0A0A2E" />
+        <circle cx="20" cy="20" r="10" fill="#6366F1" />
+        <path d="M15 18l5 6 5-6" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+  {
+    id: "metamask",
     label: "MetaMask",
     description: "EVM compatible · Browser extension",
-    color: "#FF9B3F",
     icon: (
       <svg viewBox="0 0 40 40" className="w-8 h-8" fill="none">
         <rect width="40" height="40" rx="8" fill="#1A1A1A" />
@@ -56,22 +65,6 @@ const WALLETS: {
         <path d="M25 19l-5-1-1 6 8-1z" fill="#F5841F" />
         <path d="M15 32l5-2-4-4z" fill="#C0AC9D" />
         <path d="M20 30l5 2-4-4z" fill="#C0AC9D" />
-      </svg>
-    ),
-  },
-  {
-    id: Wallet.OkxWallet,
-    label: "OKX Wallet",
-    description: "Multi-chain · Browser extension",
-    color: "#FFD23F",
-    icon: (
-      <svg viewBox="0 0 40 40" className="w-8 h-8" fill="none">
-        <rect width="40" height="40" rx="8" fill="#1A1A1A" />
-        <rect x="10" y="10" width="8" height="8" fill="white" />
-        <rect x="22" y="10" width="8" height="8" fill="white" />
-        <rect x="16" y="16" width="8" height="8" fill="white" />
-        <rect x="10" y="22" width="8" height="8" fill="white" />
-        <rect x="22" y="22" width="8" height="8" fill="white" />
       </svg>
     ),
   },
@@ -87,7 +80,7 @@ interface WalletConnectModalProps {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function WalletConnectModal({ open, onClose }: WalletConnectModalProps) {
-  const { connect, connecting, error, session } = useWallet();
+  const { connect, isConnecting, error, isConnected } = useWallet();
   const router = useRouter();
 
   // Close on Escape key
@@ -101,11 +94,11 @@ export default function WalletConnectModal({ open, onClose }: WalletConnectModal
 
   // Redirect to dashboard once connected
   useEffect(() => {
-    if (session && open) {
+    if (isConnected && open) {
       onClose();
       router.push("/dashboard");
     }
-  }, [session, open, onClose, router]);
+  }, [isConnected, open, onClose, router]);
 
   if (!open) return null;
 
@@ -114,7 +107,7 @@ export default function WalletConnectModal({ open, onClose }: WalletConnectModal
       {/* Backdrop */}
       <div
         className="fixed inset-0 z-100 bg-black/60 backdrop-blur-[2px]"
-        onClick={connecting ? undefined : onClose}
+        onClick={isConnecting ? undefined : onClose}
       />
 
       {/* Modal */}
@@ -151,7 +144,7 @@ export default function WalletConnectModal({ open, onClose }: WalletConnectModal
             </div>
             <button
               onClick={onClose}
-              disabled={!!connecting}
+              disabled={!!isConnecting}
               className="w-8 h-8 border-[3px] border-black bg-white flex items-center justify-center font-black hover:bg-neo-orange transition-colors disabled:opacity-40"
             >
               ✕
@@ -161,12 +154,12 @@ export default function WalletConnectModal({ open, onClose }: WalletConnectModal
           {/* Wallet List */}
           <div className="p-5 flex flex-col gap-3">
             {WALLETS.map((w) => {
-              const isConnecting = connecting === w.id;
+              const isThisConnecting = isConnecting === w.id;
               return (
                 <button
                   key={w.id}
                   onClick={() => connect(w.id)}
-                  disabled={!!connecting}
+                  disabled={!!isConnecting}
                   className="flex items-center gap-4 w-full border-[3px] border-black bg-white px-4 py-3 shadow-[4px_4px_0px_0px_#000] hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none transition-all disabled:opacity-50 disabled:cursor-not-allowed text-left group"
                 >
                   {/* Icon */}
@@ -176,9 +169,16 @@ export default function WalletConnectModal({ open, onClose }: WalletConnectModal
 
                   {/* Label */}
                   <div className="flex-1 min-w-0">
-                    <p className="font-black uppercase tracking-wider text-sm leading-none mb-0.5">
-                      {w.label}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-black uppercase tracking-wider text-sm leading-none mb-0.5">
+                        {w.label}
+                      </p>
+                      {w.recommended && (
+                        <span className="bg-neo-lime border border-black px-1.5 py-0.5 font-black text-[7px] uppercase tracking-widest">
+                          Recommended
+                        </span>
+                      )}
+                    </div>
                     <p className="font-bold text-[10px] uppercase tracking-widest text-black/50 truncate">
                       {w.description}
                     </p>
@@ -186,7 +186,7 @@ export default function WalletConnectModal({ open, onClose }: WalletConnectModal
 
                   {/* Status / Arrow */}
                   <div className="shrink-0">
-                    {isConnecting ? (
+                    {isThisConnecting ? (
                       <svg
                         className="w-5 h-5 animate-spin"
                         viewBox="0 0 24 24"

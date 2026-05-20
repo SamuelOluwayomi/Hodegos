@@ -4,43 +4,36 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useWallet } from "@/lib/walletContext";
-import { Wallet } from "@injectivelabs/wallet-ts";
-
-// Truncate a long address for display
-function truncateAddress(addr: string): string {
-  if (!addr) return "";
-  return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
-}
+import { useWallet, WalletId } from "@/lib/useWallet";
 
 // Wallet label map
-const WALLET_LABELS: Partial<Record<Wallet, string>> = {
-  [Wallet.Keplr]: "Keplr",
-  [Wallet.Leap]: "Leap",
-  [Wallet.Metamask]: "MetaMask",
-  [Wallet.OkxWallet]: "OKX Wallet",
+const WALLET_LABELS: Partial<Record<WalletId, string>> = {
+  keplr: "Keplr",
+  leap: "Leap",
+  ninji: "Ninji",
+  metamask: "MetaMask",
 };
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState("ALL");
-  const { session, disconnect } = useWallet();
+  const { address, wallet, isConnected, disconnect, truncateAddress, isInitialized } = useWallet();
   const router = useRouter();
 
   // Guard: redirect to landing page if not connected
   useEffect(() => {
-    if (!session) {
+    if (isInitialized && !isConnected) {
       router.replace("/");
     }
-  }, [session, router]);
+  }, [isInitialized, isConnected, router]);
 
-  // While redirecting, show nothing (avoids flash of dashboard)
-  if (!session) return null;
+  // While redirecting or initializing, show nothing (avoids flash of dashboard)
+  if (!isInitialized || !isConnected || !address || !wallet) return null;
 
-  const displayAddress = truncateAddress(session.address);
-  const walletLabel = WALLET_LABELS[session.wallet] ?? session.wallet;
+  const displayAddress = truncateAddress(address);
+  const walletLabel = WALLET_LABELS[wallet] ?? wallet;
 
-  const handleDisconnect = async () => {
-    await disconnect();
+  const handleDisconnect = () => {
+    disconnect();
     router.replace("/");
   };
 

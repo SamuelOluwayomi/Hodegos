@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Syne } from "next/font/google";
 import "./globals.css";
-import { WalletProvider } from "@/lib/walletContext";
 
 const syne = Syne({
   variable: "--font-syne",
@@ -24,9 +23,8 @@ export default function RootLayout({
       className={`${syne.variable} font-syne h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-white text-black selection:bg-neo-lime selection:text-black">
-        <WalletProvider>{children}</WalletProvider>
+        {children}
       </body>
     </html>
   );
 }
-
