@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from 'react'
+import React, { useState, useCallback, useRef, useEffect, createContext, useContext } from 'react'
 import { supabase } from '@/lib/supabase'
 import { getTierByXP } from '@/lib/tiers'
 
@@ -59,8 +59,33 @@ function loadProfile(walletAddress: string): UserProfile | null {
   return null
 }
 
-export function useChat(walletAddress?: string) {
-  const [messages, setMessages] = useState<Message[]>([])
+function saveMessages(walletAddress: string, messages: Message[]) {
+  if (typeof window !== 'undefined' && walletAddress) {
+    localStorage.setItem(`hodegos_chat_messages_${walletAddress}`, JSON.stringify(messages))
+  }
+}
+
+function loadMessages(walletAddress: string): Message[] {
+  if (typeof window !== 'undefined' && walletAddress) {
+    const data = localStorage.getItem(`hodegos_chat_messages_${walletAddress}`)
+    if (data) {
+      try {
+        return JSON.parse(data) as Message[]
+      } catch {
+        return []
+      }
+    }
+  }
+  return []
+}
+
+function useChatRaw(walletAddress?: string) {
+  const [messages, setMessages] = useState<Message[]>(() => {
+    if (walletAddress) {
+      return loadMessages(walletAddress)
+    }
+    return []
+  })
   const [isLoading, setIsLoading] = useState(false)
   const [profile, setProfile] = useState<UserProfile>(() => {
     if (walletAddress) {
@@ -91,9 +116,10 @@ export function useChat(walletAddress?: string) {
 
       // 1. Initial local load
       const localProfile = loadProfile(walletAddress) || { ...DEFAULT_PROFILE, walletAddress }
+      const localMessages = loadMessages(walletAddress)
       if (active) {
         setProfile(localProfile)
-        setMessages([])
+        setMessages(localMessages)
       }
 
       // 2. Fetch from Supabase if configured
@@ -155,11 +181,13 @@ export function useChat(walletAddress?: string) {
 
             if (messagesData && active) {
               const filteredData = messagesData.filter(m => !m.content.startsWith('[SYSTEM]'));
-              setMessages(filteredData.map(m => ({
+              const dbMessages = filteredData.map(m => ({
                 role: m.role as 'user' | 'assistant',
                 content: m.content,
                 timestamp: new Date(m.created_at).getTime()
-              })))
+              }));
+              setMessages(dbMessages)
+              saveMessages(walletAddress, dbMessages)
             }
           }
         } catch (err) {
@@ -276,6 +304,7 @@ export function useChat(walletAddress?: string) {
       { role: 'user' as const, content: userMessage, timestamp: Date.now() }
     ]
     setMessages(newMessages)
+    saveMessages(profile.walletAddress, newMessages)
     setIsLoading(true)
 
     // Save user message to Supabase (unless it's a system context message)
@@ -333,18 +362,27 @@ export function useChat(walletAddress?: string) {
       const reader = response.body?.getReader()
       const decoder = new TextDecoder()
       let assistantMessage = ''
+      const assistantTimestamp = Date.now()
 
-      setMessages(prev => [...prev, { role: 'assistant', content: '', timestamp: Date.now() }])
+      setMessages(prev => {
+        const updated = [...prev, { role: 'assistant' as const, content: '', timestamp: assistantTimestamp }]
+        saveMessages(profile.walletAddress, updated)
+        return updated
+      })
 
       while (reader) {
         const { done, value } = await reader.read()
         if (done) break
         assistantMessage += decoder.decode(value)
 
-        setMessages(prev => [
-          ...prev.slice(0, -1),
-          { role: 'assistant', content: assistantMessage, timestamp: Date.now() }
-        ])
+        setMessages(prev => {
+          const updated = [
+            ...prev.slice(0, -1),
+            { role: 'assistant' as const, content: assistantMessage, timestamp: assistantTimestamp }
+          ]
+          saveMessages(profile.walletAddress, updated)
+          return updated
+        })
       }
 
       // Save assistant message to Supabase
@@ -388,10 +426,14 @@ export function useChat(walletAddress?: string) {
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') return
       console.error('Chat error:', err)
-      setMessages(prev => [
-        ...prev,
-        { role: 'assistant', content: '⚠️ Something went wrong. Please try again.', timestamp: Date.now() }
-      ])
+      setMessages(prev => {
+        const updated = [
+          ...prev,
+          { role: 'assistant' as const, content: '⚠️ Something went wrong. Please try again.', timestamp: Date.now() }
+        ]
+        saveMessages(profile.walletAddress, updated)
+        return updated
+      })
     } finally {
       setIsLoading(false)
       abortRef.current = null
@@ -412,17 +454,21 @@ export function useChat(walletAddress?: string) {
       if (clean.length > 0 && clean[clean.length - 1].role === 'user') {
         clean.pop()
       }
+      saveMessages(profile.walletAddress, clean)
       return clean
     })
 
     await sendMessage(lastUserMessage)
-  }, [messages, sendMessage])
+  }, [messages, sendMessage, profile.walletAddress])
 
   const resetProfile = useCallback(() => {
     const fresh = { ...DEFAULT_PROFILE, walletAddress: profile.walletAddress }
     setProfile(fresh)
     saveProfile(fresh)
     setMessages([])
+    if (typeof window !== 'undefined' && profile.walletAddress) {
+      localStorage.removeItem(`hodegos_chat_messages_${profile.walletAddress}`)
+    }
 
     if (supabase && profile.walletAddress) {
       (async () => {
@@ -448,7 +494,12 @@ export function useChat(walletAddress?: string) {
     }
   }, [profile.walletAddress])
 
-  const clearMessages = useCallback(() => setMessages([]), [])
+  const clearMessages = useCallback(() => {
+    setMessages([])
+    if (typeof window !== 'undefined' && walletAddress) {
+      localStorage.removeItem(`hodegos_chat_messages_${walletAddress}`)
+    }
+  }, [walletAddress])
 
   return {
     messages,
@@ -464,3 +515,19 @@ export function useChat(walletAddress?: string) {
     resetProfile,
   }
 }
+
+const ChatContext = createContext<ReturnType<typeof useChatRaw> | null>(null)
+
+export function ChatProvider({ children, walletAddress }: { children: React.ReactNode; walletAddress?: string }) {
+  const value = useChatRaw(walletAddress)
+  return React.createElement(ChatContext.Provider, { value }, children)
+}
+
+export function useChat(walletAddress?: string) {
+  const context = useContext(ChatContext)
+  if (context && (!walletAddress || context.profile.walletAddress === walletAddress)) {
+    return context
+  }
+  return useChatRaw(walletAddress)
+}
+

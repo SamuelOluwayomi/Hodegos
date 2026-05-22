@@ -8,6 +8,8 @@ import { useWallet, WalletId } from "@/lib/useWallet";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import AskHodegosButton from "@/components/AskHodegosButton";
 import { FEATURED_MARKET_IDS, fetchMarketSummary } from "@/lib/injective";
+import { MsgCreateSpotLimitOrder, getDefaultSubaccountId, createTransaction, TxGrpcApi, BaseAccount, createTxRawFromSigResponse } from '@injectivelabs/sdk-ts';
+import { Network, getNetworkEndpoints } from '@injectivelabs/networks';
 
 const WALLET_LABELS: Partial<Record<WalletId, string>> = {
   keplr: "Keplr", leap: "Leap", ninji: "Ninji", metamask: "MetaMask",
@@ -20,6 +22,380 @@ const MARKETS = [
   { ticker: "SOL/USDT", marketId: FEATURED_MARKET_IDS["SOL/USDT"], price: 0 },
   { ticker: "TIA/USDT", marketId: FEATURED_MARKET_IDS["TIA/USDT"], price: 0 },
 ];
+
+const DECIMALS_MAP: Record<string, number> = {
+  INJ: 18, ATOM: 6, WETH: 8, SOL: 8, TIA: 6, USDT: 6,
+};
+
+const ASSET_PRICE_DEFAULTS: Record<string, number> = {
+  INJ: 4.99, USDT: 1.00, ATOM: 2.01, SOL: 86.23, TIA: 0.40, WETH: 2121.63,
+};
+
+// ── INLINE DIRECT EXECUTION COMPONENT ─────────────────────────────────────────
+
+function DirectExecutionPanel({
+  side, amount, baseAsset, price, orderType, address, wallet, onClose
+}: {
+  side: "buy" | "sell";
+  amount: string;
+  baseAsset: string;
+  price: string;
+  orderType: "market" | "limit";
+  address: string;
+  wallet: string | null;
+  onClose: () => void;
+}) {
+  const [status, setStatus] = useState<'idle' | 'signing' | 'broadcasting' | 'success' | 'failed'>('idle');
+  const [txHash, setTxHash] = useState('');
+  const [error, setError] = useState('');
+
+  const parsedAmount = parseFloat(amount) || 0;
+  const parsedPrice = price.toLowerCase() === 'market'
+    ? (ASSET_PRICE_DEFAULTS[baseAsset] || 4.99)
+    : (parseFloat(price) || ASSET_PRICE_DEFAULTS[baseAsset] || 4.99);
+  const totalCost = parsedAmount * parsedPrice;
+
+  const handleExecute = async () => {
+    setStatus('signing');
+    setError('');
+
+    try {
+      if (typeof window === "undefined") throw new Error("Window object is not available.");
+      const anyWindow = window as any;
+
+      if (wallet === "metamask") {
+        throw new Error("MetaMask requires EIP712 strategy. Please use Keplr, Leap, or Ninji.");
+      }
+
+      const endpoints = getNetworkEndpoints(Network.Testnet);
+      const accountRes = await fetch(`/api/account?address=${address}`);
+      if (!accountRes.ok) throw new Error("Failed to fetch account details from testnet");
+      const accountDetailsResponse = await accountRes.json();
+      const baseAccount = BaseAccount.fromRestApi(accountDetailsResponse);
+
+      const ticker = `${baseAsset}/USDT`;
+      const marketId = FEATURED_MARKET_IDS[ticker];
+      if (!marketId) throw new Error(`Market for ${ticker} is not supported.`);
+
+      const baseDecimals = DECIMALS_MAP[baseAsset] || 18;
+      const quoteDecimals = 6;
+
+      let currentPrice = parsedPrice;
+      try {
+        const priceRes = await fetch(`/api/markets/summary?marketId=${marketId}`);
+        if (priceRes.ok) {
+          const priceData = await priceRes.json();
+          currentPrice = parseFloat(priceData.price) || currentPrice;
+        }
+      } catch (e) {
+        console.warn("Could not fetch live price, using fallback:", e);
+      }
+
+      const isMarket = price.toLowerCase() === 'market';
+      const orderTypeNum = side === 'buy' ? 1 : 2;
+
+      const quantity = (BigInt(Math.floor(parsedAmount * 1000000)) * BigInt(10 ** baseDecimals) / BigInt(1000000)).toString();
+
+      let priceVal = currentPrice;
+      if (!isMarket) {
+        priceVal = parseFloat(price) || currentPrice;
+      }
+      const scaledPrice = (priceVal * Math.pow(10, quoteDecimals - baseDecimals)).toFixed(18);
+      const subaccountId = getDefaultSubaccountId(address);
+
+      const msg = MsgCreateSpotLimitOrder.fromJSON({
+        subaccountId,
+        injectiveAddress: address,
+        orderType: orderTypeNum,
+        price: scaledPrice,
+        quantity,
+        marketId,
+        feeRecipient: address,
+      });
+
+      let pubKey = "";
+      if (baseAccount.pubKey && baseAccount.pubKey.key) {
+        pubKey = baseAccount.pubKey.key;
+      } else {
+        let keyInfo;
+        if (wallet === "keplr" && anyWindow.keplr) {
+          keyInfo = await anyWindow.keplr.getKey('injective-888');
+        } else if (wallet === "leap" && anyWindow.leap) {
+          keyInfo = await anyWindow.leap.getKey('injective-888');
+        } else if (wallet === "ninji" && anyWindow.ninji) {
+          keyInfo = await anyWindow.ninji.getKey('injective-888');
+        }
+        if (keyInfo && keyInfo.pubKey) {
+          const binary = Array.from(keyInfo.pubKey).map((b: any) => String.fromCharCode(b)).join('');
+          pubKey = window.btoa(binary);
+        }
+      }
+
+      const { txRaw } = createTransaction({
+        message: msg,
+        memo: `Hodegos Direct: ${side.toUpperCase()} ${parsedAmount} ${baseAsset} @ ${isMarket ? 'Market' : price}`,
+        fee: {
+          amount: [{ amount: '2000000000000000', denom: 'inj' }],
+          gas: '200000',
+        },
+        pubKey,
+        sequence: baseAccount.sequence,
+        accountNumber: baseAccount.accountNumber,
+        chainId: 'injective-888',
+      });
+
+      let signatureResponse;
+      const accNum = Number(baseAccount.accountNumber);
+      const accNumObj = {
+        low: accNum, high: 0, unsigned: true,
+        toNumber: () => accNum, toString: () => accNum.toString()
+      };
+
+      const signDoc = {
+        bodyBytes: txRaw.bodyBytes,
+        authInfoBytes: txRaw.authInfoBytes,
+        chainId: 'injective-888',
+        accountNumber: accNumObj
+      };
+
+      if (wallet === "keplr") {
+        if (!anyWindow.keplr) throw new Error("Keplr extension not found.");
+        signatureResponse = await anyWindow.keplr.signDirect('injective-888', address, signDoc);
+      } else if (wallet === "leap") {
+        if (!anyWindow.leap) throw new Error("Leap extension not found.");
+        signatureResponse = await anyWindow.leap.signDirect('injective-888', address, signDoc);
+      } else if (wallet === "ninji") {
+        if (!anyWindow.ninji) throw new Error("Ninji extension not found.");
+        signatureResponse = await anyWindow.ninji.signDirect('injective-888', address, signDoc);
+      }
+
+      setStatus('broadcasting');
+
+      const broadcastTxRaw = createTxRawFromSigResponse(signatureResponse);
+      const txService = new TxGrpcApi(endpoints.grpc);
+      const txResponse = await txService.broadcast(broadcastTxRaw);
+
+      if (txResponse.code !== 0) {
+        throw new Error(txResponse.rawLog || "Transaction failed to broadcast");
+      }
+
+      setTxHash(txResponse.txHash);
+      setStatus('success');
+      window.dispatchEvent(new CustomEvent("refresh-balances"));
+    } catch (err: any) {
+      console.error("Direct execution error:", err);
+      setError(err.message || 'Transaction failed.');
+      setStatus('failed');
+    }
+  };
+
+  return (
+    <div className="border-4 border-black bg-[#FEFDF9] p-5 neo-shadow animate-fadeIn">
+      <div className="flex items-center justify-between mb-4">
+        <span className={`border-2 border-black font-black uppercase text-[10px] px-2.5 py-1 ${side === 'buy' ? 'bg-neo-lime' : 'bg-neo-orange'}`}>
+          ⚡ Direct {side === 'buy' ? 'Buy' : 'Sell'} Order
+        </span>
+        <button onClick={onClose} className="w-7 h-7 border-2 border-black bg-[#EAE8E0] flex items-center justify-center font-black text-[10px] hover:bg-neo-orange transition-colors">
+          ✕
+        </button>
+      </div>
+
+      <div className="flex flex-col gap-2 text-xs border-y-[3px] border-black/10 py-3 mb-4">
+        <div className="flex justify-between">
+          <span className="font-bold text-black/50">Asset:</span>
+          <span className="font-black">{parsedAmount} {baseAsset}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="font-bold text-black/50">Execution Price:</span>
+          <span className="font-black capitalize">{price.toLowerCase() === 'market' ? 'Market price' : `$${parsedPrice.toFixed(2)}`}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="font-bold text-black/50">Estimated Total:</span>
+          <span className="font-black text-neo-lime bg-black px-1.5 py-0.5 border border-black">${totalCost.toFixed(2)} USDT</span>
+        </div>
+      </div>
+
+      {status === 'idle' && (
+        <button
+          onClick={handleExecute}
+          className={`w-full py-3 border-[3px] border-black font-black text-xs uppercase tracking-widest shadow-[3px_3px_0px_0px_#000] hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none transition-all ${side === 'buy' ? 'bg-neo-lime' : 'bg-neo-orange'}`}
+        >
+          Sign & Execute with Wallet
+        </button>
+      )}
+
+      {status === 'signing' && (
+        <div className="w-full py-3 bg-[#EAE8E0] border-[3px] border-black text-center font-black text-xs uppercase tracking-widest animate-pulse flex items-center justify-center gap-2">
+          <span className="animate-spin text-sm">↺</span> Requesting wallet signature...
+        </div>
+      )}
+
+      {status === 'broadcasting' && (
+        <div className="w-full py-3 bg-[#EAE8E0] border-[3px] border-black text-center font-black text-xs uppercase tracking-widest animate-pulse flex items-center justify-center gap-2">
+          <span className="animate-spin text-sm">↺</span> Broadcasting to Injective...
+        </div>
+      )}
+
+      {status === 'success' && (
+        <div className="flex flex-col gap-2">
+          <div className="bg-neo-lime border-[3px] border-black p-3 text-center font-black text-xs uppercase tracking-widest">
+            ✅ Trade Executed Successfully!
+          </div>
+          <a
+            href={`https://testnet.explorer.injective.network/transaction/${txHash}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[9px] font-black uppercase text-black/40 hover:text-black hover:underline tracking-widest break-all text-center"
+          >
+            Tx: {txHash.slice(0, 12)}...{txHash.slice(-12)}
+          </a>
+          <button onClick={onClose} className="w-full py-2 bg-black text-white border-[3px] border-black font-black text-[10px] uppercase tracking-widest hover:bg-neo-lime hover:text-black transition-colors">
+            Done
+          </button>
+        </div>
+      )}
+
+      {status === 'failed' && (
+        <div className="flex flex-col gap-2">
+          <div className="bg-neo-orange text-white border-[3px] border-black p-3 text-center font-black text-[10px] uppercase tracking-widest">
+            Failed: {error}
+          </div>
+          <div className="flex gap-2">
+            <button onClick={handleExecute} className="flex-1 py-2 bg-neo-yellow border-[3px] border-black font-black text-[10px] uppercase tracking-widest">
+              Retry
+            </button>
+            <button onClick={onClose} className="flex-1 py-2 bg-[#EAE8E0] border-[3px] border-black font-black text-[10px] uppercase tracking-widest">
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── EXECUTION CHOICE MODAL ─────────────────────────────────────────────────────
+
+function ExecutionChoiceModal({
+  side, amount, baseAsset, price, orderType, address, wallet, onClose
+}: {
+  side: "buy" | "sell";
+  amount: string;
+  baseAsset: string;
+  price: string;
+  orderType: "market" | "limit";
+  address: string;
+  wallet: string | null;
+  onClose: () => void;
+}) {
+  const [mode, setMode] = useState<"choose" | "direct">("choose");
+
+  const handleAIAdvice = () => {
+    const query = `Provide real-time advice for a ${side.toUpperCase()} order of ${amount} ${baseAsset} on Injective. Type: ${orderType}. ${orderType === 'limit' ? `Price: $${price}` : `Price: Market price`}. What are the risks, technical details, or tips I should keep in mind?`;
+    window.dispatchEvent(new CustomEvent("open-hodegos-chat", { detail: { query } }));
+    onClose();
+  };
+
+  if (mode === "direct") {
+    return (
+      <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fadeIn" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+        <div className="w-full max-w-md mx-4 animate-slideUp">
+          <DirectExecutionPanel
+            side={side}
+            amount={amount}
+            baseAsset={baseAsset}
+            price={orderType === "limit" ? price : "market"}
+            orderType={orderType}
+            address={address}
+            wallet={wallet}
+            onClose={onClose}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fadeIn" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="w-full max-w-md mx-4 animate-slideUp">
+        <div className="border-4 border-black bg-[#FEFDF9] neo-shadow overflow-hidden">
+          {/* Modal header */}
+          <div className="bg-black text-white p-4 flex items-center justify-between">
+            <div>
+              <div className="font-black text-xs uppercase tracking-widest">Execute Trade</div>
+              <div className="font-bold text-[9px] text-white/50 uppercase tracking-wider mt-0.5">
+                {side.toUpperCase()} {amount} {baseAsset}
+              </div>
+            </div>
+            <button onClick={onClose} className="w-8 h-8 border-2 border-white/30 flex items-center justify-center font-black text-[10px] text-white hover:bg-white/20 transition-colors">
+              ✕
+            </button>
+          </div>
+
+          {/* Order summary */}
+          <div className="border-b-4 border-black bg-[#EAE8E0] p-4">
+            <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2">
+                <span className={`w-3 h-3 border-2 border-black ${side === 'buy' ? 'bg-neo-lime' : 'bg-neo-orange'}`} />
+                <span className="font-black uppercase">{side} {amount} {baseAsset}</span>
+              </div>
+              <span className="font-bold text-black/50">
+                {orderType === 'limit' ? `@ $${price}` : '@ Market'}
+              </span>
+            </div>
+          </div>
+
+          {/* Choice buttons */}
+          <div className="p-5 flex flex-col gap-3">
+            <div className="font-black text-[9px] uppercase tracking-widest text-black/40 mb-1">How would you like to proceed?</div>
+
+            {/* AI Advice option */}
+            <button
+              onClick={handleAIAdvice}
+              className="group w-full p-4 border-[3px] border-black bg-white hover:bg-neo-yellow transition-all shadow-[3px_3px_0px_0px_#000] hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none text-left"
+            >
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 bg-neo-yellow border-2 border-black flex items-center justify-center font-black text-lg shrink-0 group-hover:bg-white transition-colors">
+                  🤖
+                </div>
+                <div>
+                  <div className="font-black text-sm uppercase tracking-wider">Ask AI for Smart Advice</div>
+                  <div className="font-bold text-[10px] text-black/50 mt-1 leading-relaxed">
+                    Get Hodegos AI analysis on risks, timing, and optimal strategy before executing
+                  </div>
+                </div>
+              </div>
+            </button>
+
+            {/* Direct execution option */}
+            <button
+              onClick={() => setMode("direct")}
+              className="group w-full p-4 border-[3px] border-black bg-white hover:bg-neo-lime transition-all shadow-[3px_3px_0px_0px_#000] hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none text-left"
+            >
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 bg-neo-lime border-2 border-black flex items-center justify-center font-black text-lg shrink-0 group-hover:bg-white transition-colors">
+                  ⚡
+                </div>
+                <div>
+                  <div className="font-black text-sm uppercase tracking-wider">Execute Trade Directly</div>
+                  <div className="font-bold text-[10px] text-black/50 mt-1 leading-relaxed">
+                    Sign and broadcast immediately via your wallet — skip the AI
+                  </div>
+                </div>
+              </div>
+            </button>
+
+            <div className="text-center font-bold text-[8px] text-black/30 uppercase tracking-widest mt-1">
+              Powered by Injective Protocol DEX • On-Chain Execution
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── MAIN TRADE CONTENT ────────────────────────────────────────────────────────
 
 function TradeContent() {
   const searchParams = useSearchParams();
@@ -37,10 +413,17 @@ function TradeContent() {
   const [limitPrice, setLimitPrice] = useState("");
   const [livePrice, setLivePrice] = useState(0);
   const [priceLoading, setPriceLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
 
-  // Fetch balances for trading limits and display
-  const [injBalance, setInjBalance] = useState(17.1981);
-  const [usdtBalance, setUsdtBalance] = useState(10.00);
+  // Multi-coin balances
+  const [tokenBalances, setTokenBalances] = useState<Record<string, { amount: number; price: number; value: number; name: string }>>({
+    INJ: { amount: 0, price: 4.99, value: 0, name: "Injective" },
+    USDT: { amount: 0, price: 1.0, value: 0, name: "Tether" },
+    ATOM: { amount: 0, price: 2.01, value: 0, name: "Cosmos" },
+    WETH: { amount: 0, price: 2121.63, value: 0, name: "Wrapped Ethereum" },
+    SOL: { amount: 0, price: 86.23, value: 0, name: "Solana" },
+    TIA: { amount: 0, price: 0.40, value: 0, name: "Celestia" },
+  });
 
   useEffect(() => {
     if (!address) return;
@@ -49,12 +432,8 @@ function TradeContent() {
         const res = await fetch(`/api/portfolio?address=${address}`);
         if (res.ok) {
           const data = await res.json();
-          if (!data.nodeError) {
-            setInjBalance(data.injBalance ?? 0);
-            setUsdtBalance(data.usdtBalance ?? 0);
-          } else {
-            setInjBalance((prev) => prev || 17.1981);
-            setUsdtBalance((prev) => prev || 10.00);
+          if (!data.nodeError && data.tokenBalances) {
+            setTokenBalances(data.tokenBalances);
           }
         }
       } catch (err) {
@@ -97,20 +476,31 @@ function TradeContent() {
   const baseAsset = selectedMarket.ticker.split("/")[0];
   const quoteAsset = selectedMarket.ticker.split("/")[1];
 
+  // Use real fetched balances for all coins
+  const baseBalance = tokenBalances[baseAsset]?.amount ?? 0;
+  const usdtBalance = tokenBalances.USDT?.amount ?? 0;
+
   const handlePercentClick = (percent: number) => {
     if (side === "buy") {
       if (effectivePrice <= 0) return;
       const maxBuy = usdtBalance / effectivePrice;
       setAmount((maxBuy * percent).toFixed(4));
     } else {
-      const maxSell = baseAsset === "INJ" ? injBalance : 0;
-      setAmount((maxSell * percent).toFixed(4));
+      setAmount((baseBalance * percent).toFixed(4));
     }
   };
 
   const currentBalance = side === "buy"
     ? `${usdtBalance.toFixed(2)} USDT`
-    : (baseAsset === "INJ" ? `${injBalance.toFixed(4)} INJ` : `0.0000 ${baseAsset}`);
+    : `${baseBalance.toFixed(4)} ${baseAsset}`;
+
+  const handleTradeClick = () => {
+    if (!amount || Number(amount) <= 0) {
+      alert("Please enter a valid amount to trade.");
+      return;
+    }
+    setShowModal(true);
+  };
 
   if (!isInitialized || !isConnected || !address) return null;
 
@@ -310,19 +700,12 @@ function TradeContent() {
                     <span>{total > 0 ? `~$${(total * 0.0005).toFixed(4)}` : "$0.00"}</span>
                   </div>
 
-                  {/* Submit */}
+                  {/* Submit — opens choice modal */}
                   <button
                     className={`w-full py-4 font-black text-sm uppercase tracking-widest border-[3px] border-black shadow-[4px_4px_0px_0px_#000] hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none transition-all ${
                       side === "buy" ? "bg-neo-lime" : "bg-neo-orange"
                     }`}
-                    onClick={() => {
-                      if (!amount || Number(amount) <= 0) {
-                        alert("Please enter a valid amount to trade.");
-                        return;
-                      }
-                      const query = `Provide real-time advice for a ${side.toUpperCase()} order of ${amount} ${baseAsset} on Injective. Type: ${orderType}. ${orderType === 'limit' ? `Price: $${limitPrice}` : `Price: Market price`}. What are the risks, technical details, or tips I should keep in mind?`;
-                      window.dispatchEvent(new CustomEvent("open-hodegos-chat", { detail: { query } }));
-                    }}
+                    onClick={handleTradeClick}
                   >
                     {side === "buy" ? `Buy ${baseAsset}` : `Sell ${baseAsset}`}
                   </button>
@@ -374,6 +757,34 @@ function TradeContent() {
           </div>
         </div>
       </div>
+
+      {/* Execution Choice Modal */}
+      {showModal && (
+        <ExecutionChoiceModal
+          side={side}
+          amount={amount}
+          baseAsset={baseAsset}
+          price={orderType === "limit" ? limitPrice : livePrice.toString()}
+          orderType={orderType}
+          address={address}
+          wallet={wallet}
+          onClose={() => setShowModal(false)}
+        />
+      )}
+
+      {/* Animations */}
+      <style jsx global>{`
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes slideUp {
+          from { opacity: 0; transform: translateY(24px) scale(0.97); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .animate-fadeIn { animation: fadeIn 0.2s ease-out; }
+        .animate-slideUp { animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+      `}</style>
     </div>
   );
 }

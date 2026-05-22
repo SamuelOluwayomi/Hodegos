@@ -56,6 +56,30 @@ function TransactionCard({ tx, address, wallet, msgTimestamp }: { tx: TxData; ad
         console.error("Failed to parse cached transaction status:", e);
       }
     }
+
+    // Fuzzy fallback: check for close timestamps (within 60 seconds)
+    if (msgTimestamp) {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith(`hodegos_tx_status_${address}_`)) {
+          const suffix = key.replace(`hodegos_tx_status_${address}_`, '');
+          const keyTime = parseInt(suffix, 10);
+          if (!isNaN(keyTime) && Math.abs(keyTime - msgTimestamp) < 60000) {
+            const val = localStorage.getItem(key);
+            if (val) {
+              try {
+                const parsed = JSON.parse(val);
+                if (parsed.status === 'success' || parsed.status === 'failed') {
+                  // Migrate/duplicate to the current exact key
+                  localStorage.setItem(cacheKey, val);
+                  return parsed;
+                }
+              } catch (e) {}
+            }
+          }
+        }
+      }
+    }
     return null;
   };
 

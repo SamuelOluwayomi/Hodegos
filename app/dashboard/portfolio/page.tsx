@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -8,25 +8,81 @@ import { useWallet, WalletId } from "@/lib/useWallet";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import AskHodegosButton from "@/components/AskHodegosButton";
 import { useChat } from "@/hooks/useChat";
-import { fetchMarketSummary } from "@/lib/injective";
 import { getTierByXP } from "@/lib/tiers";
+import {
+  PieChart, Pie, Cell, ResponsiveContainer, Tooltip,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  AreaChart, Area,
+} from "recharts";
 
 const WALLET_LABELS: Partial<Record<WalletId, string>> = {
   keplr: "Keplr", leap: "Leap", ninji: "Ninji", metamask: "MetaMask",
 };
 
-const ALLOCATION_COLORS = ["bg-neo-lime", "bg-neo-orange", "bg-neo-yellow", "bg-black"];
+const TOKEN_COLORS: Record<string, string> = {
+  INJ: "#D0EE51",   // neo-lime
+  USDT: "#FFD700",   // neo-yellow
+  ATOM: "#FF6B35",   // neo-orange
+  WETH: "#7C3AED",   // purple
+  SOL: "#06B6D4",    // cyan
+  TIA: "#F472B6",    // pink
+};
+
+const TOKEN_CSS_CLASSES: Record<string, string> = {
+  INJ: "bg-neo-lime",
+  USDT: "bg-neo-yellow",
+  ATOM: "bg-neo-orange",
+  WETH: "bg-[#7C3AED]",
+  SOL: "bg-[#06B6D4]",
+  TIA: "bg-[#F472B6]",
+};
+
+interface TokenBalance {
+  amount: number;
+  price: number;
+  value: number;
+  name: string;
+}
+
+// Custom tooltip for charts
+function ChartTooltip({ active, payload, label }: any) {
+  if (!active || !payload || !payload.length) return null;
+  return (
+    <div className="bg-black text-white border-[3px] border-black p-3 neo-shadow-sm">
+      <div className="font-black text-xs uppercase tracking-widest mb-1">{label || payload[0]?.name}</div>
+      {payload.map((entry: any, i: number) => (
+        <div key={i} className="font-bold text-[10px]" style={{ color: entry.color || '#D0EE51' }}>
+          {entry.name}: ${typeof entry.value === 'number' ? entry.value.toFixed(2) : entry.value}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Custom Pie label
+function renderPieLabel({ cx, cy, midAngle, innerRadius, outerRadius, percent, name }: any) {
+  if (percent < 0.03) return null;
+  const RADIAN = Math.PI / 180;
+  const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+  return (
+    <text x={x} y={y} fill="#000" textAnchor="middle" dominantBaseline="central"
+      style={{ fontWeight: 900, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+      {name}
+    </text>
+  );
+}
 
 export default function PortfolioPage() {
   const { address, wallet, isConnected, disconnect, truncateAddress, isInitialized } = useWallet();
   const router = useRouter();
   const { profile } = useChat(address || undefined);
   const currentTier = getTierByXP(profile.xp);
-  const [activeTab, setActiveTab] = useState<"overview" | "history">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "analytics" | "history">("overview");
+  const [chartType, setChartType] = useState<"pie" | "bar" | "area">("pie");
 
-  const [injBalance, setInjBalance] = useState(17.1981);
-  const [usdtBalance, setUsdtBalance] = useState(10.00);
-  const [injPrice, setInjPrice] = useState(4.99);
+  const [tokenBalances, setTokenBalances] = useState<Record<string, TokenBalance>>({});
   const [loading, setLoading] = useState(true);
   const [hasFetched, setHasFetched] = useState(false);
   const [isNodeOffline, setIsNodeOffline] = useState(false);
@@ -40,18 +96,15 @@ export default function PortfolioPage() {
         const res = await fetch(`/api/portfolio?address=${address}`);
         if (res.ok) {
           const data = await res.json();
-          setInjPrice(data.injPrice || 4.99);
           setIsNodeOffline(!!data.nodeError);
-          
-          if (!data.nodeError) {
-            setInjBalance(data.injBalance ?? 0);
-            setUsdtBalance(data.usdtBalance ?? 0);
-          } else {
-            // Keep existing state or set realistic fallbacks if initial load fails
-            setInjBalance((prev) => prev || 17.1981);
-            setUsdtBalance((prev) => prev || 10.00);
+
+          if (!data.nodeError && data.tokenBalances) {
+            setTokenBalances(data.tokenBalances);
+          } else if (data.tokenBalances) {
+            // Use whatever the API returned even if nodeError
+            setTokenBalances(data.tokenBalances);
           }
-          
+
           setHasFetched(true);
         }
       } catch (err) {
@@ -71,19 +124,72 @@ export default function PortfolioPage() {
     };
   }, [address]);
 
-  const assets = [
-    { symbol: "INJ", name: "Injective", price: injPrice, amount: injBalance.toFixed(4), value: injBalance * injPrice, change: 3.45, color: "bg-neo-lime" },
-    { symbol: "USDT", name: "Tether", price: 1.00, amount: usdtBalance.toFixed(2), value: usdtBalance, change: 0.01, color: "bg-neo-yellow" },
-  ];
+  // Build asset list from tokenBalances
+  const assets = useMemo(() => {
+    const order = ["INJ", "USDT", "ATOM", "WETH", "SOL", "TIA"];
+    return order
+      .filter(sym => tokenBalances[sym])
+      .map(sym => {
+        const tb = tokenBalances[sym];
+        return {
+          symbol: sym,
+          name: tb.name,
+          price: tb.price,
+          amount: sym === "USDT" ? tb.amount.toFixed(2) : tb.amount.toFixed(4),
+          rawAmount: tb.amount,
+          value: tb.value,
+          color: TOKEN_CSS_CLASSES[sym] || "bg-black",
+          hexColor: TOKEN_COLORS[sym] || "#000000",
+        };
+      });
+  }, [tokenBalances]);
 
-  const totalValue = injBalance * injPrice + usdtBalance;
+  const totalValue = useMemo(() => assets.reduce((sum, a) => sum + a.value, 0), [assets]);
+
+  // Chart data for analytics
+  const pieData = useMemo(() =>
+    assets.filter(a => a.value > 0).map(a => ({
+      name: a.symbol,
+      value: parseFloat(a.value.toFixed(2)),
+      fill: a.hexColor,
+    }))
+  , [assets]);
+
+  const barData = useMemo(() =>
+    assets.map(a => ({
+      name: a.symbol,
+      value: parseFloat(a.value.toFixed(2)),
+      fill: a.hexColor,
+    }))
+  , [assets]);
+
+  const areaData = useMemo(() => {
+    // Create a stacked view showing the composition
+    const entry: Record<string, any> = { name: "Portfolio" };
+    assets.forEach(a => { entry[a.symbol] = parseFloat(a.value.toFixed(2)); });
+    return [entry];
+  }, [assets]);
 
   const handleDisconnect = () => { disconnect(); router.replace("/"); };
+
+  const handleAISummary = () => {
+    const assetSummary = assets
+      .filter(a => a.value > 0)
+      .map(a => `${a.symbol}: ${a.amount} ($${a.value.toFixed(2)}, ${totalValue > 0 ? ((a.value / totalValue) * 100).toFixed(1) : 0}%)`)
+      .join(", ");
+
+    const query = `Analyze my portfolio in detail. Here is my current on-chain holdings on Injective Testnet:\n\nTotal Value: $${totalValue.toFixed(2)}\nAssets: ${assetSummary}\nXP: ${profile.xp}, Badges: ${profile.badges.length}, Tier: ${currentTier.level}\n\nGive me a comprehensive breakdown of:\n1. Portfolio diversification assessment\n2. Risk analysis\n3. Strengths and weaknesses\n4. Actionable recommendations for improvement\n5. Market outlook for my held assets`;
+
+    window.dispatchEvent(new CustomEvent("open-hodegos-chat", { detail: { query } }));
+  };
 
   if (!isInitialized || !isConnected || !address) return null;
 
   const displayAddress = truncateAddress(address);
   const walletLabel = WALLET_LABELS[wallet!] ?? wallet;
+
+  // Helper for the allocation bar
+  const assetsWithValue = assets.filter(a => a.value > 0);
 
   return (
     <div className="h-screen w-screen bg-[#FEFDF9] font-sans flex overflow-hidden">
@@ -135,7 +241,9 @@ export default function PortfolioPage() {
                 </div>
                 <div className="font-black text-5xl mb-1">${totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                 <div className="flex items-center gap-2 mt-2">
-                  <span className="bg-neo-lime text-black border-2 border-neo-lime px-2 py-0.5 font-black text-xs">+0% today</span>
+                  <span className="bg-neo-lime text-black border-2 border-neo-lime px-2 py-0.5 font-black text-xs">
+                    {assetsWithValue.length} Assets
+                  </span>
                   <span className="font-bold text-xs text-white/40">Connected: {displayAddress}</span>
                 </div>
                 <div className="mt-6 grid grid-cols-3 gap-4">
@@ -171,20 +279,20 @@ export default function PortfolioPage() {
 
           {/* Tabs */}
           <div className="border-b-4 border-black flex mb-6">
-            {(["overview", "history"] as const).map(tab => (
+            {(["overview", "analytics", "history"] as const).map(tab => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`px-6 py-3 font-black text-xs uppercase tracking-widest border-b-4 transition-all ${activeTab === tab ? "border-black bg-white" : "border-transparent hover:border-black/30"}`}
               >
-                {tab === "overview" ? "Holdings" : "Trade History"}
+                {tab === "overview" ? "Holdings" : tab === "analytics" ? "📊 Analytics" : "Trade History"}
               </button>
             ))}
           </div>
 
+          {/* ── HOLDINGS TAB ─────────────────────────────────────────────────── */}
           {activeTab === "overview" && (
             <div>
-              {/* Asset allocation */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
                 <div className="lg:col-span-2">
                   <h2 className="font-black text-sm uppercase tracking-widest mb-4">Asset Holdings</h2>
@@ -196,7 +304,7 @@ export default function PortfolioPage() {
                           <th className="p-4 text-right border-r-2 border-black">Price</th>
                           <th className="p-4 text-right border-r-2 border-black">Balance</th>
                           <th className="p-4 text-right border-r-2 border-black">Value</th>
-                          <th className="p-4 text-right">24H</th>
+                          <th className="p-4 text-right">Share</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -207,7 +315,7 @@ export default function PortfolioPage() {
                             </td>
                           </tr>
                         ) : (
-                          assets.map((asset, i) => (
+                          assets.map((asset) => (
                             <tr key={asset.symbol} className="border-b-2 border-black last:border-b-0 hover:bg-[#EAE8E0]/50 transition-colors">
                               <td className="p-4 border-r-2 border-black">
                                 <div className="flex items-center gap-3">
@@ -220,11 +328,13 @@ export default function PortfolioPage() {
                                   </div>
                                 </div>
                               </td>
-                              <td className="p-4 border-r-2 border-black text-right font-black text-sm">${asset.price.toFixed(2)}</td>
+                              <td className="p-4 border-r-2 border-black text-right font-black text-sm">
+                                ${asset.price < 0.01 ? asset.price.toFixed(4) : asset.price.toFixed(2)}
+                              </td>
                               <td className="p-4 border-r-2 border-black text-right font-black text-sm">{asset.amount}</td>
                               <td className="p-4 border-r-2 border-black text-right font-black text-sm">${asset.value.toFixed(2)}</td>
-                              <td className={`p-4 text-right font-black text-sm ${asset.change >= 0 ? "text-green-600" : "text-red-500"}`}>
-                                {asset.change >= 0 ? "+" : ""}{asset.change}%
+                              <td className="p-4 text-right font-black text-sm">
+                                {totalValue > 0 ? `${((asset.value / totalValue) * 100).toFixed(1)}%` : "—"}
                               </td>
                             </tr>
                           ))
@@ -234,45 +344,32 @@ export default function PortfolioPage() {
                   </div>
                 </div>
 
-                {/* Allocation chart (visual) */}
+                {/* Allocation chart (visual bar) */}
                 <div>
                   <h2 className="font-black text-sm uppercase tracking-widest mb-4">Allocation</h2>
                   <div className="border-4 border-black p-5 bg-white neo-shadow min-h-[160px] flex flex-col justify-center">
                     {totalValue > 0 ? (
                       <div className="flex flex-col gap-4 w-full">
                         <div className="h-6 w-full border-[3px] border-black overflow-hidden flex bg-[#EAE8E0]">
-                          {injBalance * injPrice > 0 && (
-                            <div 
-                              className="h-full bg-neo-lime border-r-[3px] border-black last:border-r-0" 
-                              style={{ width: `${((injBalance * injPrice) / totalValue) * 100}%` }}
+                          {assetsWithValue.map((asset, i) => (
+                            <div
+                              key={asset.symbol}
+                              className={`h-full ${asset.color} ${i < assetsWithValue.length - 1 ? 'border-r-2 border-black' : ''}`}
+                              style={{ width: `${(asset.value / totalValue) * 100}%` }}
+                              title={`${asset.symbol}: ${((asset.value / totalValue) * 100).toFixed(1)}%`}
                             />
-                          )}
-                          {usdtBalance > 0 && (
-                            <div 
-                              className="h-full bg-neo-yellow" 
-                              style={{ width: `${(usdtBalance / totalValue) * 100}%` }}
-                            />
-                          )}
+                          ))}
                         </div>
                         <div className="flex flex-col gap-2 font-black text-[10px] uppercase tracking-widest">
-                          {injBalance * injPrice > 0 && (
-                            <div className="flex items-center justify-between">
+                          {assetsWithValue.map(asset => (
+                            <div key={asset.symbol} className="flex items-center justify-between">
                               <div className="flex items-center gap-1.5">
-                                <div className="w-2.5 h-2.5 bg-neo-lime border border-black" />
-                                <span>INJ (Injective)</span>
+                                <div className={`w-2.5 h-2.5 ${asset.color} border border-black`} />
+                                <span>{asset.symbol} ({asset.name})</span>
                               </div>
-                              <span className="font-black">{(((injBalance * injPrice) / totalValue) * 100).toFixed(1)}%</span>
+                              <span className="font-black">{((asset.value / totalValue) * 100).toFixed(1)}%</span>
                             </div>
-                          )}
-                          {usdtBalance > 0 && (
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-1.5">
-                                <div className="w-2.5 h-2.5 bg-neo-yellow border border-black" />
-                                <span>USDT (Tether)</span>
-                              </div>
-                              <span className="font-black">{((usdtBalance / totalValue) * 100).toFixed(1)}%</span>
-                            </div>
-                          )}
+                          ))}
                         </div>
                       </div>
                     ) : (
@@ -303,6 +400,208 @@ export default function PortfolioPage() {
             </div>
           )}
 
+          {/* ── ANALYTICS TAB ────────────────────────────────────────────────── */}
+          {activeTab === "analytics" && (
+            <div>
+              {/* Chart type toggle */}
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="font-black text-sm uppercase tracking-widest">Portfolio Analytics</h2>
+                <div className="flex gap-1">
+                  {([
+                    { key: "pie" as const, label: "🍩 Donut", icon: "Pie" },
+                    { key: "bar" as const, label: "📊 Bar", icon: "Bar" },
+                    { key: "area" as const, label: "📈 Area", icon: "Area" },
+                  ]).map(ct => (
+                    <button
+                      key={ct.key}
+                      onClick={() => setChartType(ct.key)}
+                      className={`px-3 py-1.5 font-black text-[9px] uppercase tracking-widest border-[3px] border-black transition-all ${
+                        chartType === ct.key
+                          ? "bg-black text-white shadow-none"
+                          : "bg-white hover:bg-[#EAE8E0] shadow-[2px_2px_0px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
+                      }`}
+                    >
+                      {ct.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                {/* Main chart area */}
+                <div className="lg:col-span-2 border-4 border-black bg-white neo-shadow p-6">
+                  <div className="font-black text-[10px] uppercase tracking-widest text-black/40 mb-4">
+                    {chartType === "pie" && "Asset Allocation Breakdown"}
+                    {chartType === "bar" && "Asset Value Comparison"}
+                    {chartType === "area" && "Portfolio Composition"}
+                  </div>
+
+                  {pieData.length === 0 ? (
+                    <div className="h-[300px] flex items-center justify-center">
+                      <div className="text-center">
+                        <div className="font-black text-xl uppercase tracking-widest mb-2">No Data</div>
+                        <div className="font-bold text-sm text-black/50">Fund your wallet to see analytics</div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="h-[340px]">
+                      {/* Donut / Pie chart */}
+                      {chartType === "pie" && (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={pieData}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={70}
+                              outerRadius={130}
+                              paddingAngle={3}
+                              dataKey="value"
+                              stroke="#000"
+                              strokeWidth={3}
+                              label={renderPieLabel}
+                              labelLine={false}
+                            >
+                              {pieData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.fill} />
+                              ))}
+                            </Pie>
+                            <Tooltip content={<ChartTooltip />} />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      )}
+
+                      {/* Bar chart */}
+                      {chartType === "bar" && (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={barData} barCategoryGap="20%">
+                            <CartesianGrid strokeDasharray="3 3" stroke="#00000015" />
+                            <XAxis
+                              dataKey="name"
+                              tick={{ fontWeight: 900, fontSize: 10, textTransform: 'uppercase' } as any}
+                              axisLine={{ stroke: '#000', strokeWidth: 3 }}
+                              tickLine={{ stroke: '#000', strokeWidth: 2 }}
+                            />
+                            <YAxis
+                              tick={{ fontWeight: 700, fontSize: 10 }}
+                              axisLine={{ stroke: '#000', strokeWidth: 3 }}
+                              tickLine={{ stroke: '#000', strokeWidth: 2 }}
+                              tickFormatter={(v) => `$${v}`}
+                            />
+                            <Tooltip content={<ChartTooltip />} />
+                            <Bar dataKey="value" radius={[4, 4, 0, 0]} stroke="#000" strokeWidth={2}>
+                              {barData.map((entry, index) => (
+                                <Cell key={`bar-${index}`} fill={entry.fill} />
+                              ))}
+                            </Bar>
+                          </BarChart>
+                        </ResponsiveContainer>
+                      )}
+
+                      {/* Area chart */}
+                      {chartType === "area" && (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <AreaChart data={areaData}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#00000015" />
+                            <XAxis
+                              dataKey="name"
+                              tick={{ fontWeight: 900, fontSize: 10 } as any}
+                              axisLine={{ stroke: '#000', strokeWidth: 3 }}
+                            />
+                            <YAxis
+                              tick={{ fontWeight: 700, fontSize: 10 }}
+                              axisLine={{ stroke: '#000', strokeWidth: 3 }}
+                              tickFormatter={(v) => `$${v}`}
+                            />
+                            <Tooltip content={<ChartTooltip />} />
+                            {assets.filter(a => a.value > 0).map((asset) => (
+                              <Area
+                                key={asset.symbol}
+                                type="monotone"
+                                dataKey={asset.symbol}
+                                stackId="1"
+                                stroke="#000"
+                                strokeWidth={2}
+                                fill={asset.hexColor}
+                              />
+                            ))}
+                          </AreaChart>
+                        </ResponsiveContainer>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Stats panel */}
+                <div className="flex flex-col gap-4">
+                  {/* Token breakdown list */}
+                  <div className="border-4 border-black bg-white neo-shadow p-5">
+                    <div className="font-black text-[10px] uppercase tracking-widest text-black/40 mb-4">Breakdown</div>
+                    <div className="flex flex-col gap-3">
+                      {assetsWithValue.map(asset => (
+                        <div key={asset.symbol} className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className={`w-4 h-4 ${asset.color} border-2 border-black`} />
+                            <span className="font-black text-xs uppercase">{asset.symbol}</span>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-black text-xs">${asset.value.toFixed(2)}</div>
+                            <div className="font-bold text-[9px] text-black/40">
+                              {totalValue > 0 ? `${((asset.value / totalValue) * 100).toFixed(1)}%` : "—"}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      {assetsWithValue.length === 0 && (
+                        <div className="font-bold text-[10px] text-black/40 text-center py-4">No assets held</div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* AI Summary button */}
+                  <button
+                    onClick={handleAISummary}
+                    className="w-full p-4 border-4 border-black bg-black text-white neo-shadow hover:bg-neo-lime hover:text-black transition-all group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-neo-lime border-2 border-black flex items-center justify-center font-black text-lg shrink-0 group-hover:bg-black group-hover:text-neo-lime transition-colors">
+                        🤖
+                      </div>
+                      <div className="text-left">
+                        <div className="font-black text-xs uppercase tracking-wider">AI Portfolio Summary</div>
+                        <div className="font-bold text-[9px] opacity-60 mt-0.5">Get personalized analysis & advice</div>
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Quick stats */}
+                  <div className="border-4 border-black bg-neo-lime neo-shadow p-5">
+                    <div className="font-black text-[9px] uppercase tracking-widest text-black/60 mb-2">Portfolio Summary</div>
+                    <div className="flex flex-col gap-2 text-xs">
+                      <div className="flex justify-between">
+                        <span className="font-bold text-black/60">Total Assets:</span>
+                        <span className="font-black">{assetsWithValue.length}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-bold text-black/60">Largest Holding:</span>
+                        <span className="font-black">
+                          {assetsWithValue.length > 0
+                            ? assetsWithValue.reduce((max, a) => a.value > max.value ? a : max, assetsWithValue[0]).symbol
+                            : "—"}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-bold text-black/60">Total Value:</span>
+                        <span className="font-black">${totalValue.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── HISTORY TAB ──────────────────────────────────────────────────── */}
           {activeTab === "history" && (
             <div className="border-4 border-black bg-white neo-shadow">
               <div className="p-8 text-center">
