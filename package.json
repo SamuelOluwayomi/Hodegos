@@ -31,6 +31,9 @@
     "tailwindcss": "^4",
     "typescript": "^5"
   },
+  "overrides": {
+    "@injectivelabs/utils": "1.14.41"
+  },
   "pnpm": {
     "overrides": {
       "@injectivelabs/utils": "1.14.41"
