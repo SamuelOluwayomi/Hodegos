@@ -124,36 +124,24 @@ Sign this message to authorize and execute this order on Hodegos Injective DEX.`
 
       // Price scaling
       let priceVal = currentPrice;
-      if (isMarket) {
-        priceVal = tx.side === 'buy' ? currentPrice * 1.3 : currentPrice * 0.7; // 30% slippage boundary
-      } else {
+      if (!isMarket) {
         priceVal = parseFloat(tx.price) || currentPrice;
       }
       const scaledPrice = (priceVal * Math.pow(10, quoteDecimals - baseDecimals)).toFixed(18);
       const subaccountId = getDefaultSubaccountId(address);
 
-      let msg;
-      if (isMarket) {
-        msg = MsgCreateSpotMarketOrder.fromJSON({
-          subaccountId,
-          injectiveAddress: address,
-          orderType,
-          price: scaledPrice,
-          quantity,
-          marketId,
-          feeRecipient: address,
-        });
-      } else {
-        msg = MsgCreateSpotLimitOrder.fromJSON({
-          subaccountId,
-          injectiveAddress: address,
-          orderType,
-          price: scaledPrice,
-          quantity,
-          marketId,
-          feeRecipient: address,
-        });
-      }
+      // We use MsgCreateSpotLimitOrder for all trades on testnet.
+      // Since public testnet order books are empty (0 liquidity), standard Market Orders (MsgCreateSpotMarketOrder)
+      // will fail. Placing a Limit Order acts as a maker order and successfully registers on-chain.
+      const msg = MsgCreateSpotLimitOrder.fromJSON({
+        subaccountId,
+        injectiveAddress: address,
+        orderType,
+        price: scaledPrice,
+        quantity,
+        marketId,
+        feeRecipient: address,
+      });
 
       // 1. Resolve Public Key (Critical for new testnet accounts)
       let pubKey = "";
