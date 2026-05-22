@@ -10,6 +10,7 @@ import DashboardSidebar from "@/components/DashboardSidebar";
 import AskHodegosButton from "@/components/AskHodegosButton";
 import { useChat } from "@/hooks/useChat";
 import { FEATURED_MARKET_IDS, fetchMarketSummary, formatVolume } from "@/lib/injective";
+import { getTierProgress } from "@/lib/tiers";
 
 // Wallet label map
 const WALLET_LABELS: Partial<Record<WalletId, string>> = {
@@ -27,6 +28,7 @@ export default function DashboardPage() {
 
   // Fetch profile for onboarding guard
   const { profile, isProfileLoading } = useChat(address || undefined);
+  const { currentTier, nextTier, progress: tierProgress } = getTierProgress(profile.xp);
 
   // Market rows state
   const [marketRows, setMarketRows] = useState<any[]>([]);
@@ -193,11 +195,11 @@ export default function DashboardPage() {
                 {/* XP Progress */}
                 <div className="w-full sm:w-64">
                   <div className="flex justify-between items-end mb-2 font-black text-[10px] uppercase tracking-widest">
-                    <span>{profile.tradingLevel === 'unknown' ? 'Apprentice' : profile.tradingLevel} Tier</span>
-                    <span>{profile.xp} / 300 XP</span>
+                    <span>{currentTier.level} Tier</span>
+                    <span>{profile.xp} / {nextTier ? nextTier.min : currentTier.min} XP</span>
                   </div>
                   <div className="h-4 w-full bg-white border-[3px] border-black rounded-full overflow-hidden flex">
-                    <div className="h-full bg-neo-lime border-r-[3px] border-black" style={{ width: `${Math.min((profile.xp / 300) * 100, 100)}%` }}></div>
+                    <div className="h-full bg-neo-lime border-r-[3px] border-black" style={{ width: `${tierProgress}%` }}></div>
                   </div>
                 </div>
               </div>
@@ -227,7 +229,7 @@ export default function DashboardPage() {
                 <div className="bg-neo-lime border-[3px] border-black neo-shadow p-5 flex flex-col relative overflow-hidden group hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all cursor-default">
                   <div className="absolute -right-6 -top-6 w-24 h-24 bg-white/30 rounded-full group-hover:scale-110 transition-transform"></div>
                   <p className="font-black text-[10px] uppercase tracking-widest mb-1 opacity-70">Current Tier</p>
-                  <p className="font-black text-2xl leading-tight relative z-10 capitalize">{profile.tradingLevel === 'unknown' ? 'Apprentice' : profile.tradingLevel}</p>
+                  <p className="font-black text-2xl leading-tight relative z-10 capitalize">{currentTier.level}</p>
                   <div className="mt-3 font-bold text-[9px] uppercase tracking-widest">
                     <span className="bg-white border border-black px-1.5 rounded">
                       {profile.onboardingComplete ? 'Onboarded ✓' : 'Level 1'}

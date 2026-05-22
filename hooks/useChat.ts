@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
+import { getTierByXP } from '@/lib/tiers'
 
 export interface Message {
   role: 'user' | 'assistant'
@@ -317,7 +318,7 @@ export function useChat(walletAddress?: string) {
           messages: newMessages.map(m => ({ role: m.role, content: m.content })),
           marketContext,
           pageContext,
-          userLevel: profile.tradingLevel,
+          userLevel: getTierByXP(profile.xp).level,
           aiTone: profile.aiTone,
           userName: profile.userName,
           onboardingStep: profile.onboardingStep,

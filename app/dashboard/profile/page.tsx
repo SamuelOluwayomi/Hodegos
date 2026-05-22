@@ -12,14 +12,7 @@ const WALLET_LABELS: Partial<Record<WalletId, string>> = {
   keplr: "Keplr", leap: "Leap", ninji: "Ninji", metamask: "MetaMask",
 };
 
-const TIER_THRESHOLDS = [
-  { level: "Apprentice", min: 0, max: 100, color: "bg-neo-yellow" },
-  { level: "Beginner", min: 100, max: 300, color: "bg-neo-lime" },
-  { level: "Intermediate", min: 300, max: 700, color: "bg-neo-orange" },
-  { level: "Advanced", min: 700, max: 1500, color: "bg-black text-white" },
-  { level: "Expert", min: 1500, max: 3000, color: "bg-black text-neo-lime" },
-  { level: "Master", min: 3000, max: Infinity, color: "bg-black text-neo-orange" },
-];
+import { getTierProgress, TIER_THRESHOLDS } from "@/lib/tiers";
 
 function getBadgeIcon(badge: string) {
   const norm = badge.toLowerCase().trim();
@@ -189,12 +182,7 @@ export default function ProfilePage() {
   const displayAddress = truncateAddress(address);
   const walletLabel = WALLET_LABELS[wallet!] ?? wallet;
 
-  const currentTier = TIER_THRESHOLDS.find(t => profile.xp >= t.min && profile.xp < t.max) || TIER_THRESHOLDS[0];
-  const nextTier = TIER_THRESHOLDS.find(t => t.min > profile.xp);
-  const xpToNext = nextTier ? nextTier.min - profile.xp : 0;
-  const tierProgress = nextTier
-    ? Math.min(100, ((profile.xp - currentTier.min) / (nextTier.min - currentTier.min)) * 100)
-    : 100;
+  const { currentTier, nextTier, xpToNext, progress: tierProgress } = getTierProgress(profile.xp);
 
   return (
     <div className="h-screen w-screen bg-[#FEFDF9] font-sans flex overflow-hidden">
@@ -270,7 +258,7 @@ export default function ProfilePage() {
                   {[
                     { label: "XP Points", value: profile.xp, bg: "bg-neo-lime" },
                     { label: "Badges", value: profile.badges.length, bg: "bg-neo-yellow" },
-                    { label: "Trading Level", value: profile.tradingLevel === "unknown" ? "Apprentice" : profile.tradingLevel, bg: "bg-neo-orange" },
+                    { label: "Trading Level", value: currentTier.level, bg: "bg-neo-orange" },
                   ].map(stat => (
                     <div key={stat.label} className={`${stat.bg} border-[3px] border-black p-4 neo-shadow`}>
                       <div className="font-black text-[9px] uppercase tracking-widest text-black/60 mb-1">{stat.label}</div>
@@ -315,7 +303,7 @@ export default function ProfilePage() {
                 </div>
                 <div className="bg-white/10 border border-white/20 p-2 font-mono text-[9px] break-all">{address}</div>
                 <div className="mt-3 flex items-center gap-1.5">
-                  <span className="font-black text-[9px] uppercase text-neo-lime">Injective Mainnet</span>
+                  <span className="font-black text-[9px] uppercase text-neo-lime">Injective Testnet</span>
                 </div>
               </div>
               <div className="bg-neo-orange border-4 border-black p-5 neo-shadow">

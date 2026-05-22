@@ -9,6 +9,7 @@ import DashboardSidebar from "@/components/DashboardSidebar";
 import AskHodegosButton from "@/components/AskHodegosButton";
 import { useChat } from "@/hooks/useChat";
 import { fetchMarketSummary } from "@/lib/injective";
+import { getTierByXP } from "@/lib/tiers";
 
 const WALLET_LABELS: Partial<Record<WalletId, string>> = {
   keplr: "Keplr", leap: "Leap", ninji: "Ninji", metamask: "MetaMask",
@@ -20,6 +21,7 @@ export default function PortfolioPage() {
   const { address, wallet, isConnected, disconnect, truncateAddress, isInitialized } = useWallet();
   const router = useRouter();
   const { profile } = useChat(address || undefined);
+  const currentTier = getTierByXP(profile.xp);
   const [activeTab, setActiveTab] = useState<"overview" | "history">("overview");
 
   const [injBalance, setInjBalance] = useState(17.1981);
@@ -147,7 +149,7 @@ export default function PortfolioPage() {
                   </div>
                   <div>
                     <div className="font-black text-[9px] uppercase tracking-widest text-white/40">Tier</div>
-                    <div className="font-black text-lg text-neo-orange capitalize">{profile.tradingLevel === "unknown" ? "Apprentice" : profile.tradingLevel}</div>
+                    <div className="font-black text-lg text-neo-orange capitalize">{currentTier.level}</div>
                   </div>
                 </div>
               </div>
