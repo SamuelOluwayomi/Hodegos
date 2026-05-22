@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
@@ -208,6 +208,46 @@ Sign this message to authorize and execute this order on Hodegos Injective DEX.`
 
 // ── MAIN AIChatBot COMPONENT ──────────────────────────────────────────────────
 
+const renderMarkdown = (text: string) => {
+  if (!text) return null;
+  const lines = text.split('\n');
+  return lines.map((line, i) => {
+    let isBullet = false;
+    let cleanLine = line.trim();
+    if (cleanLine.startsWith('***')) {
+      isBullet = true;
+      cleanLine = cleanLine.substring(1);
+    } else if (cleanLine.startsWith('* ')) {
+      isBullet = true;
+      cleanLine = cleanLine.substring(2);
+    } else if (cleanLine.startsWith('- ')) {
+      isBullet = true;
+      cleanLine = cleanLine.substring(2);
+    }
+
+    const parts = cleanLine.split(/(\*\*.*?\*\*)/g);
+    const renderedParts = parts.map((part, j) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return <strong key={j} className="font-black text-black">{part.slice(2, -2)}</strong>;
+      }
+      return <span key={j}>{part}</span>;
+    });
+
+    if (isBullet) {
+      return (
+        <div key={i} className="flex gap-2 mb-1.5 items-start">
+          <span className="text-[12px] leading-none mt-1 font-black text-neo-lime drop-shadow-[1px_1px_0_rgba(0,0,0,1)]">•</span>
+          <div className="flex-1 leading-relaxed">{renderedParts}</div>
+        </div>
+      );
+    }
+    if (cleanLine === '') {
+      return <div key={i} className="h-2"></div>;
+    }
+    return <div key={i} className="mb-2 leading-relaxed last:mb-0">{renderedParts}</div>;
+  });
+};
+
 export default function AIChatBot() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatInput, setChatInput] = useState("");
@@ -295,7 +335,6 @@ export default function AIChatBot() {
           {/* Chat Header */}
           <div className="border-b-4 border-black bg-black text-white p-3 flex justify-between items-center shrink-0">
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-neo-lime animate-pulse" />
               <span className="font-black text-xs uppercase tracking-widest">Hodegos AI</span>
             </div>
             <div className="flex gap-2">
@@ -356,7 +395,7 @@ export default function AIChatBot() {
               </div>
             )}
 
-            {filteredMessages.map((msg, i, arr) => {
+            {filteredMessages.map((msg, i) => {
               const tx = msg.role === 'assistant' ? parseTxBlock(msg.content) : null;
               const cleanText = tx ? msg.content.replace(tx.raw, '').trim() : msg.content;
 
@@ -371,21 +410,26 @@ export default function AIChatBot() {
                         ? 'bg-neo-lime rounded-xl rounded-tr-none neo-shadow-sm'
                         : 'bg-white rounded-xl rounded-tl-none neo-shadow-sm'
                     }`}
-                    style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
                   >
-                    {cleanText || (chatLoading && i === arr.length - 1 ? (
-                      <span className="flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 bg-black rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                        <span className="w-1.5 h-1.5 bg-black rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                        <span className="w-1.5 h-1.5 bg-black rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                      </span>
-                    ) : '')}
-
+                    {msg.role === 'assistant' ? renderMarkdown(cleanText) : <span style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{cleanText}</span>}
                     {tx && <TransactionCard tx={tx} address={address} wallet={wallet} />}
                   </div>
                 </div>
               );
             })}
+
+            {chatLoading && (!filteredMessages.length || filteredMessages[filteredMessages.length - 1].role === 'user') && (
+              <div className="flex flex-col gap-1 items-start animate-pulse">
+                <span className="font-black text-[9px] uppercase tracking-widest text-black/40 ml-1">
+                  Hodegos AI is thinking...
+                </span>
+                <div className="p-3 py-4 bg-white border-2 border-black rounded-xl rounded-tl-none neo-shadow-sm max-w-[90%] flex items-center justify-center gap-1.5 w-16">
+                  <span className="w-2 h-2 bg-neo-lime border-[1.5px] border-black rounded-full animate-bounce drop-shadow-[1px_1px_0_rgba(0,0,0,1)]" style={{ animationDelay: '0ms' }} />
+                  <span className="w-2 h-2 bg-neo-yellow border-[1.5px] border-black rounded-full animate-bounce drop-shadow-[1px_1px_0_rgba(0,0,0,1)]" style={{ animationDelay: '150ms' }} />
+                  <span className="w-2 h-2 bg-neo-orange border-[1.5px] border-black rounded-full animate-bounce drop-shadow-[1px_1px_0_rgba(0,0,0,1)]" style={{ animationDelay: '300ms' }} />
+                </div>
+              </div>
+            )}
 
             {chatMessages.filter(m => !m.content.startsWith('[SYSTEM]')).length === 0 && selectedCategory === "all" && (
               <div className="flex flex-wrap gap-2 mt-1">

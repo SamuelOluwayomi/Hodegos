@@ -609,7 +609,6 @@ export default function MarketsPage() {
                 <div className="font-black text-[9px] uppercase tracking-widest text-neo-lime mb-1">Injective Testnet</div>
                 <div className="font-bold text-[9px] text-white/60">Real-time DEX data</div>
                 <div className="flex items-center gap-1.5 mt-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-neo-lime animate-pulse" />
                   <span className="font-black text-[8px] uppercase text-neo-lime">Connected</span>
                 </div>
               </div>
