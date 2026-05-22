@@ -17,6 +17,9 @@ importers:
       '@injectivelabs/ts-types':
         specifier: 1.14.41
         version: 1.14.41
+      '@injectivelabs/utils':
+        specifier: 1.14.41
+        version: 1.14.41
       '@phosphor-icons/react':
         specifier: ^2.1.10
         version: 2.1.10(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -480,6 +483,9 @@ packages:
 
   '@injectivelabs/ts-types@1.19.12':
     resolution: {integrity: sha512-Ozu+eVc7oXeU9kG979y4JSXl6xMlcstXw1Bp55TXy9OxzOHMiWyXSSSLQfQwgxJnrUmji4kfmy9WzNCbIx9dCA==}
+
+  '@injectivelabs/utils@1.14.41':
+    resolution: {integrity: sha512-ZReylpIqknVQ0Dzh0NrReTERDv8hiMaP+RcxKGtb2TIvzl1zve/9otEE4tkuHKPNPD/0F5hKmSTzhP4DdGiMtA==}
 
   '@injectivelabs/utils@1.19.12':
     resolution: {integrity: sha512-fMfbArEvlGnxGBirEO8frH3U7Ske88/WeRkEWwQ8OXXZ2zQPByGd6Ek03XSZ5kCNQuR4OMjpk1aPxrJwbhXPGw==}
@@ -3223,7 +3229,7 @@ snapshots:
     dependencies:
       '@injectivelabs/exceptions': 1.19.12
       '@injectivelabs/networks': 1.19.12
-      '@injectivelabs/ts-types': 1.19.12
+      '@injectivelabs/ts-types': 1.14.41
       '@injectivelabs/utils': 1.19.12
       axios: 1.16.1
       bignumber.js: 9.3.1
@@ -3239,6 +3245,20 @@ snapshots:
       shx: 0.3.4
 
   '@injectivelabs/ts-types@1.19.12': {}
+
+  '@injectivelabs/utils@1.14.41':
+    dependencies:
+      '@injectivelabs/exceptions': 1.19.12
+      '@injectivelabs/ts-types': 1.14.41
+      axios: 1.16.1
+      bignumber.js: 9.3.1
+      http-status-codes: 2.3.0
+      shx: 0.3.4
+      snakecase-keys: 5.5.0
+      store2: 2.14.4
+    transitivePeerDependencies:
+      - debug
+      - supports-color
 
   '@injectivelabs/utils@1.19.12':
     dependencies:
