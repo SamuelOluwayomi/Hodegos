@@ -67,11 +67,13 @@ Sign this message to authorize and execute this order on Hodegos Injective DEX.`
       const anyWindow = window as any;
 
       // Dynamically import SDK to avoid SSR bundling issues
-      const [{ MsgSend, createTransaction, TxGrpcApi, ChainRestAuthApi, BaseAccount, getEip712TypedData, createTxRawEIP712, createWeb3Extension }, { Network, getNetworkEndpoints }, { EthereumChainId }] = await Promise.all([
+      const [{ MsgSend, createTransaction, TxGrpcApi, ChainRestAuthApi, BaseAccount, getEip712TypedData, createTxRawEIP712, createWeb3Extension }, { Network, getNetworkEndpoints }] = await Promise.all([
         import('@injectivelabs/sdk-ts'),
         import('@injectivelabs/networks'),
-        import('@injectivelabs/ts-types'),
       ]);
+
+      // EthereumChainId.Injective = 888 (hardcoded to avoid bundling @injectivelabs/ts-types)
+      const ETH_CHAIN_ID_INJECTIVE = 888;
 
       const endpoints = getNetworkEndpoints(Network.Testnet);
       const chainRestAuthApi = new ChainRestAuthApi(endpoints.rest);
@@ -102,7 +104,7 @@ Sign this message to authorize and execute this order on Hodegos Injective DEX.`
             amount: [{ amount: '2000000000000000', denom: 'inj' }],
             gas: '200000',
           },
-          ethereumChainId: EthereumChainId.Injective,
+          ethereumChainId: ETH_CHAIN_ID_INJECTIVE,
         });
 
         const ethAddress = anyWindow.ethereum.selectedAddress ||
@@ -128,7 +130,7 @@ Sign this message to authorize and execute this order on Hodegos Injective DEX.`
           chainId: 'injective-888',
         });
 
-        const web3Extension = createWeb3Extension({ ethereumChainId: EthereumChainId.Injective });
+        const web3Extension = createWeb3Extension({ ethereumChainId: ETH_CHAIN_ID_INJECTIVE });
         const txRawEip712 = createTxRawEIP712(txRaw, web3Extension);
         txRawEip712.signatures = [signatureBytes];
 
