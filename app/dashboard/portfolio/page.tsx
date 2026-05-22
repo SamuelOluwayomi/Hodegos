@@ -14,7 +14,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   AreaChart, Area,
 } from "recharts";
-import { Warning, ArrowClockwise, ChartBar, ChartPie, ChartLine, Robot, TrendingUp, TrendingDown } from "@phosphor-icons/react";
+import { Warning, ArrowClockwise, ChartBar, ChartPie, ChartLine, Robot, TrendUp, TrendDown } from "@phosphor-icons/react";
 
 const WALLET_LABELS: Partial<Record<WalletId, string>> = {
   keplr: "Keplr", leap: "Leap", ninji: "Ninji", metamask: "MetaMask",
@@ -391,8 +391,8 @@ export default function PortfolioPage() {
               }`}>
                 <div className="flex items-center justify-between">
                   <div className="font-black text-[9px] uppercase tracking-widest opacity-60">Net Profit & Loss</div>
-                  {tradeStats.totalPnL > 0 && <TrendingUp size={16} weight="bold" />}
-                  {tradeStats.totalPnL < 0 && <TrendingDown size={16} weight="bold" />}
+                  {tradeStats.totalPnL > 0 && <TrendUp size={16} weight="bold" />}
+                  {tradeStats.totalPnL < 0 && <TrendDown size={16} weight="bold" />}
                 </div>
                 <div className="font-black text-3xl mt-1">
                   {tradeStats.totalPnL >= 0 ? "+" : ""}${tradeStats.totalPnL.toFixed(2)}
