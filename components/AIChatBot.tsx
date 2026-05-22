@@ -5,7 +5,7 @@ import Image from "next/image";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useWallet } from "@/lib/useWallet";
 import { useChat } from "@/hooks/useChat";
-import { MsgSend, createTransaction, TxGrpcApi, ChainRestAuthApi, BaseAccount, createTxRawFromSigResponse } from '@injectivelabs/sdk-ts';
+import { MsgCreateSpotMarketOrder, MsgCreateSpotLimitOrder, getDefaultSubaccountId, createTransaction, TxGrpcApi, BaseAccount, createTxRawFromSigResponse } from '@injectivelabs/sdk-ts';
 import { Network, getNetworkEndpoints } from '@injectivelabs/networks';
 
 // ── TYPES AND INTERFACES ──────────────────────────────────────────────────────
@@ -79,11 +79,81 @@ Sign this message to authorize and execute this order on Hodegos Injective DEX.`
       
       const baseAccount = BaseAccount.fromRestApi(accountDetailsResponse);
 
-      const msg = MsgSend.fromJSON({
-        amount: { denom: 'inj', amount: '1000000000000000' }, // 0.001 INJ
-        srcInjectiveAddress: address,
-        dstInjectiveAddress: address,
-      });
+      // Map asset to market details
+      const FEATURED_MARKET_IDS: Record<string, string> = {
+        'INJ/USDT': '0x0611780ba69656949525013d947713300f56c37b6175e02f26bffa495c3208fe',
+        'ATOM/USDT': '0x491ee4fae7956dd72b6a97805046ffef65892e1d3254c559c18056a519b2ca15',
+        'WETH/USDT': '0xa97182f11f1aa5339c7f4c3fe3cc1c69b39079f11b864c86d912956c5c2db75c',
+        'SOL/USDT': '0x2da41d4f7370e6d44240480bae530661ba3ae68682089810ea29beee1984985f',
+        'TIA/USDT': '0xa283fc94a9055a01a58bb6229b1e56a8bb54069a0debfce7fbd1e6c25a95330c',
+      };
+
+      const DECIMALS_MAP: Record<string, number> = {
+        INJ: 18,
+        ATOM: 6,
+        WETH: 18,
+        SOL: 8,
+        TIA: 6,
+        USDT: 6,
+      };
+
+      const ticker = `${tx.asset}/USDT`;
+      const marketId = FEATURED_MARKET_IDS[ticker];
+      if (!marketId) throw new Error(`Market for ${ticker} is not supported on Hodegos.`);
+
+      const baseDecimals = DECIMALS_MAP[tx.asset] || 18;
+      const quoteDecimals = 6; // USDT
+
+      // Fetch live price for slippage calculations
+      let currentPrice = assetPriceMap[tx.asset] || 4.99;
+      try {
+        const priceRes = await fetch(`/api/markets/summary?marketId=${marketId}`);
+        if (priceRes.ok) {
+          const priceData = await priceRes.json();
+          currentPrice = parseFloat(priceData.price) || currentPrice;
+        }
+      } catch (e) {
+        console.warn("Could not fetch live price, using fallback:", e);
+      }
+
+      const isMarket = tx.price.toLowerCase() === 'market';
+      const orderType = tx.side === 'buy' ? 1 : 2;
+
+      // Quantity scaling (base decimals)
+      const quantity = (BigInt(Math.floor(tx.amount * 1000000)) * BigInt(10 ** baseDecimals) / BigInt(1000000)).toString();
+
+      // Price scaling
+      let priceVal = currentPrice;
+      if (isMarket) {
+        priceVal = tx.side === 'buy' ? currentPrice * 1.3 : currentPrice * 0.7; // 30% slippage boundary
+      } else {
+        priceVal = parseFloat(tx.price) || currentPrice;
+      }
+      const scaledPrice = (priceVal * Math.pow(10, quoteDecimals - baseDecimals)).toFixed(18);
+      const subaccountId = getDefaultSubaccountId(address);
+
+      let msg;
+      if (isMarket) {
+        msg = MsgCreateSpotMarketOrder.fromJSON({
+          subaccountId,
+          injectiveAddress: address,
+          orderType,
+          price: scaledPrice,
+          quantity,
+          marketId,
+          feeRecipient: address,
+        });
+      } else {
+        msg = MsgCreateSpotLimitOrder.fromJSON({
+          subaccountId,
+          injectiveAddress: address,
+          orderType,
+          price: scaledPrice,
+          quantity,
+          marketId,
+          feeRecipient: address,
+        });
+      }
 
       // 1. Resolve Public Key (Critical for new testnet accounts)
       let pubKey = "";
