@@ -39,10 +39,43 @@ function parseTxBlock(content: string): TxData | null {
 
 // ── TRANSACTION COMPONENT ─────────────────────────────────────────────────────
 
-function TransactionCard({ tx, address, wallet }: { tx: TxData; address: string; wallet: string | null }) {
-  const [status, setStatus] = useState<'idle' | 'signing' | 'broadcasting' | 'success' | 'failed'>('idle');
-  const [txHash, setTxHash] = useState('');
-  const [error, setError] = useState('');
+function TransactionCard({ tx, address, wallet, msgTimestamp }: { tx: TxData; address: string; wallet: string | null; msgTimestamp?: number }) {
+  // Load initial status from localStorage
+  const getCachedData = () => {
+    if (typeof window === "undefined" || !address) return null;
+    const cacheKey = `hodegos_tx_status_${address}_${msgTimestamp || tx.raw.replace(/\s+/g, '')}`;
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        // Only keep terminal states or failed states, reset in-progress to 'idle'
+        if (parsed.status === 'success' || parsed.status === 'failed') {
+          return parsed;
+        }
+      } catch (e) {
+        console.error("Failed to parse cached transaction status:", e);
+      }
+    }
+    return null;
+  };
+
+  const cachedData = getCachedData();
+  const [status, setStatus] = useState<'idle' | 'signing' | 'broadcasting' | 'success' | 'failed'>(cachedData?.status || 'idle');
+  const [txHash, setTxHash] = useState(cachedData?.txHash || '');
+  const [error, setError] = useState(cachedData?.error || '');
+
+  // Update localStorage when status changes
+  useEffect(() => {
+    if (typeof window === "undefined" || !address) return;
+    const cacheKey = `hodegos_tx_status_${address}_${msgTimestamp || tx.raw.replace(/\s+/g, '')}`;
+    if (status === 'success' || status === 'failed') {
+      localStorage.setItem(cacheKey, JSON.stringify({ status, txHash, error }));
+    } else {
+      // For non-terminal states, remove cache so it defaults to idle on refresh if interrupted
+      localStorage.removeItem(cacheKey);
+    }
+  }, [status, txHash, error, address, msgTimestamp, tx.raw]);
+
 
   const handleExecute = async () => {
     setStatus('signing');
@@ -538,7 +571,7 @@ export default function AIChatBot() {
                     }`}
                   >
                     {msg.role === 'assistant' ? renderMarkdown(cleanText) : <span style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{cleanText}</span>}
-                    {tx && <TransactionCard tx={tx} address={address} wallet={wallet} />}
+                    {tx && <TransactionCard tx={tx} address={address} wallet={wallet} msgTimestamp={msg.timestamp} />}
                   </div>
                 </div>
               );
