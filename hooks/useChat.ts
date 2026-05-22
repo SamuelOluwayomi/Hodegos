@@ -525,9 +525,9 @@ export function ChatProvider({ children, walletAddress }: { children: React.Reac
 
 export function useChat(walletAddress?: string) {
   const context = useContext(ChatContext)
-  if (context && (!walletAddress || context.profile.walletAddress === walletAddress)) {
-    return context
+  if (!context) {
+    throw new Error("useChat must be used within a ChatProvider");
   }
-  return useChatRaw(walletAddress)
+  return context
 }
 
