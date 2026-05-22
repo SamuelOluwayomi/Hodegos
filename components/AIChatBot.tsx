@@ -46,171 +46,133 @@ function TransactionCard({ tx, address, wallet }: { tx: TxData; address: string;
     setStatus('signing');
     setError('');
 
-    const totalCost = tx.amount * (tx.price.toLowerCase() === 'market' ? 4.99 : parseFloat(tx.price) || 4.99);
-    const messageText = `HODEGOS AI TRANSACTION APPROVAL
----------------------------------
-Action: ${tx.side?.toUpperCase()}
-Amount: ${tx.amount} ${tx.asset}
-Price: ${tx.price.toLowerCase() === 'market' ? 'Market Price' : `$${tx.price}`}
-Estimated Total: $${totalCost.toFixed(2)} USDT
-
-Wallet: ${address}
-Timestamp: ${new Date().toISOString()}
-
-Sign this message to authorize and execute this order on Hodegos Injective DEX.`;
-
     try {
       if (typeof window === "undefined") {
         throw new Error("Window object is not available.");
       }
 
       const anyWindow = window as any;
-
-      // Dynamically import SDK to avoid SSR bundling issues
-      const [{ MsgSend, createTransaction, TxGrpcApi, ChainRestAuthApi, BaseAccount, getEip712TypedData, createTxRawEIP712, createWeb3Extension }, { Network, getNetworkEndpoints }] = await Promise.all([
-        import('@injectivelabs/sdk-ts'),
-        import('@injectivelabs/networks'),
-      ]);
-
-      // EthereumChainId.Injective = 888 (hardcoded to avoid bundling @injectivelabs/ts-types)
-      const ETH_CHAIN_ID_INJECTIVE = 888;
-
-      const endpoints = getNetworkEndpoints(Network.Testnet);
-      const chainRestAuthApi = new ChainRestAuthApi(endpoints.rest);
-      const accountDetailsResponse = await chainRestAuthApi.fetchAccount(address);
-      const baseAccount = BaseAccount.fromRestApi(accountDetailsResponse);
-
-      const msg = MsgSend.fromJSON({
-        amount: { denom: 'inj', amount: '1000000000000000' }, // 0.001 INJ proof-of-execution tx
-        srcInjectiveAddress: address,
-        dstInjectiveAddress: address,
-      });
-
       const txMemo = `Hodegos AI: ${tx.side?.toUpperCase()} ${tx.amount} ${tx.asset} @ ${tx.price.toLowerCase() === 'market' ? 'Market' : tx.price}`;
+
+      // Step 1: Server builds the unsigned transaction bytes (SDK stays server-side)
+      const buildRes = await fetch('/api/build-tx', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          address,
+          side: tx.side,
+          amount: tx.amount,
+          asset: tx.asset,
+          price: tx.price,
+          memo: txMemo,
+        }),
+      });
+      const buildData = await buildRes.json();
+      if (!buildRes.ok) throw new Error(buildData.error || 'Failed to build transaction.');
+
+      const { bodyBytes, authInfoBytes, accountNumber } = buildData;
+      const bodyU8 = new Uint8Array(bodyBytes);
+      const authU8 = new Uint8Array(authInfoBytes);
+
+      let signatureArray: number[];
 
       if (wallet === "metamask") {
         if (!anyWindow.ethereum) throw new Error("MetaMask provider not found in browser.");
 
-        const eip712TypedData = getEip712TypedData({
-          msgs: msg,
-          tx: {
-            accountNumber: baseAccount.accountNumber.toString(),
-            sequence: baseAccount.sequence.toString(),
-            chainId: 'injective-888',
-            timeoutHeight: '',
+        // Step 2a: Server builds EIP712 typed data for MetaMask
+        const eip712Res = await fetch('/api/build-tx/eip712', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            address,
             memo: txMemo,
-          },
-          fee: {
-            amount: [{ amount: '2000000000000000', denom: 'inj' }],
-            gas: '200000',
-          },
-          ethereumChainId: ETH_CHAIN_ID_INJECTIVE,
+            accountNumber: buildData.accountNumber,
+            sequence: buildData.sequence,
+          }),
         });
+        const eip712Data = await eip712Res.json();
+        if (!eip712Res.ok) throw new Error(eip712Data.error || 'Failed to build EIP712 data.');
 
         const ethAddress = anyWindow.ethereum.selectedAddress ||
           (await anyWindow.ethereum.request({ method: 'eth_requestAccounts' }))[0];
 
-        const signature = await anyWindow.ethereum.request({
+        const hexSig: string = await anyWindow.ethereum.request({
           method: 'eth_signTypedData_v4',
-          params: [ethAddress, JSON.stringify(eip712TypedData)],
+          params: [ethAddress, JSON.stringify(eip712Data.typedData)],
         });
 
-        const signatureBytes = Buffer.from(signature.replace('0x', ''), 'hex');
-
-        const { txRaw } = createTransaction({
-          message: msg,
-          memo: txMemo,
-          fee: {
-            amount: [{ amount: '2000000000000000', denom: 'inj' }],
-            gas: '200000',
-          },
-          pubKey: baseAccount.pubKey.key || '',
-          sequence: baseAccount.sequence,
-          accountNumber: baseAccount.accountNumber,
-          chainId: 'injective-888',
-        });
-
-        const web3Extension = createWeb3Extension({ ethereumChainId: ETH_CHAIN_ID_INJECTIVE });
-        const txRawEip712 = createTxRawEIP712(txRaw, web3Extension);
-        txRawEip712.signatures = [signatureBytes];
+        signatureArray = Array.from(Buffer.from(hexSig.replace('0x', ''), 'hex'));
 
         setStatus('broadcasting');
-        const txService = new TxGrpcApi(endpoints.grpc);
-        const txResponse = await txService.broadcast(txRawEip712);
-
-        if (txResponse.code !== 0) {
-          throw new Error(txResponse.rawLog || 'Transaction failed to broadcast');
-        }
-        setTxHash(txResponse.txHash);
+        const broadcastRes = await fetch('/api/broadcast-tx', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            bodyBytes,
+            authInfoBytes,
+            signatures: [signatureArray],
+            isEip712: true,
+            ethereumChainId: 888, // EthereumChainId.Injective
+          }),
+        });
+        const broadcastData = await broadcastRes.json();
+        if (!broadcastRes.ok) throw new Error(broadcastData.error || 'Broadcast failed.');
+        setTxHash(broadcastData.txHash);
         setStatus('success');
         window.dispatchEvent(new CustomEvent('refresh-balances'));
         return;
       }
 
-      const { txRaw } = createTransaction({
-        message: msg,
-        memo: txMemo,
-        fee: {
-          amount: [{ amount: '2000000000000000', denom: 'inj' }],
-          gas: '200000',
-        },
-        pubKey: baseAccount.pubKey.key || "",
-        sequence: baseAccount.sequence,
-        accountNumber: baseAccount.accountNumber,
-        chainId: 'injective-888',
-      });
-
-      let signatureResponse;
-      const accNum = baseAccount.accountNumber;
+      // Step 2b: Sign with Cosmos wallet (Keplr / Leap / Ninji) using signDirect
       const accNumObj = {
-        low: accNum,
-        high: 0,
-        unsigned: true,
-        toNumber: () => accNum,
-        toString: () => accNum.toString()
+        low: accountNumber, high: 0, unsigned: true,
+        toNumber: () => accountNumber,
+        toString: () => accountNumber.toString(),
       };
 
+      let signatureResponse: any;
       if (wallet === "keplr") {
-        if (!anyWindow.keplr) throw new Error("Keplr extension not found in browser.");
+        if (!anyWindow.keplr) throw new Error("Keplr extension not found.");
         signatureResponse = await anyWindow.keplr.signDirect('injective-888', address, {
-          bodyBytes: txRaw.bodyBytes,
-          authInfoBytes: txRaw.authInfoBytes,
-          chainId: 'injective-888',
-          accountNumber: accNumObj
+          bodyBytes: bodyU8, authInfoBytes: authU8,
+          chainId: 'injective-888', accountNumber: accNumObj,
         });
       } else if (wallet === "leap") {
-        if (!anyWindow.leap) throw new Error("Leap extension not found in browser.");
+        if (!anyWindow.leap) throw new Error("Leap extension not found.");
         signatureResponse = await anyWindow.leap.signDirect('injective-888', address, {
-          bodyBytes: txRaw.bodyBytes,
-          authInfoBytes: txRaw.authInfoBytes,
-          chainId: 'injective-888',
-          accountNumber: accNumObj
+          bodyBytes: bodyU8, authInfoBytes: authU8,
+          chainId: 'injective-888', accountNumber: accNumObj,
         });
       } else if (wallet === "ninji") {
-        if (!anyWindow.ninji) throw new Error("Ninji extension not found in browser.");
+        if (!anyWindow.ninji) throw new Error("Ninji extension not found.");
         signatureResponse = await anyWindow.ninji.signDirect('injective-888', address, {
-          bodyBytes: txRaw.bodyBytes,
-          authInfoBytes: txRaw.authInfoBytes,
-          chainId: 'injective-888',
-          accountNumber: accNumObj
+          bodyBytes: bodyU8, authInfoBytes: authU8,
+          chainId: 'injective-888', accountNumber: accNumObj,
         });
+      } else {
+        throw new Error("Unsupported wallet type.");
       }
 
+      signatureArray = Array.from(signatureResponse.signature.signature as Uint8Array);
+
+      // Step 3: Server broadcasts the signed transaction
       setStatus('broadcasting');
-      
-      txRaw.signatures = [signatureResponse.signature.signature];
-      const txService = new TxGrpcApi(endpoints.grpc);
-      const txResponse = await txService.broadcast(txRaw);
+      const broadcastRes = await fetch('/api/broadcast-tx', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bodyBytes: Array.from(bodyU8),
+          authInfoBytes: Array.from(authU8),
+          signatures: [signatureArray],
+          isEip712: false,
+        }),
+      });
+      const broadcastData = await broadcastRes.json();
+      if (!broadcastRes.ok) throw new Error(broadcastData.error || 'Broadcast failed.');
 
-      if (txResponse.code !== 0) {
-        throw new Error(txResponse.rawLog || "Transaction failed to broadcast");
-      }
-      
-      setTxHash(txResponse.txHash);
+      setTxHash(broadcastData.txHash);
       setStatus('success');
-      
-      // Dispatch balance refresh
-      window.dispatchEvent(new CustomEvent("refresh-balances"));
+      window.dispatchEvent(new CustomEvent('refresh-balances'));
     } catch (err: any) {
       console.error("Wallet signing error:", err);
       setError(err.message || 'Signature rejected by user.');
@@ -219,12 +181,7 @@ Sign this message to authorize and execute this order on Hodegos Injective DEX.`
   };
 
   const assetPriceMap: Record<string, number> = {
-    INJ: 4.99,
-    USDT: 1.00,
-    ATOM: 8.12,
-    SOL: 143.50,
-    TIA: 5.25,
-    ETH: 3120.00,
+    INJ: 4.99, USDT: 1.00, ATOM: 8.12, SOL: 143.50, TIA: 5.25, ETH: 3120.00,
   };
 
   const tokenPrice = assetPriceMap[tx.asset] || 4.99;
@@ -264,13 +221,13 @@ Sign this message to authorize and execute this order on Hodegos Injective DEX.`
           onClick={handleExecute}
           className="w-full py-2 bg-neo-yellow border-2 border-black font-black text-xs uppercase tracking-widest hover:bg-neo-lime active:translate-x-0.5 active:translate-y-0.5 transition-transform"
         >
-          Sign & Execute Trade
+          Sign &amp; Execute Trade
         </button>
       )}
 
       {status === 'signing' && (
         <div className="w-full py-2 bg-[#EAE8E0] border-2 border-black text-center font-black text-xs uppercase tracking-widest animate-pulse flex items-center justify-center gap-2">
-          <span className="animate-spin text-sm animate-spin-slow">↺</span> Requesting signature from wallet...
+          <span className="animate-spin text-sm">↺</span> Requesting signature from wallet...
         </div>
       )}
 
@@ -286,7 +243,7 @@ Sign this message to authorize and execute this order on Hodegos Injective DEX.`
             Success! Trade Executed 🎉
           </div>
           <div className="text-[9px] text-black/40 font-bold uppercase tracking-wider text-center mt-0.5">
-            Wallet signed & broadcasted successfully on Injective Testnet!
+            Wallet signed &amp; broadcasted on Injective Testnet!
           </div>
           <a
             href={`https://testnet.explorer.injective.network/transaction/${txHash}`}
