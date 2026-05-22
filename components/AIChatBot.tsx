@@ -118,7 +118,7 @@ Sign this message to authorize and execute this order on Hodegos Injective DEX.`
       });
 
       let signatureResponse;
-      const accNum = baseAccount.accountNumber;
+      const accNum = Number(baseAccount.accountNumber);
       const accNumObj = {
         low: accNum,
         high: 0,
