@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useWallet, WalletId } from "@/lib/useWallet";
 import { useRouter } from "next/navigation";
+import { X } from "@phosphor-icons/react";
 
 // ── Wallet options shown in the modal ────────────────────────────────────────
 
@@ -145,9 +146,9 @@ export default function WalletConnectModal({ open, onClose }: WalletConnectModal
             <button
               onClick={onClose}
               disabled={!!isConnecting}
-              className="w-8 h-8 border-[3px] border-black bg-white flex items-center justify-center font-black hover:bg-neo-orange transition-colors disabled:opacity-40"
+              className="w-8 h-8 border-[3px] border-black bg-white flex items-center justify-center hover:bg-neo-orange transition-colors disabled:opacity-40"
             >
-              ✕
+              <X size={14} weight="bold" />
             </button>
           </div>
 

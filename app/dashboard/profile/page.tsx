@@ -7,6 +7,7 @@ import Image from "next/image";
 import { useWallet, WalletId } from "@/lib/useWallet";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import { useChat } from "@/hooks/useChat";
+import { Check } from "@phosphor-icons/react";
 
 const WALLET_LABELS: Partial<Record<WalletId, string>> = {
   keplr: "Keplr", leap: "Leap", ninji: "Ninji", metamask: "MetaMask",
@@ -309,7 +310,13 @@ export default function ProfilePage() {
               <div className="bg-neo-orange border-4 border-black p-5 neo-shadow">
                 <div className="font-black text-[10px] uppercase tracking-widest text-black/60 mb-2">Onboarding</div>
                 <div className={`font-black text-xl ${profile.onboardingComplete ? "text-black" : "text-black/40"}`}>
-                  {profile.onboardingComplete ? "✓ Complete" : "In Progress"}
+                  {profile.onboardingComplete ? (
+                    <span className="flex items-center gap-1.5">
+                      <Check size={18} weight="bold" /> Complete
+                    </span>
+                  ) : (
+                    "In Progress"
+                  )}
                 </div>
                 {!profile.onboardingComplete && (
                   <Link href="/dashboard" className="block mt-3 bg-black text-white px-3 py-1.5 font-black text-[9px] uppercase text-center">

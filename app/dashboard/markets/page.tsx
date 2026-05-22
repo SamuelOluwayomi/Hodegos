@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import { Star } from "@phosphor-icons/react";
 import { useWallet, WalletId } from "@/lib/useWallet";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import AskHodegosButton from "@/components/AskHodegosButton";
@@ -336,7 +337,9 @@ export default function MarketsPage() {
 
             {/* Featured markets pinned at top */}
             <div className="border-b-2 border-black/20 p-2">
-              <div className="font-black text-[8px] uppercase tracking-widest text-black/40 px-2 mb-1">★ Featured</div>
+              <div className="font-black text-[8px] uppercase tracking-widest text-black/40 px-2 mb-1 flex items-center gap-1">
+                <Star size={10} weight="fill" className="text-neo-yellow" /> Featured
+              </div>
               {marketRows.map(row => (
                 <button
                   key={row.ticker}

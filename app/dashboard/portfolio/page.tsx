@@ -14,6 +14,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   AreaChart, Area,
 } from "recharts";
+import { Warning, ArrowClockwise, ChartBar, ChartPie, ChartLine, Robot } from "@phosphor-icons/react";
 
 const WALLET_LABELS: Partial<Record<WalletId, string>> = {
   keplr: "Keplr", leap: "Leap", ninji: "Ninji", metamask: "MetaMask",
@@ -222,7 +223,10 @@ export default function PortfolioPage() {
         <div className="flex-1 overflow-y-auto p-6">
           {isNodeOffline && (
             <div className="bg-neo-orange text-white border-4 border-black p-3.5 mb-6 font-bold text-xs uppercase tracking-widest flex items-center justify-between shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-              <span>⚠️ Injective Testnet RPC node is temporarily offline. Showing cached/fallback balance details.</span>
+              <span className="flex items-center gap-2">
+                <Warning size={16} weight="bold" />
+                Injective Testnet RPC node is temporarily offline. Showing cached/fallback balance details.
+              </span>
               <span className="bg-black text-white px-2.5 py-0.5 text-[9px] border-2 border-white uppercase font-black tracking-widest shrink-0">Offline Mode</span>
             </div>
           )}
@@ -236,7 +240,7 @@ export default function PortfolioPage() {
                 <div className="flex items-center gap-2 mb-2">
                   <span className="font-black text-[10px] uppercase tracking-widest text-white/40">Total Portfolio Value</span>
                   {loading && (
-                    <span className="animate-spin text-neo-lime font-black text-xs">↺</span>
+                    <ArrowClockwise size={12} weight="bold" className="animate-spin text-neo-lime" />
                   )}
                 </div>
                 <div className="font-black text-5xl mb-1">${totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
@@ -285,7 +289,15 @@ export default function PortfolioPage() {
                 onClick={() => setActiveTab(tab)}
                 className={`px-6 py-3 font-black text-xs uppercase tracking-widest border-b-4 transition-all ${activeTab === tab ? "border-black bg-white" : "border-transparent hover:border-black/30"}`}
               >
-                {tab === "overview" ? "Holdings" : tab === "analytics" ? "📊 Analytics" : "Trade History"}
+                {tab === "overview" ? (
+                  "Holdings"
+                ) : tab === "analytics" ? (
+                  <span className="flex items-center gap-1.5">
+                    <ChartBar size={14} weight="bold" /> Analytics
+                  </span>
+                ) : (
+                  "Trade History"
+                )}
               </button>
             ))}
           </div>
@@ -311,7 +323,7 @@ export default function PortfolioPage() {
                         {!hasFetched && loading ? (
                           <tr>
                             <td colSpan={5} className="p-8 text-center font-bold text-xs uppercase tracking-widest text-black/40">
-                              <span className="inline-block animate-spin mr-2">↺</span> Fetching live balances...
+                              <ArrowClockwise size={14} weight="bold" className="inline-block animate-spin mr-2" /> Fetching live balances...
                             </td>
                           </tr>
                         ) : (
@@ -408,19 +420,20 @@ export default function PortfolioPage() {
                 <h2 className="font-black text-sm uppercase tracking-widest">Portfolio Analytics</h2>
                 <div className="flex gap-1">
                   {([
-                    { key: "pie" as const, label: "🍩 Donut", icon: "Pie" },
-                    { key: "bar" as const, label: "📊 Bar", icon: "Bar" },
-                    { key: "area" as const, label: "📈 Area", icon: "Area" },
+                    { key: "pie" as const, label: "Donut", icon: <ChartPie size={12} weight="fill" /> },
+                    { key: "bar" as const, label: "Bar", icon: <ChartBar size={12} weight="fill" /> },
+                    { key: "area" as const, label: "Area", icon: <ChartLine size={12} weight="fill" /> },
                   ]).map(ct => (
                     <button
                       key={ct.key}
                       onClick={() => setChartType(ct.key)}
-                      className={`px-3 py-1.5 font-black text-[9px] uppercase tracking-widest border-[3px] border-black transition-all ${
+                      className={`px-3 py-1.5 font-black text-[9px] uppercase tracking-widest border-[3px] border-black transition-all flex items-center gap-1 ${
                         chartType === ct.key
                           ? "bg-black text-white shadow-none"
                           : "bg-white hover:bg-[#EAE8E0] shadow-[2px_2px_0px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
                       }`}
                     >
+                      {ct.icon}
                       {ct.label}
                     </button>
                   ))}
@@ -564,8 +577,8 @@ export default function PortfolioPage() {
                     className="w-full p-4 border-4 border-black bg-black text-white neo-shadow hover:bg-neo-lime hover:text-black transition-all group"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-neo-lime border-2 border-black flex items-center justify-center font-black text-lg shrink-0 group-hover:bg-black group-hover:text-neo-lime transition-colors">
-                        🤖
+                      <div className="w-10 h-10 bg-neo-lime border-2 border-black flex items-center justify-center shrink-0 group-hover:bg-black group-hover:text-neo-lime transition-colors">
+                        <Robot size={20} weight="fill" />
                       </div>
                       <div className="text-left">
                         <div className="font-black text-xs uppercase tracking-wider">AI Portfolio Summary</div>

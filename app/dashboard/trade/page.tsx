@@ -10,6 +10,7 @@ import AskHodegosButton from "@/components/AskHodegosButton";
 import { FEATURED_MARKET_IDS, fetchMarketSummary } from "@/lib/injective";
 import { MsgCreateSpotLimitOrder, getDefaultSubaccountId, createTransaction, TxGrpcApi, BaseAccount, createTxRawFromSigResponse } from '@injectivelabs/sdk-ts';
 import { Network, getNetworkEndpoints } from '@injectivelabs/networks';
+import { Lightning, X, ArrowClockwise, CheckCircle, Robot } from "@phosphor-icons/react";
 
 const WALLET_LABELS: Partial<Record<WalletId, string>> = {
   keplr: "Keplr", leap: "Leap", ninji: "Ninji", metamask: "MetaMask",
@@ -192,11 +193,11 @@ function DirectExecutionPanel({
   return (
     <div className="border-4 border-black bg-[#FEFDF9] p-5 neo-shadow animate-fadeIn">
       <div className="flex items-center justify-between mb-4">
-        <span className={`border-2 border-black font-black uppercase text-[10px] px-2.5 py-1 ${side === 'buy' ? 'bg-neo-lime' : 'bg-neo-orange'}`}>
-          ⚡ Direct {side === 'buy' ? 'Buy' : 'Sell'} Order
+        <span className={`border-2 border-black font-black uppercase text-[10px] px-2.5 py-1 flex items-center gap-1 ${side === 'buy' ? 'bg-neo-lime' : 'bg-neo-orange'}`}>
+          <Lightning size={12} weight="fill" /> Direct {side === 'buy' ? 'Buy' : 'Sell'} Order
         </span>
-        <button onClick={onClose} className="w-7 h-7 border-2 border-black bg-[#EAE8E0] flex items-center justify-center font-black text-[10px] hover:bg-neo-orange transition-colors">
-          ✕
+        <button onClick={onClose} className="w-7 h-7 border-2 border-black bg-[#EAE8E0] flex items-center justify-center hover:bg-neo-orange transition-colors">
+          <X size={10} weight="bold" />
         </button>
       </div>
 
@@ -226,20 +227,20 @@ function DirectExecutionPanel({
 
       {status === 'signing' && (
         <div className="w-full py-3 bg-[#EAE8E0] border-[3px] border-black text-center font-black text-xs uppercase tracking-widest animate-pulse flex items-center justify-center gap-2">
-          <span className="animate-spin text-sm">↺</span> Requesting wallet signature...
+          <ArrowClockwise size={14} weight="bold" className="animate-spin" /> Requesting wallet signature...
         </div>
       )}
 
       {status === 'broadcasting' && (
         <div className="w-full py-3 bg-[#EAE8E0] border-[3px] border-black text-center font-black text-xs uppercase tracking-widest animate-pulse flex items-center justify-center gap-2">
-          <span className="animate-spin text-sm">↺</span> Broadcasting to Injective...
+          <ArrowClockwise size={14} weight="bold" className="animate-spin" /> Broadcasting to Injective...
         </div>
       )}
 
       {status === 'success' && (
         <div className="flex flex-col gap-2">
-          <div className="bg-neo-lime border-[3px] border-black p-3 text-center font-black text-xs uppercase tracking-widest">
-            ✅ Trade Executed Successfully!
+          <div className="bg-neo-lime border-[3px] border-black p-3 text-center font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2">
+            <CheckCircle size={16} weight="fill" /> Trade Executed Successfully!
           </div>
           <a
             href={`https://testnet.explorer.injective.network/transaction/${txHash}`}
@@ -327,8 +328,8 @@ function ExecutionChoiceModal({
                 {side.toUpperCase()} {amount} {baseAsset}
               </div>
             </div>
-            <button onClick={onClose} className="w-8 h-8 border-2 border-white/30 flex items-center justify-center font-black text-[10px] text-white hover:bg-white/20 transition-colors">
-              ✕
+            <button onClick={onClose} className="w-8 h-8 border-2 border-white/30 flex items-center justify-center text-white hover:bg-white/20 transition-colors">
+              <X size={14} weight="bold" />
             </button>
           </div>
 
@@ -355,8 +356,8 @@ function ExecutionChoiceModal({
               className="group w-full p-4 border-[3px] border-black bg-white hover:bg-neo-yellow transition-all shadow-[3px_3px_0px_0px_#000] hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none text-left"
             >
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 bg-neo-yellow border-2 border-black flex items-center justify-center font-black text-lg shrink-0 group-hover:bg-white transition-colors">
-                  🤖
+                <div className="w-10 h-10 bg-neo-yellow border-2 border-black flex items-center justify-center shrink-0 group-hover:bg-white transition-colors">
+                  <Robot size={20} weight="fill" />
                 </div>
                 <div>
                   <div className="font-black text-sm uppercase tracking-wider">Ask AI for Smart Advice</div>
@@ -373,8 +374,8 @@ function ExecutionChoiceModal({
               className="group w-full p-4 border-[3px] border-black bg-white hover:bg-neo-lime transition-all shadow-[3px_3px_0px_0px_#000] hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none text-left"
             >
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 bg-neo-lime border-2 border-black flex items-center justify-center font-black text-lg shrink-0 group-hover:bg-white transition-colors">
-                  ⚡
+                <div className="w-10 h-10 bg-neo-lime border-2 border-black flex items-center justify-center shrink-0 group-hover:bg-white transition-colors">
+                  <Lightning size={20} weight="fill" />
                 </div>
                 <div>
                   <div className="font-black text-sm uppercase tracking-wider">Execute Trade Directly</div>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -11,6 +11,7 @@ import AskHodegosButton from "@/components/AskHodegosButton";
 import { useChat } from "@/hooks/useChat";
 import { FEATURED_MARKET_IDS, fetchMarketSummary, formatVolume } from "@/lib/injective";
 import { getTierProgress } from "@/lib/tiers";
+import { Check } from "@phosphor-icons/react";
 
 // Wallet label map
 const WALLET_LABELS: Partial<Record<WalletId, string>> = {
@@ -32,6 +33,44 @@ export default function DashboardPage() {
 
   // Market rows state
   const [marketRows, setMarketRows] = useState<any[]>([]);
+
+  // Portfolio state
+  const [tokenBalances, setTokenBalances] = useState<Record<string, { amount: number; price: number; value: number; name: string }>>({});
+  const [isPortfolioLoading, setIsPortfolioLoading] = useState(true);
+
+  useEffect(() => {
+    if (!address) return;
+
+    const fetchPortfolioData = async () => {
+      try {
+        setIsPortfolioLoading(true);
+        const res = await fetch(`/api/portfolio?address=${address}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.tokenBalances) {
+            setTokenBalances(data.tokenBalances);
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching portfolio data on dashboard:", err);
+      } finally {
+        setIsPortfolioLoading(false);
+      }
+    };
+
+    fetchPortfolioData();
+    const interval = setInterval(fetchPortfolioData, 15000);
+    window.addEventListener("refresh-balances", fetchPortfolioData);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("refresh-balances", fetchPortfolioData);
+    };
+  }, [address]);
+
+  const totalValue = useMemo(() => {
+    return Object.values(tokenBalances).reduce((sum, tb) => sum + (tb.value || 0), 0);
+  }, [tokenBalances]);
 
   // Fetch featured market summaries
   useEffect(() => {
@@ -209,9 +248,15 @@ export default function DashboardPage() {
                 <div className="bg-neo-orange border-[3px] border-black neo-shadow p-5 flex flex-col relative overflow-hidden group hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all cursor-default">
                   <div className="absolute -right-6 -top-6 w-24 h-24 bg-white/30 rounded-full group-hover:scale-110 transition-transform"></div>
                   <p className="font-black text-[10px] uppercase tracking-widest mb-1 opacity-70">Portfolio Value</p>
-                  <p className="font-black text-3xl leading-none relative z-10">$0.00</p>
+                  <p className="font-black text-3xl leading-none relative z-10">
+                    {isPortfolioLoading && Object.keys(tokenBalances).length === 0 ? (
+                      "Loading..."
+                    ) : (
+                      `$${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                    )}
+                  </p>
                   <div className="mt-3 font-bold text-[9px] uppercase tracking-widest">
-                    <span className="bg-white border border-black px-1.5 rounded">+0% this week</span>
+                    <span className="bg-white border border-black px-1.5 rounded">Live Balance</span>
                   </div>
                 </div>
 
@@ -231,8 +276,14 @@ export default function DashboardPage() {
                   <p className="font-black text-[10px] uppercase tracking-widest mb-1 opacity-70">Current Tier</p>
                   <p className="font-black text-2xl leading-tight relative z-10 capitalize">{currentTier.level}</p>
                   <div className="mt-3 font-bold text-[9px] uppercase tracking-widest">
-                    <span className="bg-white border border-black px-1.5 rounded">
-                      {profile.onboardingComplete ? 'Onboarded ✓' : 'Level 1'}
+                    <span className="bg-white border border-black px-1.5 rounded flex items-center justify-center min-h-[16px]">
+                      {profile.onboardingComplete ? (
+                        <span className="flex items-center gap-1 font-bold text-[9px] uppercase tracking-widest">
+                          Onboarded <Check size={10} weight="bold" />
+                        </span>
+                      ) : (
+                        'Level 1'
+                      )}
                     </span>
                   </div>
                 </div>

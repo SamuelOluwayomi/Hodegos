@@ -7,6 +7,7 @@ import { useWallet } from "@/lib/useWallet";
 import { useChat } from "@/hooks/useChat";
 import { MsgCreateSpotMarketOrder, MsgCreateSpotLimitOrder, getDefaultSubaccountId, createTransaction, TxGrpcApi, BaseAccount, createTxRawFromSigResponse } from '@injectivelabs/sdk-ts';
 import { Network, getNetworkEndpoints } from '@injectivelabs/networks';
+import { ArrowClockwise, CheckCircle, HandWaving, X } from "@phosphor-icons/react";
 
 // ── TYPES AND INTERFACES ──────────────────────────────────────────────────────
 
@@ -343,20 +344,20 @@ Sign this message to authorize and execute this order on Hodegos Injective DEX.`
 
       {status === 'signing' && (
         <div className="w-full py-2 bg-[#EAE8E0] border-2 border-black text-center font-black text-xs uppercase tracking-widest animate-pulse flex items-center justify-center gap-2">
-          <span className="animate-spin text-sm animate-spin-slow">↺</span> Requesting signature from wallet...
+          <ArrowClockwise className="animate-spin animate-spin-slow" size={14} weight="bold" /> Requesting signature from wallet...
         </div>
       )}
 
       {status === 'broadcasting' && (
         <div className="w-full py-2 bg-[#EAE8E0] border-2 border-black text-center font-black text-xs uppercase tracking-widest animate-pulse flex items-center justify-center gap-2">
-          <span className="animate-spin text-sm">↺</span> Broadcasting to Injective Ledger...
+          <ArrowClockwise className="animate-spin" size={14} weight="bold" /> Broadcasting to Injective Ledger...
         </div>
       )}
 
       {status === 'success' && (
         <div className="flex flex-col gap-1.5">
-          <div className="bg-neo-lime border-2 border-black p-2 text-center font-black text-xs uppercase tracking-widest">
-            Success! Trade Executed 🎉
+          <div className="bg-neo-lime border-2 border-black p-2 text-center font-black text-xs uppercase tracking-widest flex items-center justify-center gap-1.5">
+            Success! Trade Executed <CheckCircle size={14} weight="fill" />
           </div>
           <div className="text-[9px] text-black/40 font-bold uppercase tracking-wider text-center mt-0.5">
             Wallet signed & broadcasted successfully on Injective Testnet!
@@ -533,9 +534,9 @@ export default function AIChatBot() {
               <button
                 onClick={() => setIsChatOpen(false)}
                 title="Close chat"
-                className="w-7 h-7 border-2 border-black bg-[#EAE8E0] text-black flex items-center justify-center font-black text-[10px] hover:bg-neo-orange transition-colors"
+                className="w-7 h-7 border-2 border-black bg-[#EAE8E0] text-black flex items-center justify-center hover:bg-neo-orange transition-colors"
               >
-                X
+                <X size={12} weight="bold" />
               </button>
             </div>
           </div>
@@ -567,7 +568,7 @@ export default function AIChatBot() {
                 <div className="bg-white border-2 border-black p-3 text-xs font-bold rounded-xl rounded-tl-none neo-shadow-sm max-w-[90%]">
                   {selectedCategory === "all" && (
                     <>
-                      Welcome{profile?.userName ? `, ${profile.userName}` : ''}! 👋<br /><br />
+                      <span className="flex items-center gap-1.5">Welcome{profile?.userName ? `, ${profile.userName}` : ''}! <HandWaving size={16} weight="fill" className="text-neo-yellow" /></span><br />
                       I can analyze markets, explain trading concepts, or help you execute trades on Injective. I also know what page you are currently viewing! What would you like to do?
                     </>
                   )}

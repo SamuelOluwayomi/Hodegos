@@ -429,7 +429,7 @@ function useChatRaw(walletAddress?: string) {
       setMessages(prev => {
         const updated = [
           ...prev,
-          { role: 'assistant' as const, content: '⚠️ Something went wrong. Please try again.', timestamp: Date.now() }
+          { role: 'assistant' as const, content: 'Something went wrong. Please try again.', timestamp: Date.now() }
         ]
         saveMessages(profile.walletAddress, updated)
         return updated

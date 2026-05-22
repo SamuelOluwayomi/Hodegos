@@ -7,7 +7,7 @@ import ToneSelector from "./ToneSelector";
 import LevelSelector from "./LevelSelector";
 import OnboardingChat from "./OnboardingChat";
 import DemoTrading from "./DemoTrading";
-import { Confetti, ArrowLeft } from "@phosphor-icons/react";
+import { Confetti, ArrowLeft, FileText, ArrowCounterClockwise } from "@phosphor-icons/react";
 
 interface OnboardingModalProps {
   open: boolean;
@@ -165,7 +165,15 @@ export default function OnboardingModal({ open, onClose, walletAddress }: Onboar
       actions.push({ label: "I have a question", value: "I have a question about this...", color: "bg-neo-yellow" });
       
       // Let the user skip to quiz at any point if they feel confident
-      actions.push({ label: "Quiz Me! 📝", value: "I think I'm ready for the quiz!", color: "bg-neo-orange" });
+      actions.push({
+        label: (
+          <span className="flex items-center gap-1">
+            Quiz Me! <FileText size={12} weight="bold" />
+          </span>
+        ),
+        value: "I think I'm ready for the quiz!",
+        color: "bg-neo-orange"
+      });
 
       return actions;
     }
@@ -177,7 +185,15 @@ export default function OnboardingModal({ open, onClose, walletAddress }: Onboar
       }
       return [
         { label: "Proceed to Demo →", value: "Let's skip the quiz and go to the demo trade.", color: "bg-neo-lime" },
-        { label: "Retake Quiz ↺", value: "I want to retake the quiz.", color: "bg-neo-yellow" },
+        {
+          label: (
+            <span className="flex items-center gap-1">
+              Retake Quiz <ArrowCounterClockwise size={12} weight="bold" />
+            </span>
+          ),
+          value: "I want to retake the quiz.",
+          color: "bg-neo-yellow"
+        },
       ];
     }
     return [];

@@ -10,12 +10,14 @@ import {
   QuizQuestion,
 } from "./QuizRenderer";
 
+import { ArrowCounterClockwise } from "@phosphor-icons/react";
+
 interface OnboardingChatProps {
   messages: Message[];
   isLoading: boolean;
   onSendMessage: (msg: string) => void;
   onRetry?: () => void;
-  quickActions?: { label: string; value: string; color: string }[];
+  quickActions?: { label: React.ReactNode; value: string; color: string }[];
   hideInput?: boolean;
 }
 
@@ -134,9 +136,9 @@ export default function OnboardingChat({ messages, isLoading, onSendMessage, onR
                     <div className="mt-2 border-t-2 border-black/10 pt-2 flex items-center">
                       <button
                         onClick={onRetry}
-                        className="bg-neo-orange text-black border-2 border-black px-3 py-1 font-black text-[10px] uppercase tracking-widest shadow-[2px_2px_0px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all cursor-pointer inline-flex items-center gap-1.5"
+                        className="bg-neo-orange text-black border-2 border-black px-3 py-1 font-black text-[10px] uppercase tracking-widest shadow-[2px_2px_0px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all cursor-pointer inline-flex items-center gap-1"
                       >
-                        🔄 Try Again / Resend
+                        <ArrowCounterClockwise size={12} weight="bold" /> Try Again / Resend
                       </button>
                     </div>
                   )}
