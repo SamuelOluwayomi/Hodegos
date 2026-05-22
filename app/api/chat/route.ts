@@ -24,10 +24,10 @@ export async function POST(req: NextRequest) {
 
     // Retrieve real-time rates from CoinGecko dynamically for AI reference context
     let injPrice = 4.99;
-    let atomPrice = 8.12;
-    let solPrice = 143.50;
-    let tiaPrice = 5.25;
-    let ethPrice = 3120.00;
+    let atomPrice = 2.01;
+    let solPrice = 86.23;
+    let tiaPrice = 0.40;
+    let ethPrice = 2121.63;
 
     try {
       const priceRes = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=injective-protocol,cosmos,solana,celestia,ethereum&vs_currencies=usd");

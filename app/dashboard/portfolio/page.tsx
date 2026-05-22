@@ -14,7 +14,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   AreaChart, Area,
 } from "recharts";
-import { Warning, ArrowClockwise, ChartBar, ChartPie, ChartLine, Robot } from "@phosphor-icons/react";
+import { Warning, ArrowClockwise, ChartBar, ChartPie, ChartLine, Robot, TrendingUp, TrendingDown } from "@phosphor-icons/react";
 
 const WALLET_LABELS: Partial<Record<WalletId, string>> = {
   keplr: "Keplr", leap: "Leap", ninji: "Ninji", metamask: "MetaMask",
@@ -82,11 +82,13 @@ export default function PortfolioPage() {
   const currentTier = getTierByXP(profile.xp);
   const [activeTab, setActiveTab] = useState<"overview" | "analytics" | "history">("overview");
   const [chartType, setChartType] = useState<"pie" | "bar" | "area">("pie");
-
   const [tokenBalances, setTokenBalances] = useState<Record<string, TokenBalance>>({});
   const [loading, setLoading] = useState(true);
   const [hasFetched, setHasFetched] = useState(false);
   const [isNodeOffline, setIsNodeOffline] = useState(false);
+
+  const [trades, setTrades] = useState<any[]>([]);
+  const [tradesLoading, setTradesLoading] = useState(true);
 
   useEffect(() => {
     if (!address) return;
@@ -102,7 +104,6 @@ export default function PortfolioPage() {
           if (!data.nodeError && data.tokenBalances) {
             setTokenBalances(data.tokenBalances);
           } else if (data.tokenBalances) {
-            // Use whatever the API returned even if nodeError
             setTokenBalances(data.tokenBalances);
           }
 
@@ -115,13 +116,35 @@ export default function PortfolioPage() {
       }
     };
 
+    const fetchTrades = async () => {
+      try {
+        setTradesLoading(true);
+        const res = await fetch(`/api/trades?address=${address}`);
+        if (res.ok) {
+          const data = await res.json();
+          setTrades(data.trades || []);
+        }
+      } catch (err) {
+        console.error("Error fetching trades:", err);
+      } finally {
+        setTradesLoading(false);
+      }
+    };
+
+    const handleRefresh = () => {
+      fetchPortfolioData();
+      fetchTrades();
+    };
+
     fetchPortfolioData();
-    const interval = setInterval(fetchPortfolioData, 15000);
-    window.addEventListener("refresh-balances", fetchPortfolioData);
+    fetchTrades();
+
+    const interval = setInterval(handleRefresh, 15000);
+    window.addEventListener("refresh-balances", handleRefresh);
 
     return () => {
       clearInterval(interval);
-      window.removeEventListener("refresh-balances", fetchPortfolioData);
+      window.removeEventListener("refresh-balances", handleRefresh);
     };
   }, [address]);
 
@@ -144,8 +167,99 @@ export default function PortfolioPage() {
         };
       });
   }, [tokenBalances]);
-
   const totalValue = useMemo(() => assets.reduce((sum, a) => sum + a.value, 0), [assets]);
+
+  // Compute realized & unrealized P&L and trading stats dynamically
+  const tradeStats = useMemo(() => {
+    const sortedTrades = [...trades].sort(
+      (a, b) => new Date(a.executed_at).getTime() - new Date(b.executed_at).getTime()
+    );
+
+    const assetState: Record<string, { holdings: number; avgPrice: number; realizedPnL: number }> = {};
+
+    sortedTrades.forEach(trade => {
+      const asset = trade.pair.split('/')[0];
+      if (!assetState[asset]) {
+        assetState[asset] = { holdings: 0, avgPrice: 0, realizedPnL: 0 };
+      }
+
+      const state = assetState[asset];
+      const amount = parseFloat(trade.amount);
+      const price = parseFloat(trade.price);
+
+      if (trade.side === 'buy') {
+        const newHoldings = state.holdings + amount;
+        const newCost = (state.holdings * state.avgPrice) + (amount * price);
+        state.avgPrice = newHoldings > 0 ? newCost / newHoldings : 0;
+        state.holdings = newHoldings;
+      } else if (trade.side === 'sell') {
+        const profit = amount * (price - state.avgPrice);
+        state.realizedPnL += profit;
+        state.holdings = Math.max(0, state.holdings - amount);
+        if (state.holdings === 0) {
+          state.avgPrice = 0;
+        }
+      }
+    });
+
+    let totalRealizedPnL = 0;
+    let totalCostBasis = 0;
+    let totalUnrealizedPnL = 0;
+
+    Object.entries(assetState).forEach(([asset, state]) => {
+      totalRealizedPnL += state.realizedPnL;
+      
+      const tb = tokenBalances[asset];
+      if (tb && tb.amount > 0) {
+        const currentPrice = tb.price;
+        const currentCost = tb.amount * state.avgPrice;
+        totalCostBasis += currentCost;
+        
+        const unrealized = tb.amount * (currentPrice - state.avgPrice);
+        totalUnrealizedPnL += unrealized;
+      }
+    });
+
+    let wins = 0;
+    let totalSells = 0;
+    
+    const tempAssetState: Record<string, { holdings: number; avgPrice: number }> = {};
+    sortedTrades.forEach(trade => {
+      const asset = trade.pair.split('/')[0];
+      if (!tempAssetState[asset]) {
+        tempAssetState[asset] = { holdings: 0, avgPrice: 0 };
+      }
+      const state = tempAssetState[asset];
+      const amount = parseFloat(trade.amount);
+      const price = parseFloat(trade.price);
+      if (trade.side === 'buy') {
+        const newHoldings = state.holdings + amount;
+        const newCost = (state.holdings * state.avgPrice) + (amount * price);
+        state.avgPrice = newHoldings > 0 ? newCost / newHoldings : 0;
+        state.holdings = newHoldings;
+      } else if (trade.side === 'sell') {
+        totalSells++;
+        if (price > state.avgPrice) {
+          wins++;
+        }
+        state.holdings = Math.max(0, state.holdings - amount);
+        if (state.holdings === 0) {
+          state.avgPrice = 0;
+        }
+      }
+    });
+
+    const winRate = totalSells > 0 ? (wins / totalSells) * 100 : 0;
+
+    return {
+      realizedPnL: totalRealizedPnL,
+      unrealizedPnL: totalUnrealizedPnL,
+      totalPnL: totalRealizedPnL + totalUnrealizedPnL,
+      winRate,
+      totalTradesCount: sortedTrades.length,
+      assetState,
+    };
+  }, [trades, tokenBalances]);
 
   // Chart data for analytics
   const pieData = useMemo(() =>
@@ -268,15 +382,39 @@ export default function PortfolioPage() {
             </div>
 
             <div className="flex flex-col gap-4">
-              <div className="bg-neo-lime border-4 border-black p-5 neo-shadow">
-                <div className="font-black text-[9px] uppercase tracking-widest text-black/60">Unrealized P&L</div>
-                <div className="font-black text-3xl mt-1">$0.00</div>
-                <div className="mt-3 font-black text-xs uppercase tracking-widest text-black/40">No open positions</div>
+              <div className={`border-4 border-black p-5 neo-shadow transition-colors ${
+                tradeStats.totalPnL > 0 
+                  ? "bg-neo-lime text-black" 
+                  : tradeStats.totalPnL < 0 
+                    ? "bg-neo-orange text-black" 
+                    : "bg-[#EAE8E0] text-black"
+              }`}>
+                <div className="flex items-center justify-between">
+                  <div className="font-black text-[9px] uppercase tracking-widest opacity-60">Net Profit & Loss</div>
+                  {tradeStats.totalPnL > 0 && <TrendingUp size={16} weight="bold" />}
+                  {tradeStats.totalPnL < 0 && <TrendingDown size={16} weight="bold" />}
+                </div>
+                <div className="font-black text-3xl mt-1">
+                  {tradeStats.totalPnL >= 0 ? "+" : ""}${tradeStats.totalPnL.toFixed(2)}
+                </div>
+                <div className="mt-3 flex flex-col gap-0.5 font-black text-[10px] uppercase tracking-wider opacity-85">
+                  <div className="flex justify-between">
+                    <span>Realized P&L:</span>
+                    <span>{tradeStats.realizedPnL >= 0 ? "+" : ""}${tradeStats.realizedPnL.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Unrealized P&L:</span>
+                    <span>{tradeStats.unrealizedPnL >= 0 ? "+" : ""}${tradeStats.unrealizedPnL.toFixed(2)}</span>
+                  </div>
+                </div>
               </div>
-              <div className="bg-neo-yellow border-4 border-black p-5 neo-shadow">
-                <div className="font-black text-[9px] uppercase tracking-widest text-black/60">Total Trades</div>
-                <div className="font-black text-3xl mt-1">0</div>
-                <div className="mt-3 font-black text-xs uppercase tracking-widest text-black/40">Win rate: —</div>
+              <div className="bg-neo-yellow border-4 border-black p-5 neo-shadow text-black">
+                <div className="font-black text-[9px] uppercase tracking-widest opacity-60">Total Trades</div>
+                <div className="font-black text-3xl mt-1">{tradeStats.totalTradesCount}</div>
+                <div className="mt-3 flex justify-between font-black text-[10px] uppercase tracking-wider opacity-85">
+                  <span>Win Rate:</span>
+                  <span>{trades.filter(t => t.side === 'sell').length > 0 ? `${tradeStats.winRate.toFixed(1)}%` : "—"}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -616,17 +754,97 @@ export default function PortfolioPage() {
 
           {/* ── HISTORY TAB ──────────────────────────────────────────────────── */}
           {activeTab === "history" && (
-            <div className="border-4 border-black bg-white neo-shadow">
-              <div className="p-8 text-center">
-                <div className="font-black text-xl uppercase tracking-widest mb-2">No Trades Yet</div>
-                <div className="font-bold text-sm text-black/50 mb-6">Your transaction history will appear here after your first trade</div>
-                <Link
-                  href="/dashboard/trade"
-                  className="inline-block bg-black text-white border-[3px] border-black px-8 py-3 font-black uppercase tracking-widest text-sm shadow-[4px_4px_0px_0px_#D0EE51] hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none transition-all"
-                >
-                  Make Your First Trade →
-                </Link>
-              </div>
+            <div>
+              {tradesLoading ? (
+                <div className="border-4 border-black bg-white neo-shadow p-8 text-center">
+                  <ArrowClockwise size={24} weight="bold" className="inline-block animate-spin mr-2" />
+                  <span className="font-black text-xs uppercase tracking-widest">Loading trade history...</span>
+                </div>
+              ) : trades.length === 0 ? (
+                <div className="border-4 border-black bg-white neo-shadow">
+                  <div className="p-8 text-center">
+                    <div className="font-black text-xl uppercase tracking-widest mb-2">No Trades Yet</div>
+                    <div className="font-bold text-sm text-black/50 mb-6">Your transaction history will appear here after your first trade</div>
+                    <Link
+                      href="/dashboard/trade"
+                      className="inline-block bg-black text-white border-[3px] border-black px-8 py-3 font-black uppercase tracking-widest text-sm shadow-[4px_4px_0px_0px_#D0EE51] hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none transition-all"
+                    >
+                      Make Your First Trade →
+                    </Link>
+                  </div>
+                </div>
+              ) : (
+                <div className="border-4 border-black overflow-x-auto bg-white neo-shadow">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-[#EAE8E0] border-b-4 border-black font-black text-[10px] uppercase tracking-widest">
+                        <th className="p-4 border-r-2 border-black">Time</th>
+                        <th className="p-4 border-r-2 border-black">Pair</th>
+                        <th className="p-4 border-r-2 border-black text-center">Side</th>
+                        <th className="p-4 border-r-2 border-black text-center">Type</th>
+                        <th className="p-4 border-r-2 border-black text-right">Price</th>
+                        <th className="p-4 border-r-2 border-black text-right">Amount</th>
+                        <th className="p-4 border-r-2 border-black text-right">Total</th>
+                        <th className="p-4 text-center">Transaction</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {trades.map((trade) => {
+                        const dateStr = new Date(trade.executed_at).toLocaleString();
+                        const isBuy = trade.side === "buy";
+                        const baseAsset = trade.pair.split('/')[0];
+                        const priceVal = parseFloat(trade.price);
+                        const amountVal = parseFloat(trade.amount);
+                        const totalVal = parseFloat(trade.total_value);
+
+                        return (
+                          <tr key={trade.id} className="border-b-2 border-black last:border-b-0 hover:bg-[#EAE8E0]/50 transition-colors">
+                            <td className="p-4 border-r-2 border-black font-bold text-xs whitespace-nowrap">
+                              {dateStr}
+                            </td>
+                            <td className="p-4 border-r-2 border-black font-black text-xs">
+                              {trade.pair}
+                            </td>
+                            <td className="p-4 border-r-2 border-black text-center">
+                              <span className={`inline-block px-2.5 py-0.5 border-2 border-black font-black text-[9px] uppercase tracking-wider ${
+                                isBuy ? "bg-neo-lime text-black" : "bg-neo-orange text-black"
+                              }`}>
+                                {trade.side}
+                              </span>
+                            </td>
+                            <td className="p-4 border-r-2 border-black text-center font-bold text-xs uppercase tracking-wider">
+                              {trade.order_type}
+                            </td>
+                            <td className="p-4 border-r-2 border-black text-right font-black text-xs">
+                              ${priceVal < 0.01 ? priceVal.toFixed(4) : priceVal.toFixed(2)}
+                            </td>
+                            <td className="p-4 border-r-2 border-black text-right font-black text-xs">
+                              {amountVal.toFixed(4)} {baseAsset}
+                            </td>
+                            <td className="p-4 border-r-2 border-black text-right font-black text-xs">
+                              ${totalVal.toFixed(2)}
+                            </td>
+                            <td className="p-4 text-center whitespace-nowrap">
+                              {trade.tx_hash ? (
+                                <a
+                                  href={`https://testnet.explorer.injective.network/transaction/${trade.tx_hash}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="underline font-black text-[10px] uppercase hover:text-black/60 tracking-wider"
+                                >
+                                  View Tx ↗
+                                </a>
+                              ) : (
+                                <span className="text-black/40 font-bold text-[10px] uppercase">Manual/Offchain</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
         </div>

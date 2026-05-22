@@ -25,7 +25,15 @@ const MARKETS = [
 ];
 
 const DECIMALS_MAP: Record<string, number> = {
-  INJ: 18, ATOM: 6, WETH: 8, SOL: 8, TIA: 6, USDT: 6,
+  INJ: 18, ATOM: 6, WETH: 18, SOL: 8, TIA: 6, USDT: 6,
+};
+
+const TICK_RULES: Record<string, { minPriceTick: number; minQtyTick: number }> = {
+  INJ: { minPriceTick: 1e-15, minQtyTick: 1e15 },
+  ATOM: { minPriceTick: 1e-3, minQtyTick: 1e4 },
+  WETH: { minPriceTick: 1e-13, minQtyTick: 1e15 },
+  SOL: { minPriceTick: 1e-4, minQtyTick: 1e6 },
+  TIA: { minPriceTick: 1e-3, minQtyTick: 1e5 },
 };
 
 const ASSET_PRICE_DEFAULTS: Record<string, number> = {
@@ -95,13 +103,21 @@ function DirectExecutionPanel({
       const isMarket = price.toLowerCase() === 'market';
       const orderTypeNum = side === 'buy' ? 1 : 2;
 
-      const quantity = (BigInt(Math.floor(parsedAmount * 1000000)) * BigInt(10 ** baseDecimals) / BigInt(1000000)).toString();
+      const rule = TICK_RULES[baseAsset] || { minPriceTick: 1e-15, minQtyTick: 1 };
+
+      // Quantity scaling (base decimals) and alignment to tick size
+      const qtyBaseVal = parsedAmount * Math.pow(10, baseDecimals);
+      const qtyTicks = Math.round(qtyBaseVal / rule.minQtyTick);
+      const quantity = (BigInt(Math.max(1, qtyTicks)) * BigInt(rule.minQtyTick)).toString();
 
       let priceVal = currentPrice;
       if (!isMarket) {
         priceVal = parseFloat(price) || currentPrice;
       }
-      const scaledPrice = (priceVal * Math.pow(10, quoteDecimals - baseDecimals)).toFixed(18);
+      const scaledPriceVal = priceVal * Math.pow(10, quoteDecimals - baseDecimals);
+      const priceTicks = Math.round(scaledPriceVal / rule.minPriceTick);
+      const alignedScaledPriceVal = Math.max(1, priceTicks) * rule.minPriceTick;
+      const scaledPrice = alignedScaledPriceVal.toFixed(18);
       const subaccountId = getDefaultSubaccountId(address);
 
       const msg = MsgCreateSpotLimitOrder.fromJSON({
@@ -178,6 +194,25 @@ function DirectExecutionPanel({
 
       if (txResponse.code !== 0) {
         throw new Error(txResponse.rawLog || "Transaction failed to broadcast");
+      }
+
+      try {
+        await fetch('/api/trades', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            address,
+            pair: `${baseAsset}/USDT`,
+            side,
+            order_type: orderType,
+            amount: parsedAmount,
+            price: parsedPrice,
+            total_value: totalCost,
+            tx_hash: txResponse.txHash,
+          }),
+        });
+      } catch (e) {
+        console.error("Error logging trade to database:", e);
       }
 
       setTxHash(txResponse.txHash);

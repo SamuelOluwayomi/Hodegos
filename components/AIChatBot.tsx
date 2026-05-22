@@ -155,6 +155,14 @@ Sign this message to authorize and execute this order on Hodegos Injective DEX.`
         USDT: 6,
       };
 
+      const TICK_RULES: Record<string, { minPriceTick: number; minQtyTick: number }> = {
+        INJ: { minPriceTick: 1e-15, minQtyTick: 1e15 },
+        ATOM: { minPriceTick: 1e-3, minQtyTick: 1e4 },
+        WETH: { minPriceTick: 1e-13, minQtyTick: 1e15 },
+        SOL: { minPriceTick: 1e-4, minQtyTick: 1e6 },
+        TIA: { minPriceTick: 1e-3, minQtyTick: 1e5 },
+      };
+
       const ticker = `${tx.asset}/USDT`;
       const marketId = FEATURED_MARKET_IDS[ticker];
       if (!marketId) throw new Error(`Market for ${ticker} is not supported on Hodegos.`);
@@ -177,15 +185,22 @@ Sign this message to authorize and execute this order on Hodegos Injective DEX.`
       const isMarket = tx.price.toLowerCase() === 'market';
       const orderType = tx.side === 'buy' ? 1 : 2;
 
-      // Quantity scaling (base decimals)
-      const quantity = (BigInt(Math.floor(tx.amount * 1000000)) * BigInt(10 ** baseDecimals) / BigInt(1000000)).toString();
+      const rule = TICK_RULES[tx.asset] || { minPriceTick: 1e-15, minQtyTick: 1 };
 
-      // Price scaling
+      // Quantity scaling (base decimals) and alignment to tick size
+      const qtyBaseVal = tx.amount * Math.pow(10, baseDecimals);
+      const qtyTicks = Math.round(qtyBaseVal / rule.minQtyTick);
+      const quantity = (BigInt(Math.max(1, qtyTicks)) * BigInt(rule.minQtyTick)).toString();
+
+      // Price scaling and alignment to tick size
       let priceVal = currentPrice;
       if (!isMarket) {
         priceVal = parseFloat(tx.price) || currentPrice;
       }
-      const scaledPrice = (priceVal * Math.pow(10, quoteDecimals - baseDecimals)).toFixed(18);
+      const scaledPriceVal = priceVal * Math.pow(10, quoteDecimals - baseDecimals);
+      const priceTicks = Math.round(scaledPriceVal / rule.minPriceTick);
+      const alignedScaledPriceVal = Math.max(1, priceTicks) * rule.minPriceTick;
+      const scaledPrice = alignedScaledPriceVal.toFixed(18);
       const subaccountId = getDefaultSubaccountId(address);
 
       // We use MsgCreateSpotLimitOrder for all trades on testnet.
@@ -279,6 +294,27 @@ Sign this message to authorize and execute this order on Hodegos Injective DEX.`
       if (txResponse.code !== 0) {
         throw new Error(txResponse.rawLog || "Transaction failed to broadcast");
       }
+
+      try {
+        const pVal = tx.price.toLowerCase() === 'market' ? tokenPrice : (parseFloat(tx.price) || tokenPrice);
+        const orderType = tx.price.toLowerCase() === 'market' ? 'market' : 'limit';
+        await fetch('/api/trades', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            address,
+            pair: `${tx.asset}/USDT`,
+            side: tx.side || 'buy',
+            order_type: orderType,
+            amount: tx.amount,
+            price: pVal,
+            total_value: tx.amount * pVal,
+            tx_hash: txResponse.txHash,
+          }),
+        });
+      } catch (e) {
+        console.error("Error logging chatbot trade to database:", e);
+      }
       
       setTxHash(txResponse.txHash);
       setStatus('success');
@@ -295,10 +331,10 @@ Sign this message to authorize and execute this order on Hodegos Injective DEX.`
   const assetPriceMap: Record<string, number> = {
     INJ: 4.99,
     USDT: 1.00,
-    ATOM: 8.12,
-    SOL: 143.50,
-    TIA: 5.25,
-    ETH: 3120.00,
+    ATOM: 2.01,
+    SOL: 86.23,
+    TIA: 0.40,
+    WETH: 2121.63,
   };
 
   const tokenPrice = assetPriceMap[tx.asset] || 4.99;
