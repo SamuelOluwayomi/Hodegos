@@ -52,127 +52,152 @@ function TransactionCard({ tx, address, wallet }: { tx: TxData; address: string;
       }
 
       const anyWindow = window as any;
-      const txMemo = `Hodegos AI: ${tx.side?.toUpperCase()} ${tx.amount} ${tx.asset} @ ${tx.price.toLowerCase() === 'market' ? 'Market' : tx.price}`;
 
-      // Step 1: Server builds the unsigned transaction bytes (SDK stays server-side)
-      const buildRes = await fetch('/api/build-tx', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          address,
-          side: tx.side,
-          amount: tx.amount,
-          asset: tx.asset,
-          price: tx.price,
-          memo: txMemo,
-        }),
+      // Dynamically import SDK to avoid SSR bundling issues
+      const [{ MsgSend, createTransaction, TxGrpcApi, ChainRestAuthApi, BaseAccount, getEip712TypedData, createTxRawEIP712, createWeb3Extension }, { Network, getNetworkEndpoints }] = await Promise.all([
+        import('@injectivelabs/sdk-ts'),
+        import('@injectivelabs/networks'),
+      ]);
+
+      // EthereumChainId.Injective = 888
+      const ETH_CHAIN_ID_INJECTIVE = 888;
+
+      const endpoints = getNetworkEndpoints(Network.Testnet);
+      const chainRestAuthApi = new ChainRestAuthApi(endpoints.rest);
+      const accountDetailsResponse = await chainRestAuthApi.fetchAccount(address);
+      const baseAccount = BaseAccount.fromRestApi(accountDetailsResponse);
+
+      const msg = MsgSend.fromJSON({
+        amount: { denom: 'inj', amount: '1000000000000000' }, // 0.001 INJ proof-of-execution tx
+        srcInjectiveAddress: address,
+        dstInjectiveAddress: address,
       });
-      const buildData = await buildRes.json();
-      if (!buildRes.ok) throw new Error(buildData.error || 'Failed to build transaction.');
 
-      const { bodyBytes, authInfoBytes, accountNumber } = buildData;
-      const bodyU8 = new Uint8Array(bodyBytes);
-      const authU8 = new Uint8Array(authInfoBytes);
-
-      let signatureArray: number[];
+      const txMemo = `Hodegos AI: ${tx.side?.toUpperCase()} ${tx.amount} ${tx.asset} @ ${tx.price.toLowerCase() === 'market' ? 'Market' : tx.price}`;
 
       if (wallet === "metamask") {
         if (!anyWindow.ethereum) throw new Error("MetaMask provider not found in browser.");
 
-        // Step 2a: Server builds EIP712 typed data for MetaMask
-        const eip712Res = await fetch('/api/build-tx/eip712', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            address,
+        const eip712TypedData = getEip712TypedData({
+          msgs: msg,
+          tx: {
+            accountNumber: baseAccount.accountNumber.toString(),
+            sequence: baseAccount.sequence.toString(),
+            chainId: 'injective-888',
+            timeoutHeight: '',
             memo: txMemo,
-            accountNumber: buildData.accountNumber,
-            sequence: buildData.sequence,
-          }),
+          },
+          fee: {
+            amount: [{ amount: '2000000000000000', denom: 'inj' }],
+            gas: '200000',
+          },
+          ethereumChainId: ETH_CHAIN_ID_INJECTIVE,
         });
-        const eip712Data = await eip712Res.json();
-        if (!eip712Res.ok) throw new Error(eip712Data.error || 'Failed to build EIP712 data.');
 
         const ethAddress = anyWindow.ethereum.selectedAddress ||
           (await anyWindow.ethereum.request({ method: 'eth_requestAccounts' }))[0];
 
-        const hexSig: string = await anyWindow.ethereum.request({
+        const signature = await anyWindow.ethereum.request({
           method: 'eth_signTypedData_v4',
-          params: [ethAddress, JSON.stringify(eip712Data.typedData)],
+          params: [ethAddress, JSON.stringify(eip712TypedData)],
         });
 
-        signatureArray = Array.from(Buffer.from(hexSig.replace('0x', ''), 'hex'));
+        const signatureBytes = Buffer.from(signature.replace('0x', ''), 'hex');
+
+        const { txRaw } = createTransaction({
+          message: msg,
+          memo: txMemo,
+          fee: {
+            amount: [{ amount: '2000000000000000', denom: 'inj' }],
+            gas: '200000',
+          },
+          pubKey: baseAccount.pubKey.key || '',
+          sequence: baseAccount.sequence,
+          accountNumber: baseAccount.accountNumber,
+          chainId: 'injective-888',
+        });
+
+        const web3Extension = createWeb3Extension({ ethereumChainId: ETH_CHAIN_ID_INJECTIVE });
+        const txRawEip712 = createTxRawEIP712(txRaw, web3Extension);
+        txRawEip712.signatures = [signatureBytes];
 
         setStatus('broadcasting');
-        const broadcastRes = await fetch('/api/broadcast-tx', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            bodyBytes,
-            authInfoBytes,
-            signatures: [signatureArray],
-            isEip712: true,
-            ethereumChainId: 888, // EthereumChainId.Injective
-          }),
-        });
-        const broadcastData = await broadcastRes.json();
-        if (!broadcastRes.ok) throw new Error(broadcastData.error || 'Broadcast failed.');
-        setTxHash(broadcastData.txHash);
+        const txService = new TxGrpcApi(endpoints.grpc);
+        const txResponse = await txService.broadcast(txRawEip712);
+
+        if (txResponse.code !== 0) {
+          throw new Error(txResponse.rawLog || 'Transaction failed to broadcast');
+        }
+        setTxHash(txResponse.txHash);
         setStatus('success');
         window.dispatchEvent(new CustomEvent('refresh-balances'));
         return;
       }
 
-      // Step 2b: Sign with Cosmos wallet (Keplr / Leap / Ninji) using signDirect
+      const { txRaw } = createTransaction({
+        message: msg,
+        memo: txMemo,
+        fee: {
+          amount: [{ amount: '2000000000000000', denom: 'inj' }],
+          gas: '200000',
+        },
+        pubKey: baseAccount.pubKey.key || "",
+        sequence: baseAccount.sequence,
+        accountNumber: baseAccount.accountNumber,
+        chainId: 'injective-888',
+      });
+
+      let signatureResponse;
+      const accNum = baseAccount.accountNumber;
       const accNumObj = {
-        low: accountNumber, high: 0, unsigned: true,
-        toNumber: () => accountNumber,
-        toString: () => accountNumber.toString(),
+        low: accNum,
+        high: 0,
+        unsigned: true,
+        toNumber: () => accNum,
+        toString: () => accNum.toString()
       };
 
-      let signatureResponse: any;
       if (wallet === "keplr") {
-        if (!anyWindow.keplr) throw new Error("Keplr extension not found.");
+        if (!anyWindow.keplr) throw new Error("Keplr extension not found in browser.");
         signatureResponse = await anyWindow.keplr.signDirect('injective-888', address, {
-          bodyBytes: bodyU8, authInfoBytes: authU8,
-          chainId: 'injective-888', accountNumber: accNumObj,
+          bodyBytes: txRaw.bodyBytes,
+          authInfoBytes: txRaw.authInfoBytes,
+          chainId: 'injective-888',
+          accountNumber: accNumObj
         });
       } else if (wallet === "leap") {
-        if (!anyWindow.leap) throw new Error("Leap extension not found.");
+        if (!anyWindow.leap) throw new Error("Leap extension not found in browser.");
         signatureResponse = await anyWindow.leap.signDirect('injective-888', address, {
-          bodyBytes: bodyU8, authInfoBytes: authU8,
-          chainId: 'injective-888', accountNumber: accNumObj,
+          bodyBytes: txRaw.bodyBytes,
+          authInfoBytes: txRaw.authInfoBytes,
+          chainId: 'injective-888',
+          accountNumber: accNumObj
         });
       } else if (wallet === "ninji") {
-        if (!anyWindow.ninji) throw new Error("Ninji extension not found.");
+        if (!anyWindow.ninji) throw new Error("Ninji extension not found in browser.");
         signatureResponse = await anyWindow.ninji.signDirect('injective-888', address, {
-          bodyBytes: bodyU8, authInfoBytes: authU8,
-          chainId: 'injective-888', accountNumber: accNumObj,
+          bodyBytes: txRaw.bodyBytes,
+          authInfoBytes: txRaw.authInfoBytes,
+          chainId: 'injective-888',
+          accountNumber: accNumObj
         });
-      } else {
-        throw new Error("Unsupported wallet type.");
       }
 
-      signatureArray = Array.from(signatureResponse.signature.signature as Uint8Array);
-
-      // Step 3: Server broadcasts the signed transaction
       setStatus('broadcasting');
-      const broadcastRes = await fetch('/api/broadcast-tx', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          bodyBytes: Array.from(bodyU8),
-          authInfoBytes: Array.from(authU8),
-          signatures: [signatureArray],
-          isEip712: false,
-        }),
-      });
-      const broadcastData = await broadcastRes.json();
-      if (!broadcastRes.ok) throw new Error(broadcastData.error || 'Broadcast failed.');
+      
+      txRaw.signatures = [signatureResponse.signature.signature];
+      const txService = new TxGrpcApi(endpoints.grpc);
+      const txResponse = await txService.broadcast(txRaw);
 
-      setTxHash(broadcastData.txHash);
+      if (txResponse.code !== 0) {
+        throw new Error(txResponse.rawLog || "Transaction failed to broadcast");
+      }
+      
+      setTxHash(txResponse.txHash);
       setStatus('success');
-      window.dispatchEvent(new CustomEvent('refresh-balances'));
+      
+      // Dispatch balance refresh
+      window.dispatchEvent(new CustomEvent("refresh-balances"));
     } catch (err: any) {
       console.error("Wallet signing error:", err);
       setError(err.message || 'Signature rejected by user.');
