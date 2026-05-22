@@ -290,7 +290,6 @@ export default function ProfilePage() {
                       className="h-full bg-black transition-all duration-700"
                       style={{ width: `${tierProgress}%` }}
                     >
-                      <div className="h-full bg-neo-lime/60 w-full animate-pulse" />
                     </div>
                   </div>
                   <div className="flex justify-between font-bold text-[9px] text-black/40 mt-1">
@@ -316,7 +315,6 @@ export default function ProfilePage() {
                 </div>
                 <div className="bg-white/10 border border-white/20 p-2 font-mono text-[9px] break-all">{address}</div>
                 <div className="mt-3 flex items-center gap-1.5">
-                  <div className="w-1.5 h-1.5 bg-neo-lime rounded-full animate-pulse" />
                   <span className="font-black text-[9px] uppercase text-neo-lime">Injective Mainnet</span>
                 </div>
               </div>

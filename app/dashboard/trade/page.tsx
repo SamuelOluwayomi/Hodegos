@@ -142,7 +142,6 @@ function TradeContent() {
               <span className="font-black uppercase">{walletLabel}</span>
               <span className="text-black/60">{displayAddress}</span>
             </div>
-            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
             <span className="font-black text-[9px] uppercase text-green-600">Live</span>
           </div>
         </header>
@@ -190,7 +189,6 @@ function TradeContent() {
                     </div>
                   )}
                   <div className="flex items-center gap-1 mt-1">
-                    <div className="w-1.5 h-1.5 bg-neo-lime rounded-full animate-pulse" />
                     <span className="font-black text-[8px] uppercase text-neo-lime/70">Injective Testnet</span>
                   </div>
                 </div>

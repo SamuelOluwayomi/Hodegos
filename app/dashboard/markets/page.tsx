@@ -305,7 +305,6 @@ export default function MarketsPage() {
               <span className="font-black uppercase">{walletLabel}</span>
               <span className="text-black/60">{displayAddress}</span>
             </div>
-            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" title="Live Data" />
             <span className="font-black text-[9px] uppercase tracking-widest text-green-600">Live</span>
           </div>
         </header>

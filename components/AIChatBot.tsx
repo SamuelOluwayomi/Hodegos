@@ -73,8 +73,10 @@ Sign this message to authorize and execute this order on Hodegos Injective DEX.`
       }
 
       const endpoints = getNetworkEndpoints(Network.Testnet);
-      const chainRestAuthApi = new ChainRestAuthApi(endpoints.rest);
-      const accountDetailsResponse = await chainRestAuthApi.fetchAccount(address);
+      const accountRes = await fetch(`/api/account?address=${address}`);
+      if (!accountRes.ok) throw new Error("Failed to fetch account details from testnet");
+      const accountDetailsResponse = await accountRes.json();
+      
       const baseAccount = BaseAccount.fromRestApi(accountDetailsResponse);
 
       const msg = MsgSend.fromJSON({
