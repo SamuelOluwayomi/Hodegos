@@ -5,9 +5,6 @@ import Image from "next/image";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useWallet } from "@/lib/useWallet";
 import { useChat } from "@/hooks/useChat";
-import { MsgSend, createTransaction, TxGrpcApi, ChainRestAuthApi, BaseAccount, getEip712TypedData, createTxRawEIP712, createWeb3Extension } from '@injectivelabs/sdk-ts';
-import { Network, getNetworkEndpoints } from '@injectivelabs/networks';
-import { EthereumChainId } from '@injectivelabs/ts-types';
 
 // ── TYPES AND INTERFACES ──────────────────────────────────────────────────────
 
@@ -68,6 +65,13 @@ Sign this message to authorize and execute this order on Hodegos Injective DEX.`
       }
 
       const anyWindow = window as any;
+
+      // Dynamically import SDK to avoid SSR bundling issues
+      const [{ MsgSend, createTransaction, TxGrpcApi, ChainRestAuthApi, BaseAccount, getEip712TypedData, createTxRawEIP712, createWeb3Extension }, { Network, getNetworkEndpoints }, { EthereumChainId }] = await Promise.all([
+        import('@injectivelabs/sdk-ts'),
+        import('@injectivelabs/networks'),
+        import('@injectivelabs/ts-types'),
+      ]);
 
       const endpoints = getNetworkEndpoints(Network.Testnet);
       const chainRestAuthApi = new ChainRestAuthApi(endpoints.rest);
