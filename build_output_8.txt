@@ -1,0 +1,113 @@
+$ next build
+⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of C:\Users\SAMUEL\pnpm-workspace.yaml as the root directory.
+ To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+ Detected additional lockfiles: 
+   * C:\Users\SAMUEL\Desktop\SAMUEL\Hackathon\hodegos\pnpm-workspace.yaml
+
+▲ Next.js 16.2.6 (Turbopack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+
+> Build error occurred
+Error: Turbopack build failed with 7 errors:
+./Desktop/SAMUEL/Hackathon/hodegos/node_modules/.pnpm/@injectivelabs+sdk-ts@1.14._5d61b6816096417a3bd23eaee2c69f2b/node_modules/@injectivelabs/sdk-ts/dist/esm/core/tx/broadcaster/MsgBroadcasterWithPk.js:6:1
+Export DEFAULT_STD_FEE doesn't exist in target module
+  [90m4 |[0m ...[33mnGrpcAuthApi[0m, [33mChainGrpcTendermintApi[0m, } [36mfrom[0m [32m'../../../client/chain/grpc/index.js'[0m;
+  [90m5 |[0m ...[33mnRestAuthApi[0m, [33mChainRestTendermintApi[0m, } [36mfrom[0m [32m'../../../client/chain/rest/index.js'[0m;
+[31m[1m>[0m [90m6 |[0m ...tdFee, [33mDEFAULT_STD_FEE[0m, [33mBigNumberInBase[0m, [33mDEFAULT_BLOCK_TIMEOUT_HEIGHT[0m, } [36mfrom[0m [32m'@injectiv...[0m
+  [90m  |[0m    [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m ...[33mralException[0m } [36mfrom[0m [32m'@injectivelabs/exceptions'[0m;
+  [90m8 |[0m ...[33mork[0m, getNetworkInfo, getNetworkEndpoints, } [36mfrom[0m [32m'@injectivelabs/networks'[0m;
+  [90m9 |[0m ...asPriceBasedOnMessage } [36mfrom[0m [32m'../../../utils/msgs.js'[0m;
+
+The export DEFAULT_STD_FEE was not found in module [project]/Desktop/SAMUEL/Hackathon/hodegos/node_modules/.pnpm/@injectivelabs+utils@1.19.12/node_modules/@injectivelabs/utils/dist/esm/index.js [externals-tracing] (ecmascript).
+Did you mean to import DEFAULT_STD_FEE_BY_DENOM?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+
+./Desktop/SAMUEL/Hackathon/hodegos/node_modules/.pnpm/@injectivelabs+sdk-ts@1.14._5d61b6816096417a3bd23eaee2c69f2b/node_modules/@injectivelabs/sdk-ts/dist/esm/core/tx/eip712/utils.js:1:1
+Export DEFAULT_STD_FEE doesn't exist in target module
+[31m[1m>[0m [90m1 |[0m [36mimport[0m { [33mBigNumberInBase[0m, [33mDEFAULT_GAS_LIMIT[0m, [33mDEFAULT_STD_FEE[0m, } [36mfrom[0m [32m'@injectivelabs/utils'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m2 |[0m [36mexport[0m [36mconst[0m getEip712Domain = (ethereumChainId) => {
+  [90m3 |[0m     [36mreturn[0m {
+  [90m4 |[0m         domain: {
+
+The export DEFAULT_STD_FEE was not found in module [project]/Desktop/SAMUEL/Hackathon/hodegos/node_modules/.pnpm/@injectivelabs+utils@1.19.12/node_modules/@injectivelabs/utils/dist/esm/index.js [externals-tracing] (ecmascript).
+Did you mean to import DEFAULT_STD_FEE_BY_DENOM?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+
+./Desktop/SAMUEL/Hackathon/hodegos/node_modules/.pnpm/@injectivelabs+sdk-ts@1.14._5d61b6816096417a3bd23eaee2c69f2b/node_modules/@injectivelabs/sdk-ts/dist/esm/core/tx/tx.js:2:1
+Export DEFAULT_STD_FEE doesn't exist in target module
+  [90m1 |[0m [36mimport[0m keccak256 [36mfrom[0m [32m'keccak256'[0m;
+[31m[1m>[0m [90m2 |[0m [36mimport[0m { [33mDEFAULT_STD_FEE[0m } [36mfrom[0m [32m'@injectivelabs/utils'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m3 |[0m [36mimport[0m { createAuthInfo, createBody, createFee, createSignDoc, createSigners, [33mSIGN_DIRECT[0m, ..[36m.[0m
+  [90m4 |[0m [36mimport[0m { [33mBigNumberInBase[0m } [36mfrom[0m [32m'@injectivelabs/utils'[0m;
+  [90m5 |[0m [36mimport[0m { [33mGeneralException[0m } [36mfrom[0m [32m'@injectivelabs/exceptions'[0m;
+
+The export DEFAULT_STD_FEE was not found in module [project]/Desktop/SAMUEL/Hackathon/hodegos/node_modules/.pnpm/@injectivelabs+utils@1.19.12/node_modules/@injectivelabs/utils/dist/esm/index.js [externals-tracing] (ecmascript).
+Did you mean to import DEFAULT_STD_FEE_BY_DENOM?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+
+./Desktop/SAMUEL/Hackathon/hodegos/node_modules/.pnpm/@injectivelabs+networks@1.14.41/node_modules/@injectivelabs/networks/dist/esm/chainInfos.js:1:1
+Export EthereumChainId doesn't exist in target module
+[31m[1m>[0m [90m1 |[0m [36mimport[0m { [33mChainId[0m, [33mEthereumChainId[0m } [36mfrom[0m [32m'@injectivelabs/ts-types'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m2 |[0m [36mimport[0m { [33mINJ_DENOM[0m } [36mfrom[0m [32m'@injectivelabs/utils'[0m;
+  [90m3 |[0m [36mexport[0m [36mconst[0m mainnetChainInfo = {
+  [90m4 |[0m     feeDenom: [33mINJ_DENOM[0m,
+
+The export EthereumChainId was not found in module [project]/Desktop/SAMUEL/Hackathon/hodegos/node_modules/.pnpm/@injectivelabs+ts-types@1.19.12/node_modules/@injectivelabs/ts-types/dist/esm/index.js [externals-tracing] (ecmascript).
+Did you mean to import EvmChainId?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+
+./Desktop/SAMUEL/Hackathon/hodegos/node_modules/.pnpm/@injectivelabs+sdk-ts@1.14._5d61b6816096417a3bd23eaee2c69f2b/node_modules/@injectivelabs/sdk-ts/dist/esm/core/accounts/PrivateKey.js:14:1
+Export EthereumChainId doesn't exist in target module
+  [90m12 |[0m [36mimport[0m { getEip712TypedData, [33mMsgDecoder[0m } [36mfrom[0m [32m'../tx/eip712/index.js'[0m;
+  [90m13 |[0m [36mimport[0m { [33mGeneralException[0m } [36mfrom[0m [32m'@injectivelabs/exceptions'[0m;
+[31m[1m>[0m [90m14 |[0m [36mimport[0m { [33mChainId[0m, [33mEthereumChainId[0m } [36mfrom[0m [32m'@injectivelabs/ts-types'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m15 |[0m /**
+  [90m16 |[0m  * [33mClass[0m [36mfor[0m wrapping [33mSigningKey[0m that is used [36mfor[0m signature creation and [36mpublic[0m key deriva...
+  [90m17 |[0m  *
+
+The export EthereumChainId was not found in module [project]/Desktop/SAMUEL/Hackathon/hodegos/node_modules/.pnpm/@injectivelabs+ts-types@1.19.12/node_modules/@injectivelabs/ts-types/dist/esm/index.js [externals-tracing] (ecmascript).
+Did you mean to import EvmChainId?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+
+./Desktop/SAMUEL/Hackathon/hodegos/node_modules/.pnpm/@injectivelabs+sdk-ts@1.14._5d61b6816096417a3bd23eaee2c69f2b/node_modules/@injectivelabs/sdk-ts/dist/esm/client/indexer/transformers/IndexerAuctionStreamTransformer.js:1:1
+Export StreamOperation doesn't exist in target module
+[31m[1m>[0m [90m1 |[0m [36mimport[0m { [33mStreamOperation[0m } [36mfrom[0m [32m'@injectivelabs/ts-types'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m2 |[0m [90m/**[0m
+  [90m3 |[0m [90m * @category Indexer Stream Transformer[0m
+  [90m4 |[0m [90m */[0m
+
+The export StreamOperation was not found in module [project]/Desktop/SAMUEL/Hackathon/hodegos/node_modules/.pnpm/@injectivelabs+ts-types@1.19.12/node_modules/@injectivelabs/ts-types/dist/esm/index.js [externals-tracing] (ecmascript).
+Did you mean to import MsgStatus?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+
+./Desktop/SAMUEL/Hackathon/hodegos/node_modules/.pnpm/@injectivelabs+sdk-ts@1.14._5d61b6816096417a3bd23eaee2c69f2b/node_modules/@injectivelabs/sdk-ts/dist/esm/client/indexer/transformers/IndexerGrpcDerivativeTransformer.js:1:1
+Export TradeDirection doesn't exist in target module
+[31m[1m>[0m [90m1 |[0m [36mimport[0m { [33mTradeDirection[0m, } [36mfrom[0m [32m'@injectivelabs/ts-types'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m2 |[0m [36mimport[0m { [33mBigNumber[0m } [36mfrom[0m [32m'@injectivelabs/utils'[0m;
+  [90m3 |[0m [36mimport[0m { [33mTokenType[0m } [36mfrom[0m [32m'../../../types/token.js'[0m;
+  [90m4 |[0m [36mimport[0m { grpcPagingToPaging } [36mfrom[0m [32m'../../../utils/pagination.js'[0m;
+
+The export TradeDirection was not found in module [project]/Desktop/SAMUEL/Hackathon/hodegos/node_modules/.pnpm/@injectivelabs+ts-types@1.19.12/node_modules/@injectivelabs/ts-types/dist/esm/index.js [externals-tracing] (ecmascript).
+Did you mean to import DeprecatedMsgType?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+
+    at ignore-listed frames
+[ELIFECYCLE] Command failed with exit code 1.

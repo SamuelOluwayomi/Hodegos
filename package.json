@@ -8,7 +8,6 @@
     "start": "next start",
     "lint": "eslint"
   },
-  "packageManager": "pnpm@11.1.2",
   "dependencies": {
     "@injectivelabs/networks": "1.14.41",
     "@injectivelabs/sdk-ts": "1.14.41",
@@ -31,13 +30,5 @@
     "prettier": "^3.8.3",
     "tailwindcss": "^4",
     "typescript": "^5"
-  },
-  "overrides": {
-    "@injectivelabs/utils": "1.14.41"
-  },
-  "pnpm": {
-    "overrides": {
-      "@injectivelabs/utils": "1.14.41"
-    }
   }
 }
