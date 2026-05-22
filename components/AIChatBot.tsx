@@ -5,7 +5,7 @@ import Image from "next/image";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useWallet } from "@/lib/useWallet";
 import { useChat } from "@/hooks/useChat";
-import { MsgSend, createTransaction, TxGrpcApi, ChainRestAuthApi, BaseAccount } from '@injectivelabs/sdk-ts';
+import { MsgSend, createTransaction, TxGrpcApi, ChainRestAuthApi, BaseAccount, createTxRawFromSigResponse } from '@injectivelabs/sdk-ts';
 import { Network, getNetworkEndpoints } from '@injectivelabs/networks';
 
 // ── TYPES AND INTERFACES ──────────────────────────────────────────────────────
@@ -85,6 +85,25 @@ Sign this message to authorize and execute this order on Hodegos Injective DEX.`
         dstInjectiveAddress: address,
       });
 
+      // 1. Resolve Public Key (Critical for new testnet accounts)
+      let pubKey = "";
+      if (baseAccount.pubKey && baseAccount.pubKey.key) {
+        pubKey = baseAccount.pubKey.key;
+      } else {
+        let keyInfo;
+        if (wallet === "keplr" && anyWindow.keplr) {
+          keyInfo = await anyWindow.keplr.getKey('injective-888');
+        } else if (wallet === "leap" && anyWindow.leap) {
+          keyInfo = await anyWindow.leap.getKey('injective-888');
+        } else if (wallet === "ninji" && anyWindow.ninji) {
+          keyInfo = await anyWindow.ninji.getKey('injective-888');
+        }
+        if (keyInfo && keyInfo.pubKey) {
+          const binary = Array.from(keyInfo.pubKey).map(b => String.fromCharCode(b)).join('');
+          pubKey = window.btoa(binary);
+        }
+      }
+
       const { signBytes, txRaw } = createTransaction({
         message: msg,
         memo: `Hodegos AI Execution: ${tx.side?.toUpperCase()} ${tx.amount} ${tx.asset} @ ${tx.price.toLowerCase() === 'market' ? 'Market' : tx.price}`,
@@ -92,7 +111,7 @@ Sign this message to authorize and execute this order on Hodegos Injective DEX.`
           amount: [{ amount: '2000000000000000', denom: 'inj' }],
           gas: '200000',
         },
-        pubKey: baseAccount.pubKey.key || "",
+        pubKey: pubKey,
         sequence: baseAccount.sequence,
         accountNumber: baseAccount.accountNumber,
         chainId: 'injective-888',
@@ -136,9 +155,10 @@ Sign this message to authorize and execute this order on Hodegos Injective DEX.`
 
       setStatus('broadcasting');
       
-      txRaw.signatures = [signatureResponse.signature.signature];
+      // Use SDK helper to construct standard Cosmos TxRaw from DirectSignResponse
+      const broadcastTxRaw = createTxRawFromSigResponse(signatureResponse);
       const txService = new TxGrpcApi(endpoints.grpc);
-      const txResponse = await txService.broadcast(txRaw);
+      const txResponse = await txService.broadcast(broadcastTxRaw);
 
       if (txResponse.code !== 0) {
         throw new Error(txResponse.rawLog || "Transaction failed to broadcast");
