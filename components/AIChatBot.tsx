@@ -99,7 +99,7 @@ Sign this message to authorize and execute this order on Hodegos Injective DEX.`
           keyInfo = await anyWindow.ninji.getKey('injective-888');
         }
         if (keyInfo && keyInfo.pubKey) {
-          const binary = Array.from(keyInfo.pubKey).map(b => String.fromCharCode(b)).join('');
+          const binary = Array.from(keyInfo.pubKey).map((b: any) => String.fromCharCode(b)).join('');
           pubKey = window.btoa(binary);
         }
       }
