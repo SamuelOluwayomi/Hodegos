@@ -127,7 +127,8 @@ function DirectExecutionPanel({
       const scaledPriceVal = priceVal * Math.pow(10, quoteDecimals - baseDecimals);
       const priceTicks = Math.round(scaledPriceVal / rule.minPriceTick);
       const alignedScaledPriceVal = Math.max(1, priceTicks) * rule.minPriceTick;
-      const scaledPrice = alignedScaledPriceVal.toFixed(18);
+      const tickDecimals = Math.max(0, Math.ceil(-Math.log10(rule.minPriceTick)));
+      const scaledPrice = alignedScaledPriceVal.toFixed(tickDecimals);
       const subaccountId = getDefaultSubaccountId(address);
 
       const msg = MsgCreateSpotLimitOrder.fromJSON({
