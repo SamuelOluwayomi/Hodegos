@@ -12,6 +12,10 @@
   --color-neo-cyan: #3FD2FF;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #000000;

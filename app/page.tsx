@@ -12,6 +12,13 @@ export default function Home() {
   const { isConnected, isInitialized } = useWallet();
   const router = useRouter();
 
+  const scrollToSection = (id: string) => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
   // If already connected (persisted session), skip landing page
   useEffect(() => {
     if (isInitialized && isConnected) {
@@ -67,13 +74,26 @@ export default function Home() {
 
         {/* Navigation Links */}
         <nav className="hidden md:flex items-center gap-4 absolute left-1/2 -translate-x-1/2 font-black text-xs uppercase tracking-widest whitespace-nowrap">
-          <Link href="#" className="border-2 border-black bg-white rounded-full px-4 py-1.5 shadow-[2px_4px_0px_0px_#000] hover:translate-x-[2px] hover:translate-y-[4px] hover:shadow-none transition-all">
+          <button 
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            className="border-2 border-black bg-white rounded-full px-4 py-1.5 shadow-[2px_4px_0px_0px_#000] hover:translate-x-[2px] hover:translate-y-[4px] hover:shadow-none transition-all cursor-pointer"
+          >
             Home
-          </Link>
+          </button>
           <span className="text-black/40 font-thin">/</span>
-          <Link href="#" className="hover:underline underline-offset-4 decoration-2">Simulate</Link>
+          <button 
+            onClick={() => scrollToSection("how-it-works")}
+            className="hover:underline underline-offset-4 decoration-2 cursor-pointer"
+          >
+            How It Works
+          </button>
           <span className="text-black/40 font-thin">/</span>
-          <Link href="#" className="hover:underline underline-offset-4 decoration-2">Trade</Link>
+          <button 
+            onClick={() => scrollToSection("bounty")}
+            className="hover:underline underline-offset-4 decoration-2 cursor-pointer"
+          >
+            Bounty
+          </button>
         </nav>
 
         {/* Call to Action */}
@@ -223,7 +243,7 @@ export default function Home() {
       </div>
       
       {/* Additional Sections */}
-      <section className="flex flex-col lg:flex-row items-center border-t-4 border-black shrink-0 bg-[#EAE8E0] py-16 px-6 lg:px-16 overflow-hidden relative min-h-[700px]">
+      <section id="how-it-works" className="flex flex-col lg:flex-row items-center border-t-4 border-black shrink-0 bg-[#EAE8E0] py-16 px-6 lg:px-16 overflow-hidden relative min-h-[700px]">
         
         {/* Background Dot Grid (subtle) */}
         <div
@@ -308,7 +328,7 @@ export default function Home() {
       </section>
 
       {/* ── Hackathon Section ── */}
-      <section className="relative border-t-4 border-black bg-neo-yellow overflow-hidden">
+      <section id="bounty" className="relative border-t-4 border-black bg-neo-yellow overflow-hidden">
 
         {/* Obvious Grid Background */}
         <div 
@@ -529,7 +549,7 @@ export default function Home() {
             <svg viewBox="0 0 100 100" width="100%" height="100%">
               <path id="hbp2" d="M50,50 m-36,0 a36,36 0 1,1 72,0 a36,36 0 1,1 -72,0" fill="transparent"/>
               <text fontSize="10.5" fontWeight="900" fill="#FFD23F" letterSpacing="1.5">
-                <textPath href="#hbp2">★ HACKATHON ★ 2026 ★</textPath>
+                <textPath href="#hbp2">★ Bounty ★ 2026 ★</textPath>
               </text>
             </svg>
           </div>
@@ -544,7 +564,7 @@ export default function Home() {
             className="flex items-center gap-2 bg-neo-orange text-black border-[3px] border-black rounded-full px-8 py-3.5 shadow-[4px_4px_0px_0px_#000] font-black uppercase tracking-widest text-sm hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none transition-all"
           >
             <Image src="/injective-logo.svg" alt="Injective" width={18} height={18} className="object-contain" />
-            View Hackathon →
+            View Bounty  →
           </a>
         </div>
 
