@@ -113,6 +113,13 @@ function DirectExecutionPanel({
       let priceVal = currentPrice;
       if (!isMarket) {
         priceVal = parseFloat(price) || currentPrice;
+      } else {
+        // Apply 5% slippage to ensure the market order doesn't fail testnet price deviation bounds
+        if (side === 'buy') {
+          priceVal = currentPrice * 1.05;
+        } else {
+          priceVal = currentPrice * 0.95;
+        }
       }
       const scaledPriceVal = priceVal * Math.pow(10, quoteDecimals - baseDecimals);
       const priceTicks = Math.round(scaledPriceVal / rule.minPriceTick);

@@ -44,7 +44,7 @@ export default function Home() {
 
       {/* Navbar */}
       <header
-        className="relative flex items-center px-6 shrink-0 bg-[#EAE8E0] z-30 border-b-4 border-black"
+        className="sticky top-0 w-full flex items-center px-6 shrink-0 bg-[#EAE8E0] z-100 border-b-4 border-black"
         style={{ height: "76px" }}
       >
         {/* Beta Bookmark */}
@@ -85,14 +85,14 @@ export default function Home() {
             onClick={() => scrollToSection("how-it-works")}
             className="hover:underline underline-offset-4 decoration-2 cursor-pointer"
           >
-            How It Works
+            Features
           </button>
           <span className="text-black/40 font-thin">/</span>
           <button 
             onClick={() => scrollToSection("bounty")}
             className="hover:underline underline-offset-4 decoration-2 cursor-pointer"
           >
-            Bounty
+            Hackathon
           </button>
         </nav>
 
@@ -271,8 +271,10 @@ export default function Home() {
             Every trading app assumes you already know what you're doing. We turn your curiosity into custom <span className="text-neo-orange font-black">learning, simulation, and execution</span> paths guided by an AI companion.
           </p>
 
-          <button className="mt-10 self-start bg-neo-orange text-white border-2 border-black rounded-full shadow-[2px_4px_0px_0px_#000] px-10 py-3.5 font-black uppercase tracking-widest text-sm hover:translate-x-[2px] hover:translate-y-[4px] hover:shadow-none transition-all">
-            Start My Baseline
+          <button 
+            onClick={() => setWalletModalOpen(true)}
+            className="mt-10 self-start bg-neo-orange text-white border-2 border-black rounded-full shadow-[2px_4px_0px_0px_#000] px-10 py-3.5 font-black uppercase tracking-widest text-sm hover:translate-x-[2px] hover:translate-y-[4px] hover:shadow-none transition-all">
+            Login to Start
           </button>
         </div>
 
