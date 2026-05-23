@@ -79,9 +79,28 @@ export default function MarketsPage() {
   const [activeTab, setActiveTab] = useState<"chart" | "depth">("chart");
   const [orderbook, setOrderbook] = useState<Orderbook | null>(null);
   const [orderbookLoading, setOrderbookLoading] = useState(false);
+  const [sentimentData, setSentimentData] = useState<Record<string, { sentiment: string; score: number; reason: string }>>({});
+  const [sentimentLoading, setSentimentLoading] = useState(false);
 
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
+
+  useEffect(() => {
+    const getSentiment = async () => {
+      setSentimentLoading(true);
+      try {
+        const res = await fetch("/api/sentiment");
+        if (res.ok) {
+          const data = await res.json();
+          setSentimentData(data);
+        }
+      } catch (err) {
+        console.error("Error loading sentiment:", err);
+      }
+      setSentimentLoading(false);
+    };
+    getSentiment();
+  }, []);
 
   const handleDisconnect = () => { disconnect(); router.replace("/"); };
 
@@ -351,7 +370,20 @@ export default function MarketsPage() {
                   }`}
                 >
                   <div>
-                    <div className="font-black text-xs">{row.ticker}</div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="font-black text-xs">{row.ticker}</div>
+                      {sentimentData[row.ticker.split("/")[0]] && (
+                        <span className={`text-[8px] font-black uppercase px-1 border border-black ${
+                          sentimentData[row.ticker.split("/")[0]].sentiment === "Bullish"
+                            ? "bg-neo-lime text-black"
+                            : sentimentData[row.ticker.split("/")[0]].sentiment === "Bearish"
+                            ? "bg-neo-orange text-white"
+                            : "bg-neo-yellow text-black"
+                        }`}>
+                          {sentimentData[row.ticker.split("/")[0]].sentiment[0]}
+                        </span>
+                      )}
+                    </div>
                     <div className={`font-bold text-[9px] ${selectedMarket.marketId === row.marketId ? "text-white/60" : "text-black/40"}`}>
                       {row.status === "loading" ? "—" : row.price > 0 ? `$${row.price.toFixed(row.price < 0.01 ? 6 : 2)}` : "—"}
                     </div>
@@ -583,6 +615,50 @@ export default function MarketsPage() {
                   </>
                 )}
               </div>
+            </div>
+
+            {/* AI Sentiment Mood Widget */}
+            <div className="p-4 border-b-2 border-black/10">
+              <div className="font-black text-[10px] uppercase tracking-widest text-black/40 mb-3 flex items-center justify-between">
+                <span>AI Sentiment Mood</span>
+                <span className="bg-black text-neo-lime text-[8px] font-black px-1.5 py-0.5 border border-black uppercase tracking-wider">AI Powered</span>
+              </div>
+              
+              {sentimentLoading ? (
+                <div className="border-[3px] border-black bg-white p-3 text-center animate-pulse">
+                  <div className="font-black text-[10px] uppercase tracking-wider text-black/50">Computing market mood...</div>
+                </div>
+              ) : sentimentData[selectedMarket.ticker.split("/")[0]] ? (() => {
+                const data = sentimentData[selectedMarket.ticker.split("/")[0]];
+                const badgeColor = data.sentiment === "Bullish" ? "bg-neo-lime text-black" : data.sentiment === "Bearish" ? "bg-neo-orange text-white" : "bg-neo-yellow text-black";
+                return (
+                  <div className="border-[3px] border-black bg-[#FEFDF9] p-3 flex flex-col gap-2 animate-fadeIn">
+                    <div className="flex justify-between items-center">
+                      <span className="font-black text-[10px] uppercase tracking-wider">{selectedMarket.ticker.split("/")[0]} Mood</span>
+                      <span className={`font-black text-[8px] uppercase px-1.5 py-0.5 border border-black ${badgeColor}`}>
+                        {data.sentiment} ({data.score}%)
+                      </span>
+                    </div>
+                    <p className="font-bold text-[10px] text-black/60 leading-relaxed">
+                      {data.reason}
+                    </p>
+                    <button
+                      onClick={() => {
+                        const base = selectedMarket.ticker.split("/")[0];
+                        const query = `Provide a comprehensive technical and fundamental analysis of ${base}/USDT on Injective. Market Sentiment is currently ${data.sentiment} with a score of ${data.score}%: "${data.reason}". Should I buy or sell right now, and what price targets should I look out for?`;
+                        window.dispatchEvent(new CustomEvent("open-hodegos-chat", { detail: { query } }));
+                      }}
+                      className="w-full text-center font-black text-[9px] uppercase bg-neo-yellow border-2 border-black py-1 hover:bg-white transition-colors mt-1"
+                    >
+                      Ask AI for Deep Analysis
+                    </button>
+                  </div>
+                );
+              })() : (
+                <div className="border-[3px] border-black bg-white p-3 text-center">
+                  <div className="font-black text-[10px] uppercase tracking-wider text-black/40">No sentiment data</div>
+                </div>
+              )}
             </div>
 
             {/* Quick trade buttons */}

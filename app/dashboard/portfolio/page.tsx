@@ -709,43 +709,74 @@ export default function PortfolioPage() {
                     </div>
                   </div>
 
-                  {/* AI Summary button */}
-                  <button
-                    onClick={handleAISummary}
-                    className="w-full p-4 border-4 border-black bg-black text-white neo-shadow hover:bg-neo-lime hover:text-black transition-all group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-neo-lime border-2 border-black flex items-center justify-center shrink-0 group-hover:bg-black group-hover:text-neo-lime transition-colors">
-                        <Robot size={20} weight="fill" />
+                  {/* Portfolio Rebalance Advisor */}
+                  <div className="border-4 border-black bg-white neo-shadow p-5 flex flex-col gap-4">
+                    <div className="flex justify-between items-center border-b-2 border-black/10 pb-3">
+                      <div>
+                        <h3 className="font-black text-xs uppercase tracking-widest flex items-center gap-1.5">
+                          <Robot size={16} weight="fill" className="text-neo-orange animate-pulse" /> Rebalance Advisor
+                        </h3>
+                        <p className="text-[8px] font-bold text-black/40 uppercase mt-0.5">Optimize asset weights</p>
                       </div>
-                      <div className="text-left">
-                        <div className="font-black text-xs uppercase tracking-wider">AI Portfolio Summary</div>
-                        <div className="font-bold text-[9px] opacity-60 mt-0.5">Get personalized analysis & advice</div>
-                      </div>
+                      <span className="bg-neo-orange text-black border border-black font-black text-[8px] px-1.5 py-0.5 uppercase tracking-widest">
+                        AI Model
+                      </span>
                     </div>
-                  </button>
 
-                  {/* Quick stats */}
-                  <div className="border-4 border-black bg-neo-lime neo-shadow p-5">
-                    <div className="font-black text-[9px] uppercase tracking-widest text-black/60 mb-2">Portfolio Summary</div>
-                    <div className="flex flex-col gap-2 text-xs">
-                      <div className="flex justify-between">
-                        <span className="font-bold text-black/60">Total Assets:</span>
-                        <span className="font-black">{assetsWithValue.length}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="font-bold text-black/60">Largest Holding:</span>
-                        <span className="font-black">
-                          {assetsWithValue.length > 0
-                            ? assetsWithValue.reduce((max, a) => a.value > max.value ? a : max, assetsWithValue[0]).symbol
-                            : "—"}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="font-bold text-black/60">Total Value:</span>
-                        <span className="font-black">${totalValue.toFixed(2)}</span>
-                      </div>
+                    <div className="flex flex-col gap-3">
+                      {(() => {
+                        const targets: Record<string, number> = { INJ: 30, USDT: 20, SOL: 20, WETH: 15, ATOM: 10, TIA: 5 };
+                        const order = ["INJ", "USDT", "ATOM", "WETH", "SOL", "TIA"];
+                        return order.map(sym => {
+                          const tb = tokenBalances[sym];
+                          const currentVal = tb ? tb.value : 0;
+                          const currentPct = totalValue > 0 ? (currentVal / totalValue) * 100 : 0;
+                          const targetPct = targets[sym] || 0;
+                          const diff = currentPct - targetPct;
+                          const color = TOKEN_CSS_CLASSES[sym] || "bg-black";
+                          
+                          return (
+                            <div key={sym} className="flex flex-col gap-1.5 border-b border-black/5 pb-1.5 last:border-b-0 last:pb-0">
+                              <div className="flex justify-between items-center">
+                                <div className="flex items-center gap-2">
+                                  <div className={`w-3 h-3 ${color} border border-black`} />
+                                  <span className="font-black text-[10px]">{sym}</span>
+                                </div>
+                                <div className="flex items-center gap-1.5 text-right">
+                                  <span className="font-bold text-[8px] text-black/40 uppercase">Cur: {currentPct.toFixed(0)}%</span>
+                                  <span className="font-bold text-[8px] text-black/40 uppercase">Tgt: {targetPct}%</span>
+                                  <span className={`font-black text-[8px] px-1 border border-black ${
+                                    Math.abs(diff) < 3 ? "bg-neo-lime text-black" : diff > 0 ? "bg-neo-orange text-black" : "bg-neo-yellow text-black"
+                                  }`}>
+                                    {diff === 0 ? "Perfect" : diff > 0 ? `+${diff.toFixed(0)}%` : `${diff.toFixed(0)}%`}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="h-1.5 w-full border border-black rounded-full overflow-hidden bg-[#EAE8E0] relative">
+                                <div className={`h-full ${color}`} style={{ width: `${currentPct}%` }} />
+                                <div className="absolute top-0 bottom-0 w-0.5 bg-black" style={{ left: `${targetPct}%` }} />
+                              </div>
+                            </div>
+                          );
+                        });
+                      })()}
                     </div>
+
+                    <button
+                      onClick={() => {
+                        const targets: Record<string, number> = { INJ: 30, USDT: 20, SOL: 20, WETH: 15, ATOM: 10, TIA: 5 };
+                        const breakDown = assets.map(a => {
+                          const currentPct = totalValue > 0 ? (a.value / totalValue) * 100 : 0;
+                          const targetPct = targets[a.symbol] || 0;
+                          return `${a.symbol}: Current ${currentPct.toFixed(1)}% vs Target ${targetPct}% (diff ${((currentPct - targetPct)).toFixed(1)}%)`;
+                        }).join("\n");
+                        const query = `Create an actionable rebalancing recipe for my portfolio. Here is my current asset allocation compared to my target weights:\n\n${breakDown}\n\nWhat exact trades should I make (e.g. Sell X SOL for USDT, Buy Y INJ) to restore balance? Please calculate the approximate USD amounts to trade based on my total portfolio value of $${totalValue.toFixed(2)}.`;
+                        window.dispatchEvent(new CustomEvent("open-hodegos-chat", { detail: { query } }));
+                      }}
+                      className="w-full text-center font-black text-[10px] uppercase bg-neo-yellow border-2 border-black py-2.5 hover:bg-white shadow-[2px_2px_0px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all"
+                    >
+                      Ask AI for Rebalance Plan
+                    </button>
                   </div>
                 </div>
               </div>
@@ -785,7 +816,8 @@ export default function PortfolioPage() {
                         <th className="p-4 border-r-2 border-black text-right">Price</th>
                         <th className="p-4 border-r-2 border-black text-right">Amount</th>
                         <th className="p-4 border-r-2 border-black text-right">Total</th>
-                        <th className="p-4 text-center">Transaction</th>
+                        <th className="p-4 border-r-2 border-black text-center">Transaction</th>
+                        <th className="p-4 text-center">AI Journal</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -824,7 +856,7 @@ export default function PortfolioPage() {
                             <td className="p-4 border-r-2 border-black text-right font-black text-xs">
                               ${totalVal.toFixed(2)}
                             </td>
-                            <td className="p-4 text-center whitespace-nowrap">
+                            <td className="p-4 border-r-2 border-black text-center whitespace-nowrap">
                               {trade.tx_hash ? (
                                 <a
                                   href={`https://testnet.explorer.injective.network/transaction/${trade.tx_hash}`}
@@ -837,6 +869,17 @@ export default function PortfolioPage() {
                               ) : (
                                 <span className="text-black/40 font-bold text-[10px] uppercase">Manual/Offchain</span>
                               )}
+                            </td>
+                            <td className="p-4 text-center whitespace-nowrap">
+                              <button
+                                onClick={() => {
+                                  const query = `Analyze this specific simulated trade from my journal:\nPair: ${trade.pair}\nSide: ${trade.side.toUpperCase()}\nOrder Type: ${trade.order_type.toUpperCase()}\nPrice: $${priceVal.toFixed(4)}\nAmount: ${amountVal.toFixed(4)} ${baseAsset}\nTotal Cost: $${totalVal.toFixed(2)}\nExecuted on: ${dateStr}\n\nGiven the asset and execution price, let me know if this was a smart entry/exit point, what risks I should keep in mind, and what lessons I can learn from this trade to improve my strategy.`;
+                                  window.dispatchEvent(new CustomEvent("open-hodegos-chat", { detail: { query } }));
+                                }}
+                                className="bg-neo-yellow border-2 border-black px-2 py-1 font-black text-[9px] uppercase hover:bg-white transition-colors"
+                              >
+                                Analyze
+                              </button>
                             </td>
                           </tr>
                         );

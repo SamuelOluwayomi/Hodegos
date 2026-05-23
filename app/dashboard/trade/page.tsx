@@ -10,7 +10,8 @@ import AskHodegosButton from "@/components/AskHodegosButton";
 import { FEATURED_MARKET_IDS, fetchMarketSummary } from "@/lib/injective";
 import { MsgCreateSpotLimitOrder, getDefaultSubaccountId, createTransaction, TxGrpcApi, BaseAccount, createTxRawFromSigResponse } from '@injectivelabs/sdk-ts';
 import { Network, getNetworkEndpoints } from '@injectivelabs/networks';
-import { Lightning, X, ArrowClockwise, CheckCircle, Robot } from "@phosphor-icons/react";
+import { Lightning, X, ArrowClockwise, CheckCircle, Robot, Bell } from "@phosphor-icons/react";
+import PriceAlerts from "@/components/PriceAlerts";
 
 const WALLET_LABELS: Partial<Record<WalletId, string>> = {
   keplr: "Keplr", leap: "Leap", ninji: "Ninji", metamask: "MetaMask",
@@ -43,7 +44,7 @@ const ASSET_PRICE_DEFAULTS: Record<string, number> = {
 // ── INLINE DIRECT EXECUTION COMPONENT ─────────────────────────────────────────
 
 function DirectExecutionPanel({
-  side, amount, baseAsset, price, orderType, address, wallet, onClose
+  side, amount, baseAsset, price, orderType, address, wallet, slippage = 5.0, onClose
 }: {
   side: "buy" | "sell";
   amount: string;
@@ -52,6 +53,7 @@ function DirectExecutionPanel({
   orderType: "market" | "limit";
   address: string;
   wallet: string | null;
+  slippage?: number;
   onClose: () => void;
 }) {
   const [status, setStatus] = useState<'idle' | 'signing' | 'broadcasting' | 'success' | 'failed'>('idle');
@@ -114,11 +116,12 @@ function DirectExecutionPanel({
       if (!isMarket) {
         priceVal = parseFloat(price) || currentPrice;
       } else {
-        // Apply 5% slippage to ensure the market order doesn't fail testnet price deviation bounds
+        // Apply dynamic slippage to ensure the market order doesn't fail testnet price deviation bounds
+        const slippageMultiplier = slippage / 100;
         if (side === 'buy') {
-          priceVal = currentPrice * 1.05;
+          priceVal = currentPrice * (1 + slippageMultiplier);
         } else {
-          priceVal = currentPrice * 0.95;
+          priceVal = currentPrice * (1 - slippageMultiplier);
         }
       }
       const scaledPriceVal = priceVal * Math.pow(10, quoteDecimals - baseDecimals);
@@ -320,7 +323,7 @@ function DirectExecutionPanel({
 // ── EXECUTION CHOICE MODAL ─────────────────────────────────────────────────────
 
 function ExecutionChoiceModal({
-  side, amount, baseAsset, price, orderType, address, wallet, onClose
+  side, amount, baseAsset, price, orderType, address, wallet, slippage = 5.0, onClose
 }: {
   side: "buy" | "sell";
   amount: string;
@@ -329,6 +332,7 @@ function ExecutionChoiceModal({
   orderType: "market" | "limit";
   address: string;
   wallet: string | null;
+  slippage?: number;
   onClose: () => void;
 }) {
   const [mode, setMode] = useState<"choose" | "direct">("choose");
@@ -351,6 +355,7 @@ function ExecutionChoiceModal({
             orderType={orderType}
             address={address}
             wallet={wallet}
+            slippage={slippage}
             onClose={onClose}
           />
         </div>
@@ -457,6 +462,10 @@ function TradeContent() {
   const [livePrice, setLivePrice] = useState(0);
   const [priceLoading, setPriceLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [slippage, setSlippage] = useState(5.0);
+  const [customSlippage, setCustomSlippage] = useState("");
+  const [showSlippagePanel, setShowSlippagePanel] = useState(false);
+  const [showAlertPanel, setShowAlertPanel] = useState(false);
 
   // Multi-coin balances
   const [tokenBalances, setTokenBalances] = useState<Record<string, { amount: number; price: number; value: number; name: string }>>({
@@ -610,22 +619,41 @@ function TradeContent() {
               {/* Price banner */}
               <div className="bg-black text-white border-4 border-black p-5 mb-6 neo-shadow relative overflow-hidden">
                 <div className="absolute -right-8 -top-8 w-32 h-32 rounded-full bg-neo-lime/10" />
-                <div className="relative z-10">
-                  <div className="font-black text-[9px] uppercase tracking-widest text-white/40 mb-1">{selectedMarket.ticker} • Live Price</div>
-                  {priceLoading ? (
-                    <div className="flex gap-1.5">
-                      {[0, 1, 2].map(i => <div key={i} className="w-2 h-2 bg-neo-lime rounded-full animate-bounce" style={{ animationDelay: `${i * 150}ms` }} />)}
+                <div className="relative z-10 flex justify-between items-center">
+                  <div>
+                    <div className="font-black text-[9px] uppercase tracking-widest text-white/40 mb-1">{selectedMarket.ticker} • Live Price</div>
+                    {priceLoading ? (
+                      <div className="flex gap-1.5">
+                        {[0, 1, 2].map(i => <div key={i} className="w-2 h-2 bg-neo-lime rounded-full animate-bounce" style={{ animationDelay: `${i * 150}ms` }} />)}
+                      </div>
+                    ) : (
+                      <div className="font-black text-3xl text-neo-lime">
+                        {livePrice > 0 ? `$${livePrice.toFixed(livePrice < 0.01 ? 6 : 2)}` : "—"}
+                      </div>
+                    )}
+                    <div className="flex items-center gap-1 mt-1">
+                      <span className="font-black text-[8px] uppercase text-neo-lime/70">Injective Testnet</span>
                     </div>
-                  ) : (
-                    <div className="font-black text-3xl text-neo-lime">
-                      {livePrice > 0 ? `$${livePrice.toFixed(livePrice < 0.01 ? 6 : 2)}` : "—"}
-                    </div>
-                  )}
-                  <div className="flex items-center gap-1 mt-1">
-                    <span className="font-black text-[8px] uppercase text-neo-lime/70">Injective Testnet</span>
                   </div>
+                  <button
+                    onClick={() => setShowAlertPanel(!showAlertPanel)}
+                    className="w-10 h-10 border-2 border-neo-lime bg-black hover:bg-neo-lime text-neo-lime hover:text-black flex items-center justify-center transition-colors shadow-[2px_2px_0px_0px_#9FEF6A]"
+                  >
+                    <Bell size={18} weight="fill" />
+                  </button>
                 </div>
               </div>
+
+              {/* Price Alerts Panel Overlay */}
+              {showAlertPanel && (
+                <div className="mb-6">
+                  <PriceAlerts
+                    ticker={selectedMarket.ticker}
+                    livePrice={livePrice}
+                    onClose={() => setShowAlertPanel(false)}
+                  />
+                </div>
+              )}
 
               {/* Order form */}
               <div className="border-4 border-black bg-white neo-shadow">
@@ -737,6 +765,145 @@ function TradeContent() {
                     )}
                   </div>
 
+                  {/* Slippage Settings */}
+                  <div className="border-[3px] border-black bg-white p-3">
+                    <div className="flex justify-between items-center">
+                      <span className="font-black text-[9px] uppercase tracking-widest text-black/50">Slippage Tolerance</span>
+                      <button
+                        type="button"
+                        onClick={() => setShowSlippagePanel(!showSlippagePanel)}
+                        className="text-[9px] font-black uppercase text-black hover:underline tracking-widest"
+                      >
+                        {showSlippagePanel ? "Hide Settings" : `Adjust (${slippage}%)`}
+                      </button>
+                    </div>
+
+                    {showSlippagePanel && (
+                      <div className="mt-3 flex flex-col gap-2 border-t-2 border-black/10 pt-3 animate-fadeIn">
+                        <div className="flex gap-1">
+                          {[0.5, 1.0, 2.0, 5.0].map((preset) => (
+                            <button
+                              key={preset}
+                              type="button"
+                              onClick={() => {
+                                setSlippage(preset);
+                                setCustomSlippage("");
+                              }}
+                              className={`flex-1 border-2 border-black py-1 font-black text-[9px] uppercase transition-colors ${
+                                slippage === preset && !customSlippage
+                                  ? "bg-black text-white"
+                                  : "bg-[#EAE8E0] hover:bg-neo-yellow"
+                              }`}
+                            >
+                              {preset}%
+                            </button>
+                          ))}
+                          <div className="relative flex-1">
+                            <input
+                              type="number"
+                              value={customSlippage}
+                              onChange={(e) => {
+                                const val = parseFloat(e.target.value) || 0;
+                                setCustomSlippage(e.target.value);
+                                setSlippage(val > 0 ? val : 0.5);
+                              }}
+                              placeholder="Custom"
+                              className="w-full text-center border-2 border-black bg-[#EAE8E0] py-1 font-black text-[9px] outline-none focus:bg-white transition-colors"
+                            />
+                            {customSlippage && <span className="absolute right-1 top-1/2 -translate-y-1/2 font-black text-[9px]">%</span>}
+                          </div>
+                        </div>
+
+                        <div className="flex justify-between items-center mt-1">
+                          <span className="font-bold text-[9px] text-black/40">
+                            AI Rec: {baseAsset === "TIA" || baseAsset === "SOL" ? "2.0% (High Volatility)" : "0.5% (Stable)"}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const query = `Explain how slippage works, how a slippage of ${slippage}% affects my fill price, and what slippage you recommend for ${baseAsset}/USDT given current market volatility.`;
+                              window.dispatchEvent(new CustomEvent("open-hodegos-chat", { detail: { query } }));
+                            }}
+                            className="font-black text-[9px] uppercase bg-neo-yellow border-2 border-black px-2 py-0.5 hover:bg-white transition-colors"
+                          >
+                            Ask AI Advisor
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Pre-Trade Risk Score */}
+                  {amount && parseFloat(amount) > 0 && (
+                    <div className="border-[3px] border-black bg-[#FEFDF9] p-3 flex flex-col gap-2 animate-fadeIn">
+                      <div className="flex justify-between items-center">
+                        <span className="font-black text-[9px] uppercase tracking-widest text-black/50">Pre-Trade Risk Score</span>
+                        <span className={`font-black text-xs px-2.5 py-0.5 border-2 border-black ${
+                          (() => {
+                            const totalPortfolioValue = Object.values(tokenBalances).reduce((acc, t) => acc + (t.amount * t.price), 0) || 1000;
+                            const sizePercentage = (total / totalPortfolioValue) * 100;
+                            let risk = 1;
+                            if (sizePercentage > 20) risk += 5;
+                            else if (sizePercentage > 5) risk += 3;
+                            else if (sizePercentage > 1) risk += 1;
+                            const volatilityScores: Record<string, number> = { INJ: 2, ATOM: 3, WETH: 1, SOL: 4, TIA: 5 };
+                            risk += volatilityScores[baseAsset] || 2;
+                            if (orderType === "market") risk += 2;
+                            if (slippage > 3) risk += 2;
+                            else if (slippage > 1) risk += 1;
+                            const clamped = Math.min(10, Math.max(1, risk));
+                            return clamped <= 3 ? "bg-neo-lime" : clamped <= 6 ? "bg-neo-yellow" : "bg-neo-orange";
+                          })()
+                        }`}>
+                          {(() => {
+                            const totalPortfolioValue = Object.values(tokenBalances).reduce((acc, t) => acc + (t.amount * t.price), 0) || 1000;
+                            const sizePercentage = (total / totalPortfolioValue) * 100;
+                            let risk = 1;
+                            if (sizePercentage > 20) risk += 5;
+                            else if (sizePercentage > 5) risk += 3;
+                            else if (sizePercentage > 1) risk += 1;
+                            const volatilityScores: Record<string, number> = { INJ: 2, ATOM: 3, WETH: 1, SOL: 4, TIA: 5 };
+                            risk += volatilityScores[baseAsset] || 2;
+                            if (orderType === "market") risk += 2;
+                            if (slippage > 3) risk += 2;
+                            else if (slippage > 1) risk += 1;
+                            const clamped = Math.min(10, Math.max(1, risk));
+                            return `${clamped}/10 — ${clamped <= 3 ? "Low" : clamped <= 6 ? "Moderate" : "High"}`;
+                          })()}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center text-[9px] font-bold text-black/40">
+                        <span>
+                          Size: {(() => {
+                            const totalPortfolioValue = Object.values(tokenBalances).reduce((acc, t) => acc + (t.amount * t.price), 0) || 1000;
+                            return ((total / totalPortfolioValue) * 100).toFixed(1);
+                          })()}% of portfolio
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const totalPortfolioValue = Object.values(tokenBalances).reduce((acc, t) => acc + (t.amount * t.price), 0) || 1000;
+                            const sizePercentage = (total / totalPortfolioValue) * 100;
+                            let risk = 1;
+                            if (sizePercentage > 20) risk += 5;
+                            else if (sizePercentage > 5) risk += 3;
+                            else if (sizePercentage > 1) risk += 1;
+                            const volatilityScores: Record<string, number> = { INJ: 2, ATOM: 3, WETH: 1, SOL: 4, TIA: 5 };
+                            risk += volatilityScores[baseAsset] || 2;
+                            if (orderType === "market") risk += 2;
+                            if (slippage > 3) risk += 2;
+                            const clamped = Math.min(10, Math.max(1, risk));
+                            const query = `Explain why my pre-trade risk score is ${clamped}/10 for executing a ${side.toUpperCase()} of ${amount} ${baseAsset} (${orderType} order, ${slippage}% slippage). Given that this represents ${sizePercentage.toFixed(1)}% of my portfolio, what are the primary risk considerations and how can I mitigate them?`;
+                            window.dispatchEvent(new CustomEvent("open-hodegos-chat", { detail: { query } }));
+                          }}
+                          className="font-black uppercase bg-neo-yellow border-2 border-black px-2 py-0.5 hover:bg-white text-black transition-colors"
+                        >
+                          Explain Risk
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Fees */}
                   <div className="flex justify-between font-bold text-[10px] text-black/40">
                     <span>Taker fee (0.05%)</span>
@@ -811,6 +978,7 @@ function TradeContent() {
           orderType={orderType}
           address={address}
           wallet={wallet}
+          slippage={slippage}
           onClose={() => setShowModal(false)}
         />
       )}
