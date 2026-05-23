@@ -25,7 +25,7 @@ const TOKEN_CONFIG: Record<string, { denom: string; decimals: number; coingeckoI
   },
   WETH: {
     denom: "factory/inj17vytdwqczqz72j65saukplrktd4gyfme5agf6c/weth",
-    decimals: 8,
+    decimals: 18,
     coingeckoId: "ethereum",
     defaultPrice: 2121.63,
     name: "Wrapped Ethereum",

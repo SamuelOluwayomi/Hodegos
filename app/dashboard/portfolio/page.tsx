@@ -148,25 +148,49 @@ export default function PortfolioPage() {
     };
   }, [address]);
 
-  // Build asset list from tokenBalances
+  // Build asset list from tokenBalances + completed trades (subaccount logic)
   const assets = useMemo(() => {
     const order = ["INJ", "USDT", "ATOM", "WETH", "SOL", "TIA"];
+    
+    // Calculate total net assets from simulated trades that exist in the subaccount
+    const subaccountHoldings: Record<string, number> = {};
+    
+    trades.forEach(trade => {
+      const baseAsset = trade.pair.split('/')[0];
+      const quoteAsset = trade.pair.split('/')[1] || "USDT";
+      const amount = parseFloat(trade.amount);
+      const totalCost = parseFloat(trade.total_value);
+      
+      if (!subaccountHoldings[baseAsset]) subaccountHoldings[baseAsset] = 0;
+      if (!subaccountHoldings[quoteAsset]) subaccountHoldings[quoteAsset] = 0;
+      
+      if (trade.side === 'buy') {
+        subaccountHoldings[baseAsset] += amount;
+      } else if (trade.side === 'sell') {
+        subaccountHoldings[quoteAsset] += totalCost;
+      }
+    });
+
     return order
       .filter(sym => tokenBalances[sym])
       .map(sym => {
         const tb = tokenBalances[sym];
+        const subaccountAmount = subaccountHoldings[sym] || 0;
+        const totalAmount = tb.amount + subaccountAmount;
+        const totalValue = sym === "USDT" ? totalAmount : totalAmount * tb.price;
+        
         return {
           symbol: sym,
           name: tb.name,
           price: tb.price,
-          amount: sym === "USDT" ? tb.amount.toFixed(2) : tb.amount.toFixed(4),
-          rawAmount: tb.amount,
-          value: tb.value,
+          amount: sym === "USDT" ? totalAmount.toFixed(2) : totalAmount.toFixed(4),
+          rawAmount: totalAmount,
+          value: totalValue,
           color: TOKEN_CSS_CLASSES[sym] || "bg-black",
           hexColor: TOKEN_COLORS[sym] || "#000000",
         };
       });
-  }, [tokenBalances]);
+  }, [tokenBalances, trades]);
   const totalValue = useMemo(() => assets.reduce((sum, a) => sum + a.value, 0), [assets]);
 
   // Compute realized & unrealized P&L and trading stats dynamically
