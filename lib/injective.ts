@@ -122,8 +122,15 @@ export async function fetchCandles(marketId: string, resolution: number = 3600):
     }));
   } catch {
     // Simulated testnet candles
+    const BASE_PRICES: Record<string, number> = {
+      '0x0611780ba69656949525013d947713300f56c37b6175e02f26bffa495c3208fe': 4.90, // INJ
+      '0x491ee4fae7956dd72b6a97805046ffef65892e1d3254c559c18056a519b2ca15': 2.00, // ATOM
+      '0xa97182f11f1aa5339c7f4c3fe3cc1c69b39079f11b864c86d912956c5c2db75c': 2100.00, // WETH
+      '0x2da41d4f7370e6d44240480bae530661ba3ae68682089810ea29beee1984985f': 86.00, // SOL
+      '0xa283fc94a9055a01a58bb6229b1e56a8bb54069a0debfce7fbd1e6c25a95330c': 2.25, // TIA
+    };
     const candles: Candle[] = [];
-    let currentPrice = Math.random() * 100 + 50;
+    let currentPrice = BASE_PRICES[marketId] || (Math.random() * 100 + 50);
     for (let i = 0; i < 200; i++) {
       const time = from + i * resolution;
       const open = currentPrice;
