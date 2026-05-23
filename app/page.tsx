@@ -157,19 +157,14 @@ export default function Home() {
 
           <div className="flex flex-wrap gap-3">
             <button
-              className="flex items-center gap-2 bg-neo-lime border-2 border-black rounded-full shadow-[2px_4px_0px_0px_#000] font-bold uppercase tracking-wider hover:translate-x-[2px] hover:translate-y-[4px] hover:shadow-none transition-all"
+              onClick={() => setWalletModalOpen(true)}
+              className="flex items-center gap-2 bg-neo-lime border-2 border-black rounded-full shadow-[2px_4px_0px_0px_#000] font-bold uppercase tracking-wider hover:translate-x-[2px] hover:translate-y-[4px] hover:shadow-none transition-all cursor-pointer"
               style={{ fontSize: "clamp(0.6rem, 0.9vw, 0.8rem)", padding: "10px 22px" }}
             >
-              Start Learning
+              Start Trading
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>
               </svg>
-            </button>
-            <button
-              className="flex items-center bg-white border-2 border-black rounded-full shadow-[2px_4px_0px_0px_#000] font-bold uppercase tracking-wider hover:translate-x-[2px] hover:translate-y-[4px] hover:shadow-none transition-all"
-              style={{ fontSize: "clamp(0.6rem, 0.9vw, 0.8rem)", padding: "10px 22px" }}
-            >
-              Simulate Trade
             </button>
           </div>
         </div>
