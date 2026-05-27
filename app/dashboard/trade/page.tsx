@@ -61,9 +61,7 @@ function DirectExecutionPanel({
   const [error, setError] = useState('');
 
   const parsedAmount = parseFloat(amount) || 0;
-  const parsedPrice = price.toLowerCase() === 'market'
-    ? (ASSET_PRICE_DEFAULTS[baseAsset] || 4.99)
-    : (parseFloat(price) || ASSET_PRICE_DEFAULTS[baseAsset] || 4.99);
+  const parsedPrice = parseFloat(price) || ASSET_PRICE_DEFAULTS[baseAsset] || 4.99;
   const totalCost = parsedAmount * parsedPrice;
 
   const handleExecute = async () => {
@@ -102,7 +100,7 @@ function DirectExecutionPanel({
         console.warn("Could not fetch live price, using fallback:", e);
       }
 
-      const isMarket = price.toLowerCase() === 'market';
+      const isMarket = orderType === 'market';
       const orderTypeNum = side === 'buy' ? 1 : 2;
 
       const rule = TICK_RULES[baseAsset] || { minPriceTick: 1e-15, minQtyTick: 1 };
@@ -254,7 +252,7 @@ function DirectExecutionPanel({
         </div>
         <div className="flex justify-between">
           <span className="font-bold text-black/50">Execution Price:</span>
-          <span className="font-black capitalize">{price.toLowerCase() === 'market' ? 'Market price' : `$${parsedPrice.toFixed(2)}`}</span>
+          <span className="font-black capitalize">{orderType === 'market' ? 'Market price' : `$${parsedPrice.toFixed(2)}`}</span>
         </div>
         <div className="flex justify-between">
           <span className="font-bold text-black/50">Estimated Total:</span>
@@ -352,7 +350,7 @@ function ExecutionChoiceModal({
             side={side}
             amount={amount}
             baseAsset={baseAsset}
-            price={orderType === "limit" ? price : "market"}
+            price={price}
             orderType={orderType}
             address={address}
             wallet={wallet}

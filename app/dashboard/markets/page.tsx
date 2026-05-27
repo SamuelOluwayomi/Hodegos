@@ -104,13 +104,22 @@ export default function MarketsPage() {
 
   const handleDisconnect = () => { disconnect(); router.replace("/"); };
 
-  // Fetch candle data
+  // Fetch candle data and sync last-close price to market row
   const loadCandles = useCallback(async (marketId: string, res: number) => {
     setCandleLoading(true);
     try {
       const data = await fetchCandles(marketId, res);
       if (data.length > 0) {
         setCandles(data);
+        // Sync the price ticker to the last candle close — this is what the chart shows
+        const lastClose = data[data.length - 1].close;
+        if (lastClose > 0) {
+          setMarketRows(prev => prev.map(row =>
+            row.marketId === marketId
+              ? { ...row, price: lastClose }
+              : row
+          ));
+        }
       }
     } catch { /* ignore */ }
     setCandleLoading(false);
