@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
 
     const toneSetting = TONE_PRESETS[aiTone] || TONE_PRESETS['friendly']
 
-    // Retrieve real-time rates from CoinGecko dynamically for AI reference context
+    // Retrieve real-time rates from Injective Testnet Orderbooks for AI reference context
     let injPrice = 4.99;
     let atomPrice = 2.01;
     let solPrice = 86.23;
@@ -96,15 +96,32 @@ export async function POST(req: NextRequest) {
     let ethPrice = 2121.63;
 
     try {
-      const priceRes = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=injective-protocol,cosmos,solana,celestia,ethereum&vs_currencies=usd");
-      if (priceRes.ok) {
-        const priceData = await priceRes.json();
-        injPrice = priceData["injective-protocol"]?.usd || injPrice;
-        atomPrice = priceData["cosmos"]?.usd || atomPrice;
-        solPrice = priceData["solana"]?.usd || solPrice;
-        tiaPrice = priceData["celestia"]?.usd || tiaPrice;
-        ethPrice = priceData["ethereum"]?.usd || ethPrice;
-      }
+      const EXCHANGE = 'https://testnet.sentry.exchange.grpc-web.injective.network';
+      const markets = [
+        { id: '0x0611780ba69656949525013d947713300f56c37b6175e02f26bffa495c3208fe', setter: (p: number) => injPrice = p },
+        { id: '0x491ee4fae7956dd72b6a97805046ffef65892e1d3254c559c18056a519b2ca15', setter: (p: number) => atomPrice = p },
+        { id: '0xa97182f11f1aa5339c7f4c3fe3cc1c69b39079f11b864c86d912956c5c2db75c', setter: (p: number) => ethPrice = p },
+        { id: '0x2da41d4f7370e6d44240480bae530661ba3ae68682089810ea29beee1984985f', setter: (p: number) => solPrice = p },
+        { id: '0xa283fc94a9055a01a58bb6229b1e56a8bb54069a0debfce7fbd1e6c25a95330c', setter: (p: number) => tiaPrice = p }
+      ];
+
+      await Promise.all(markets.map(async (m) => {
+        try {
+          const res = await fetch(`${EXCHANGE}/api/exchange/v1beta1/spot/orderbook/${m.id}`, { next: { revalidate: 10 } });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.orderbook) {
+              const bids = data.orderbook.buys || [];
+              const asks = data.orderbook.sells || [];
+              let p = 0;
+              if (bids.length > 0 && asks.length > 0) p = (parseFloat(bids[0].price) + parseFloat(asks[0].price)) / 2;
+              else if (bids.length > 0) p = parseFloat(bids[0].price);
+              else if (asks.length > 0) p = parseFloat(asks[0].price);
+              if (p > 0) m.setter(p);
+            }
+          }
+        } catch (e) { /* ignore individual failures */ }
+      }));
     } catch (err) {
       console.error("Error fetching rates inside chat API:", err);
     }
@@ -235,7 +252,8 @@ CRITICAL FORMATTING RULES:
 - If the user asks something outside trading/crypto, gently redirect them.
 
 TRANSACTION INITIATION:
-When the user asks you to buy/sell assets, place a trade, or execute a transaction, you MUST initiate it by outputting the transaction parameters inside [TX] tags at the end of your message in this EXACT format:
+CRITICAL RULE: ONLY generate a [TX] block if the user EXPLICITLY asks you to place a trade, buy, sell, or execute an order. DO NOT generate a [TX] block if the user is simply asking for analysis, asking for price targets, or asking "should I buy?".
+When the user EXPLICITLY asks you to execute a transaction, you MUST initiate it by outputting the transaction parameters inside [TX] tags at the end of your message in this EXACT format:
 [TX]
 side: [buy or sell]
 amount: [amount, number only]

@@ -20,15 +20,32 @@ export async function GET() {
   try {
     let prices = { INJ: 4.99, ATOM: 2.01, WETH: 2121.63, SOL: 86.23, TIA: 0.40 };
     try {
-      const priceRes = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=injective-protocol,cosmos,solana,celestia,ethereum&vs_currencies=usd");
-      if (priceRes.ok) {
-        const priceData = await priceRes.json();
-        prices.INJ = priceData["injective-protocol"]?.usd || prices.INJ;
-        prices.ATOM = priceData["cosmos"]?.usd || prices.ATOM;
-        prices.SOL = priceData["solana"]?.usd || prices.SOL;
-        prices.TIA = priceData["celestia"]?.usd || prices.TIA;
-        prices.WETH = priceData["ethereum"]?.usd || prices.WETH;
-      }
+      const EXCHANGE = 'https://testnet.sentry.exchange.grpc-web.injective.network';
+      const markets = [
+        { id: '0x0611780ba69656949525013d947713300f56c37b6175e02f26bffa495c3208fe', setter: (p: number) => prices.INJ = p },
+        { id: '0x491ee4fae7956dd72b6a97805046ffef65892e1d3254c559c18056a519b2ca15', setter: (p: number) => prices.ATOM = p },
+        { id: '0xa97182f11f1aa5339c7f4c3fe3cc1c69b39079f11b864c86d912956c5c2db75c', setter: (p: number) => prices.WETH = p },
+        { id: '0x2da41d4f7370e6d44240480bae530661ba3ae68682089810ea29beee1984985f', setter: (p: number) => prices.SOL = p },
+        { id: '0xa283fc94a9055a01a58bb6229b1e56a8bb54069a0debfce7fbd1e6c25a95330c', setter: (p: number) => prices.TIA = p }
+      ];
+
+      await Promise.all(markets.map(async (m) => {
+        try {
+          const res = await fetch(`${EXCHANGE}/api/exchange/v1beta1/spot/orderbook/${m.id}`, { next: { revalidate: 10 } });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.orderbook) {
+              const bids = data.orderbook.buys || [];
+              const asks = data.orderbook.sells || [];
+              let p = 0;
+              if (bids.length > 0 && asks.length > 0) p = (parseFloat(bids[0].price) + parseFloat(asks[0].price)) / 2;
+              else if (bids.length > 0) p = parseFloat(bids[0].price);
+              else if (asks.length > 0) p = parseFloat(asks[0].price);
+              if (p > 0) m.setter(p);
+            }
+          }
+        } catch (e) { /* ignore individual failures */ }
+      }));
     } catch (e) {
       console.warn("Sentiment fetch price warning:", e);
     }

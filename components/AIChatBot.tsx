@@ -8,6 +8,7 @@ import { useChat } from "@/hooks/useChat";
 import { MsgCreateSpotMarketOrder, MsgCreateSpotLimitOrder, getDefaultSubaccountId, createTransaction, TxGrpcApi, BaseAccount, createTxRawFromSigResponse } from '@injectivelabs/sdk-ts';
 import { Network, getNetworkEndpoints } from '@injectivelabs/networks';
 import { ArrowClockwise, CheckCircle, HandWaving, X } from "@phosphor-icons/react";
+import { FEATURED_MARKET_IDS } from "@/lib/injective";
 
 // ── TYPES AND INTERFACES ──────────────────────────────────────────────────────
 
@@ -102,11 +103,36 @@ function TransactionCard({ tx, address, wallet, msgTimestamp }: { tx: TxData; ad
   }, [status, txHash, error, address, msgTimestamp, tx.raw]);
 
 
+  const [livePrice, setLivePrice] = useState<number | null>(null);
+
+  // Fetch live price on mount
+  useEffect(() => {
+    let mounted = true;
+    const ticker = `${tx.asset}/USDT`;
+    const marketId = FEATURED_MARKET_IDS[ticker];
+    if (marketId) {
+      fetch(`/api/markets/summary?marketId=${marketId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (mounted && data.price) {
+            setLivePrice(parseFloat(data.price));
+          }
+        })
+        .catch(console.warn);
+    }
+    return () => { mounted = false; };
+  }, [tx.asset]);
+
+  const fallbackMap: Record<string, number> = { INJ: 4.99, USDT: 1.0, ATOM: 2.01, SOL: 86.23, TIA: 0.40, WETH: 2121.63 };
+  const currentTokenPrice = livePrice !== null ? livePrice : (fallbackMap[tx.asset] || 4.99);
+
   const handleExecute = async () => {
     setStatus('signing');
     setError('');
 
-    const totalCost = tx.amount * (tx.price.toLowerCase() === 'market' ? 4.99 : parseFloat(tx.price) || 4.99);
+    const limitVal = tx.price.toLowerCase() === 'market' ? currentTokenPrice : parseFloat(tx.price) || currentTokenPrice;
+    const totalCost = tx.amount * limitVal;
+    
     const messageText = `HODEGOS AI TRANSACTION APPROVAL
 ---------------------------------
 Action: ${tx.side?.toUpperCase()}
@@ -171,7 +197,7 @@ Sign this message to authorize and execute this order on Hodegos Injective DEX.`
       const quoteDecimals = 6; // USDT
 
       // Fetch live price for slippage calculations
-      let currentPrice = assetPriceMap[tx.asset] || 4.99;
+      let currentPrice = currentTokenPrice;
       try {
         const priceRes = await fetch(`/api/markets/summary?marketId=${marketId}`);
         if (priceRes.ok) {
@@ -296,7 +322,7 @@ Sign this message to authorize and execute this order on Hodegos Injective DEX.`
       }
 
       try {
-        const pVal = tx.price.toLowerCase() === 'market' ? tokenPrice : (parseFloat(tx.price) || tokenPrice);
+        const pVal = tx.price.toLowerCase() === 'market' ? currentTokenPrice : (parseFloat(tx.price) || currentTokenPrice);
         const orderType = tx.price.toLowerCase() === 'market' ? 'market' : 'limit';
         await fetch('/api/trades', {
           method: 'POST',
@@ -328,17 +354,7 @@ Sign this message to authorize and execute this order on Hodegos Injective DEX.`
     }
   };
 
-  const assetPriceMap: Record<string, number> = {
-    INJ: 4.99,
-    USDT: 1.00,
-    ATOM: 2.01,
-    SOL: 86.23,
-    TIA: 0.40,
-    WETH: 2121.63,
-  };
-
-  const tokenPrice = assetPriceMap[tx.asset] || 4.99;
-  const limitVal = tx.price.toLowerCase() === 'market' ? tokenPrice : parseFloat(tx.price) || tokenPrice;
+  const limitVal = tx.price.toLowerCase() === 'market' ? currentTokenPrice : parseFloat(tx.price) || currentTokenPrice;
   const totalCost = tx.amount * limitVal;
 
   return (

@@ -59,37 +59,47 @@ const MARKET_TO_COINGECKO_ID: Record<string, { id: string, defaultPrice: number 
   '0xa283fc94a9055a01a58bb6229b1e56a8bb54069a0debfce7fbd1e6c25a95330c': { id: 'celestia', defaultPrice: 0.40 }
 };
 
-// Fetch orderbook summary/ticker from Injective exchange API
 export async function fetchMarketSummary(marketId: string): Promise<MarketSummary | null> {
   try {
-    // If running in browser, fetch through server proxy to bypass CORS
     if (typeof window !== "undefined") {
       const res = await fetch(`/api/markets/summary?marketId=${marketId}`);
       if (res.ok) {
         return await res.json();
       }
     } else {
-      // If running on server side, query CoinGecko directly
-      const coin = MARKET_TO_COINGECKO_ID[marketId];
-      if (coin) {
-        const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${coin.id}&vs_currencies=usd`);
-        if (res.ok) {
-          const data = await res.json();
-          const price = data[coin.id]?.usd ?? coin.defaultPrice;
-          return {
-            market_id: marketId,
-            price: price.toFixed(4),
-            price_24h_ago: (price * 0.985).toFixed(4),
-            volume: "154230.00"
-          };
+      // Server side: read directly from the testnet orderbook
+      const res = await fetch(`${EXCHANGE}/api/exchange/v1beta1/spot/orderbook/${marketId}`, { next: { revalidate: 10 } });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.orderbook) {
+          const bids = data.orderbook.buys || [];
+          const asks = data.orderbook.sells || [];
+          
+          let price = 0;
+          if (bids.length > 0 && asks.length > 0) {
+            price = (parseFloat(bids[0].price) + parseFloat(asks[0].price)) / 2;
+          } else if (bids.length > 0) {
+            price = parseFloat(bids[0].price);
+          } else if (asks.length > 0) {
+            price = parseFloat(asks[0].price);
+          }
+
+          if (price > 0) {
+            return {
+              market_id: marketId,
+              price: price.toFixed(4),
+              price_24h_ago: (price * 0.985).toFixed(4),
+              volume: "154230.00"
+            };
+          }
         }
       }
     }
   } catch (err) {
-    console.error("fetchMarketSummary proxy error:", err);
+    console.error("fetchMarketSummary orderbook error:", err);
   }
 
-  // Fallback to static realistic price seed if offline/rate-limited
+  // Fallback to static testnet seed if offline
   const coin = MARKET_TO_COINGECKO_ID[marketId] || { id: 'injective-protocol', defaultPrice: 4.99 };
   const basePrice = coin.defaultPrice;
   return {
