@@ -8,7 +8,7 @@ import { useWallet, WalletId } from "@/lib/useWallet";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import AskHodegosButton from "@/components/AskHodegosButton";
 import { FEATURED_MARKET_IDS, fetchMarketSummary } from "@/lib/injective";
-import { MsgCreateSpotLimitOrder, getDefaultSubaccountId, createTransaction, TxGrpcApi, BaseAccount, createTxRawFromSigResponse } from '@injectivelabs/sdk-ts';
+import { MsgCreateSpotMarketOrder, MsgCreateSpotLimitOrder, getDefaultSubaccountId, createTransaction, TxGrpcApi, BaseAccount, createTxRawFromSigResponse } from '@injectivelabs/sdk-ts';
 import { Network, getNetworkEndpoints } from '@injectivelabs/networks';
 import { Lightning, X, ArrowClockwise, CheckCircle, Robot, Bell } from "@phosphor-icons/react";
 import PriceAlerts from "@/components/PriceAlerts";
@@ -129,7 +129,15 @@ function DirectExecutionPanel({
       const scaledPrice = alignedScaledPriceVal.toFixed(tickDecimals);
       const subaccountId = getDefaultSubaccountId(address);
 
-      const msg = MsgCreateSpotLimitOrder.fromJSON({
+      const msg = isMarket ? MsgCreateSpotMarketOrder.fromJSON({
+        subaccountId,
+        injectiveAddress: address,
+        orderType: side === 'buy' ? 3 : 4, // 3 = buy market, 4 = sell market
+        price: scaledPrice,
+        quantity,
+        marketId,
+        feeRecipient: address,
+      }) : MsgCreateSpotLimitOrder.fromJSON({
         subaccountId,
         injectiveAddress: address,
         orderType: orderTypeNum,

@@ -229,10 +229,15 @@ Sign this message to authorize and execute this order on Hodegos Injective DEX.`
       const scaledPrice = alignedScaledPriceVal.toFixed(18);
       const subaccountId = getDefaultSubaccountId(address);
 
-      // We use MsgCreateSpotLimitOrder for all trades on testnet.
-      // Since public testnet order books are empty (0 liquidity), standard Market Orders (MsgCreateSpotMarketOrder)
-      // will fail. Placing a Limit Order acts as a maker order and successfully registers on-chain.
-      const msg = MsgCreateSpotLimitOrder.fromJSON({
+      const msg = isMarket ? MsgCreateSpotMarketOrder.fromJSON({
+        subaccountId,
+        injectiveAddress: address,
+        orderType: tx.side === 'buy' ? 3 : 4,
+        price: scaledPrice,
+        quantity,
+        marketId,
+        feeRecipient: address,
+      }) : MsgCreateSpotLimitOrder.fromJSON({
         subaccountId,
         injectiveAddress: address,
         orderType,

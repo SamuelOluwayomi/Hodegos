@@ -59,47 +59,37 @@ const MARKET_TO_COINGECKO_ID: Record<string, { id: string, defaultPrice: number 
   '0xa283fc94a9055a01a58bb6229b1e56a8bb54069a0debfce7fbd1e6c25a95330c': { id: 'celestia', defaultPrice: 0.40 }
 };
 
+// Fetch orderbook summary/ticker from Injective exchange API
 export async function fetchMarketSummary(marketId: string): Promise<MarketSummary | null> {
   try {
+    // If running in browser, fetch through server proxy to bypass CORS
     if (typeof window !== "undefined") {
       const res = await fetch(`/api/markets/summary?marketId=${marketId}`);
       if (res.ok) {
         return await res.json();
       }
     } else {
-      // Server side: read directly from the testnet orderbook
-      const res = await fetch(`${EXCHANGE}/api/exchange/v1beta1/spot/orderbook/${marketId}`, { next: { revalidate: 10 } });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.orderbook) {
-          const bids = data.orderbook.buys || [];
-          const asks = data.orderbook.sells || [];
-          
-          let price = 0;
-          if (bids.length > 0 && asks.length > 0) {
-            price = (parseFloat(bids[0].price) + parseFloat(asks[0].price)) / 2;
-          } else if (bids.length > 0) {
-            price = parseFloat(bids[0].price);
-          } else if (asks.length > 0) {
-            price = parseFloat(asks[0].price);
-          }
-
-          if (price > 0) {
-            return {
-              market_id: marketId,
-              price: price.toFixed(4),
-              price_24h_ago: (price * 0.985).toFixed(4),
-              volume: "154230.00"
-            };
-          }
+      // If running on server side, query CoinGecko directly
+      const coin = MARKET_TO_COINGECKO_ID[marketId];
+      if (coin) {
+        const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${coin.id}&vs_currencies=usd`);
+        if (res.ok) {
+          const data = await res.json();
+          const price = data[coin.id]?.usd ?? coin.defaultPrice;
+          return {
+            market_id: marketId,
+            price: price.toFixed(4),
+            price_24h_ago: (price * 0.985).toFixed(4),
+            volume: "154230.00"
+          };
         }
       }
     }
   } catch (err) {
-    console.error("fetchMarketSummary orderbook error:", err);
+    console.error("fetchMarketSummary proxy error:", err);
   }
 
-  // Fallback to static testnet seed if offline
+  // Fallback to static realistic price seed if offline/rate-limited
   const coin = MARKET_TO_COINGECKO_ID[marketId] || { id: 'injective-protocol', defaultPrice: 4.99 };
   const basePrice = coin.defaultPrice;
   return {
@@ -115,13 +105,26 @@ export async function fetchCandles(marketId: string, resolution: number = 3600):
   const to = Math.floor(Date.now() / 1000);
   const from = to - resolution * 200; // last 200 candles
   
+  // Use the actual live CoinGecko price as the anchor for the chart
   let livePrice = 4.90;
+  const BASE_PRICES: Record<string, number> = {
+    '0x0611780ba69656949525013d947713300f56c37b6175e02f26bffa495c3208fe': 4.90, // INJ
+    '0x491ee4fae7956dd72b6a97805046ffef65892e1d3254c559c18056a519b2ca15': 2.00, // ATOM
+    '0xa97182f11f1aa5339c7f4c3fe3cc1c69b39079f11b864c86d912956c5c2db75c': 2100.00, // WETH
+    '0x2da41d4f7370e6d44240480bae530661ba3ae68682089810ea29beee1984985f': 86.00, // SOL
+    '0xa283fc94a9055a01a58bb6229b1e56a8bb54069a0debfce7fbd1e6c25a95330c': 2.25, // TIA
+  };
+
   try {
     const summary = await fetchMarketSummary(marketId);
     if (summary && parseFloat(summary.price) > 0) {
       livePrice = parseFloat(summary.price);
+    } else {
+      livePrice = BASE_PRICES[marketId] || 50;
     }
-  } catch { /* ignore */ }
+  } catch {
+    livePrice = BASE_PRICES[marketId] || 50;
+  }
 
   const candles: Candle[] = new Array(200);
   let currentPrice = livePrice;
