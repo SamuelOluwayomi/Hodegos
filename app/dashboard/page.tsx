@@ -8,6 +8,7 @@ import { useWallet, WalletId } from "@/lib/useWallet";
 import OnboardingModal from "@/components/onboarding/OnboardingModal";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import AskHodegosButton from "@/components/AskHodegosButton";
+import NewsSection from "@/components/NewsSection";
 import { useChat } from "@/hooks/useChat";
 import { FEATURED_MARKET_IDS, fetchMarketSummary, formatVolume } from "@/lib/injective";
 import { getTierProgress } from "@/lib/tiers";
@@ -38,6 +39,10 @@ export default function DashboardPage() {
   const [tokenBalances, setTokenBalances] = useState<Record<string, { amount: number; price: number; value: number; name: string }>>({});
   const [isPortfolioLoading, setIsPortfolioLoading] = useState(true);
 
+  // Agentic AI alerts state
+  const [aiAlerts, setAiAlerts] = useState<{ asset: string; severity: 'info' | 'warning'; message: string }[]>([]);
+  const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(new Set());
+
   useEffect(() => {
     if (!address) return;
 
@@ -49,6 +54,33 @@ export default function DashboardPage() {
           const data = await res.json();
           if (data.tokenBalances) {
             setTokenBalances(data.tokenBalances);
+
+            // Trigger AI alert check after portfolio loads (once per session)
+            try {
+              const totalValue = Object.values(data.tokenBalances as Record<string, { amount: number; price: number; value: number }>).reduce((s, t) => s + t.value, 0);
+              const holdings = Object.entries(data.tokenBalances as Record<string, { amount: number; price: number; value: number; name: string }>)
+                .filter(([, t]) => t.amount > 0)
+                .map(([symbol, t]) => ({
+                  symbol,
+                  amount: t.amount,
+                  price: t.price,
+                  valueUsd: t.value,
+                  portfolioPercent: totalValue > 0 ? parseFloat(((t.value / totalValue) * 100).toFixed(1)) : 0,
+                }));
+              const alertRes = await fetch('/api/alerts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ portfolioContext: { holdings, totalValueUsd: totalValue } }),
+              });
+              if (alertRes.ok) {
+                const alertData = await alertRes.json();
+                if (alertData.alerts?.length) {
+                  setAiAlerts(alertData.alerts);
+                }
+              }
+            } catch (alertErr) {
+              console.warn('AI alerts fetch error:', alertErr);
+            }
           }
         }
       } catch (err) {
@@ -242,6 +274,55 @@ export default function DashboardPage() {
                   </div>
                 </div>
               </div>
+
+              {/* AI Agentic Alerts */}
+              {aiAlerts
+                .filter(a => !dismissedAlerts.has(a.asset + a.message))
+                .map((alert) => (
+                  <div
+                    key={alert.asset + alert.message}
+                    className={`flex items-start justify-between gap-3 border-[3px] border-black px-4 py-3 ${
+                      alert.severity === 'warning' ? 'bg-neo-orange' : 'bg-neo-lime'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3 flex-1">
+                      <div className="shrink-0 mt-0.5">
+                        {alert.severity === 'warning' ? (
+                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                            <line x1="12" y1="9" x2="12" y2="13"/>
+                            <line x1="12" y1="17" x2="12.01" y2="17"/>
+                          </svg>
+                        ) : (
+                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="12" y1="8" x2="12" y2="12"/>
+                            <line x1="12" y1="16" x2="12.01" y2="16"/>
+                          </svg>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-black text-[9px] uppercase tracking-widest mb-0.5">Hodegos AI Alert — {alert.asset}</p>
+                        <p className="font-bold text-xs leading-snug">{alert.message}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <AskHodegosButton
+                        query={`Tell me more about what is happening with ${alert.asset} right now and what I should consider doing.`}
+                        label="Ask AI"
+                      />
+                      <button
+                        onClick={() => setDismissedAlerts(prev => new Set([...prev, alert.asset + alert.message]))}
+                        className="w-6 h-6 border-2 border-black bg-white flex items-center justify-center hover:bg-[#EAE8E0] transition-colors"
+                        title="Dismiss"
+                      >
+                        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
+                          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                ))}
 
               {/* 3 Stat Cards */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

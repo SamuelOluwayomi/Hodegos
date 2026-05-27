@@ -1,5 +1,6 @@
 import Groq from 'groq-sdk'
 import { NextRequest, NextResponse } from 'next/server'
+import { fetchOrderbook, FEATURED_MARKET_IDS } from '@/lib/injective'
 
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY?.trim(),
@@ -16,9 +17,74 @@ const TONE_PRESETS: Record<string, string> = {
   socratic: `Your tone is inquisitive and thought-provoking. Instead of directly explaining, ask guiding questions that lead the user to discover answers themselves. Use the Socratic method. Respond with "What do you think would happen if...?", "Why do you think that is?", "Can you spot the pattern here?" Push them to think critically about trading.`,
 }
 
+// Detect which asset the user is most likely asking about
+function detectAsset(message: string): string {
+  const msg = message.toUpperCase();
+  if (msg.includes('ATOM')) return 'ATOM/USDT';
+  if (msg.includes('WETH') || msg.includes('ETH')) return 'WETH/USDT';
+  if (msg.includes('SOL')) return 'SOL/USDT';
+  if (msg.includes('TIA')) return 'TIA/USDT';
+  return 'INJ/USDT'; // default
+}
+
+// Build a human-readable orderbook snippet for the AI
+function buildOrderbookContext(ticker: string, bids: any[], asks: any[]): string {
+  if (!bids.length && !asks.length) return '';
+
+  const topBids = bids.slice(0, 5).map(b => `$${b.price.toFixed(4)} (${b.quantity.toFixed(2)})`).join(', ');
+  const topAsks = asks.slice(0, 5).map(a => `$${a.price.toFixed(4)} (${a.quantity.toFixed(2)})`).join(', ');
+  
+  const spread = asks.length && bids.length ? (asks[0].price - bids[0].price) : 0;
+  const spreadPct = asks.length && bids[0]?.price > 0 ? ((spread / bids[0].price) * 100).toFixed(3) : '0';
+
+  // Wall detection: flag any ask level that is >3x the average ask quantity
+  let wallWarning = '';
+  if (asks.length >= 3) {
+    const avgAskQty = asks.slice(0, 5).reduce((s, a) => s + a.quantity, 0) / Math.min(5, asks.length);
+    const wall = asks.find(a => a.quantity > avgAskQty * 3);
+    if (wall) {
+      wallWarning = `\nSELL WALL DETECTED at $${wall.price.toFixed(4)} — ${wall.quantity.toFixed(2)} units (${(wall.quantity / avgAskQty).toFixed(1)}x avg). This may act as resistance.`;
+    }
+  }
+  if (bids.length >= 3) {
+    const avgBidQty = bids.slice(0, 5).reduce((s, b) => s + b.quantity, 0) / Math.min(5, bids.length);
+    const wall = bids.find(b => b.quantity > avgBidQty * 3);
+    if (wall) {
+      wallWarning += `\nBUY WALL DETECTED at $${wall.price.toFixed(4)} — ${wall.quantity.toFixed(2)} units (${(wall.quantity / avgBidQty).toFixed(1)}x avg). This may act as support.`;
+    }
+  }
+
+  return `INJECTIVE LIVE ORDERBOOK — ${ticker} (top 5 levels):
+BIDS (buy support):   ${topBids}
+ASKS (sell pressure): ${topAsks}
+Spread: $${spread.toFixed(4)} (${spreadPct}%)${wallWarning}
+Use this orderbook data to recommend smarter limit order entry prices. Translate it into plain beginner-friendly language — avoid jargon like "bid/ask" without explaining it.`;
+}
+
+// Build a human-readable portfolio snapshot for the AI
+function buildPortfolioContext(portfolioContext: any): string {
+  if (!portfolioContext?.holdings?.length) return '';
+
+  const { holdings, totalValueUsd } = portfolioContext;
+  const lines = holdings.map((h: any) =>
+    `- ${h.symbol}: ${h.amount.toFixed(4)} tokens @ $${h.price.toFixed(2)} = $${h.valueUsd.toFixed(2)} (${h.portfolioPercent}% of portfolio)`
+  ).join('\n');
+
+  const concentrated = holdings.filter((h: any) => h.portfolioPercent > 60);
+  let riskNote = '';
+  if (concentrated.length > 0) {
+    riskNote = `\nCONCENTRATION RISK: ${concentrated[0].symbol} makes up ${concentrated[0].portfolioPercent}% of the portfolio. For a beginner, this is high risk. You should proactively flag this if relevant to the conversation.`;
+  }
+
+  return `LIVE PORTFOLIO SNAPSHOT (user's current on-chain holdings):
+${lines}
+Total Portfolio Value: $${totalValueUsd}${riskNote}
+Use this data to give personalized, actionable portfolio advice when the user asks about their holdings, performance, or what to do next.`;
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const { messages, marketContext, pageContext, userLevel, aiTone, userName, onboardingStep } = await req.json()
+    const { messages, marketContext, pageContext, portfolioContext, userLevel, aiTone, userName, onboardingStep } = await req.json()
 
     const toneSetting = TONE_PRESETS[aiTone] || TONE_PRESETS['friendly']
 
@@ -43,6 +109,24 @@ export async function POST(req: NextRequest) {
       console.error("Error fetching rates inside chat API:", err);
     }
 
+    // Fetch Injective orderbook for the most relevant asset in the conversation
+    let orderbookBlock = '';
+    try {
+      const lastUserMessage = messages.filter((m: any) => m.role === 'user').slice(-1)[0]?.content || '';
+      const ticker = detectAsset(lastUserMessage);
+      const marketId = FEATURED_MARKET_IDS[ticker];
+      if (marketId) {
+        const priceForMarket = ticker.startsWith('INJ') ? injPrice : ticker.startsWith('ATOM') ? atomPrice : ticker.startsWith('WETH') ? ethPrice : ticker.startsWith('SOL') ? solPrice : tiaPrice;
+        const orderbook = await fetchOrderbook(marketId, priceForMarket);
+        orderbookBlock = buildOrderbookContext(ticker, orderbook.bids, orderbook.asks);
+      }
+    } catch (err) {
+      console.warn("Could not fetch orderbook for chat context:", err);
+    }
+
+    // Build portfolio context block
+    const portfolioBlock = buildPortfolioContext(portfolioContext);
+
     const systemPrompt = `You are Hodegos AI — the personal AI trading guide built into the Hodegos platform on Injective blockchain.
 
 LIVE REAL-TIME CONVERSION RATES (USDT):
@@ -54,6 +138,8 @@ LIVE REAL-TIME CONVERSION RATES (USDT):
 
 Use the LIVE REAL-TIME CONVERSION RATES listed above in your responses. When calculating totals, estimated costs, or conversion rates, you MUST use these exact prices so your calculations align with the user's dashboard view.
 
+${portfolioBlock ? `${portfolioBlock}\n` : ''}
+${orderbookBlock ? `${orderbookBlock}\n` : ''}
 USER CURRENT LOCATION/ROUTE CONTEXT:
 - The user is currently checking/viewing this page: ${pageContext || "/dashboard"}
 - Use this context to personalize your answers (e.g. if they are on the trade page, you can help them trade; if they are on the portfolio page, help them analyze their assets, etc.).
@@ -83,6 +169,8 @@ YOUR CAPABILITIES:
 - Run quizzes to test understanding and award XP points
 - Guide users through simulated (paper) trades
 - Analyze markets and explain what's happening
+- Analyze the user's personal portfolio and provide risk assessments
+- Draft market orders, limit orders, and stop-loss orders based on natural language
 - Generate social media posts about trades
 - Remember user preferences and adapt accordingly
 
@@ -147,19 +235,42 @@ CRITICAL FORMATTING RULES:
 - If the user asks something outside trading/crypto, gently redirect them.
 
 TRANSACTION INITIATION:
-- If the user asks you to buy/sell assets, place a trade, or execute a transaction, you MUST initiate it by outputting the transaction parameters inside [TX] tags at the end of your message in this EXACT format:
+When the user asks you to buy/sell assets, place a trade, or execute a transaction, you MUST initiate it by outputting the transaction parameters inside [TX] tags at the end of your message in this EXACT format:
 [TX]
 side: [buy or sell]
 amount: [amount, number only]
 asset: [token symbol, e.g. INJ, USDT, ATOM, SOL, TIA, WETH]
 price: [market or a specific limit price number]
 [/TX]
-Do not put any other text inside the [TX] block. Keep it exactly as shown. For example:
+Do not put any other text inside the [TX] block. Keep it exactly as shown.
+
+SMART LIMIT ORDER & STOP-LOSS RULES:
+You must intelligently parse natural language trade requests and calculate actual prices:
+
+- "buy X INJ if it drops a bit" → calculate 5% below current price. Output price: [currentPrice * 0.95]
+- "buy X INJ if it dips to $Y" → output price: Y
+- "buy X INJ only if it drops Z%" → output price: [currentPrice * (1 - Z/100)]
+- "set a stop loss at $Y" → output a sell [TX] with price: Y
+- "cut my losses if INJ drops Z%" → output a sell [TX] with price: [currentPrice * (1 - Z/100)]
+- "sell X INJ when it hits $Y" (take profit) → output a sell [TX] with price: Y
+- "buy at market" or "buy now" → output price: market
+
+Always tell the user the calculated price BEFORE outputting the [TX] block so they understand what they are signing. For example: "I'll set a limit buy at $4.74 (5% below the current $4.99). Here's the order:"
+
+Example limit buy:
 [TX]
 side: buy
 amount: 3
 asset: INJ
-price: market
+price: 4.74
+[/TX]
+
+Example stop loss:
+[TX]
+side: sell
+amount: 5
+asset: INJ
+price: 4.50
 [/TX]
 `
 

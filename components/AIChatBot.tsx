@@ -472,6 +472,7 @@ export default function AIChatBot() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatInput, setChatInput] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<"all" | "lessons" | "trades" | "advisor">("all");
+  const [portfolioContext, setPortfolioContext] = useState<object | undefined>(undefined);
   const { address, wallet, isInitialized, isConnected } = useWallet();
   
   const pathname = usePathname();
@@ -487,6 +488,39 @@ export default function AIChatBot() {
   } = useChat(address || undefined);
 
   const currentUrl = `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
+
+  // Fetch the user's live portfolio for AI context
+  useEffect(() => {
+    if (!address) return;
+    const fetchPortfolio = async () => {
+      try {
+        const res = await fetch(`/api/portfolio?address=${address}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.tokenBalances) {
+            // Build a compact summary for the AI prompt
+            const totalValue = Object.values(data.tokenBalances as Record<string, { amount: number; price: number; value: number; name: string }>).reduce((sum, t) => sum + t.value, 0);
+            const summary = Object.entries(data.tokenBalances as Record<string, { amount: number; price: number; value: number; name: string }>)
+              .filter(([, t]) => t.amount > 0)
+              .map(([symbol, t]) => ({
+                symbol,
+                amount: t.amount,
+                price: t.price,
+                valueUsd: t.value,
+                portfolioPercent: totalValue > 0 ? parseFloat(((t.value / totalValue) * 100).toFixed(1)) : 0,
+              }));
+            setPortfolioContext({ holdings: summary, totalValueUsd: parseFloat(totalValue.toFixed(2)) });
+          }
+        }
+      } catch (err) {
+        console.warn("AIChatBot: Failed to fetch portfolio context:", err);
+      }
+    };
+    fetchPortfolio();
+    // Refresh portfolio context every 60 seconds while chat is open
+    const interval = setInterval(fetchPortfolio, 60000);
+    return () => clearInterval(interval);
+  }, [address]);
 
   // Automatically scroll chat container to latest message
   const scrollToBottom = () => {
@@ -507,24 +541,24 @@ export default function AIChatBot() {
       if (query) {
         clearMessages();
         setTimeout(() => {
-          chatSend(query, undefined, currentUrl);
+          chatSend(query, undefined, currentUrl, portfolioContext);
         }, 50);
       }
     };
     window.addEventListener("open-hodegos-chat", handleOpenChat);
     return () => window.removeEventListener("open-hodegos-chat", handleOpenChat);
-  }, [chatSend, clearMessages, currentUrl]);
+  }, [chatSend, clearMessages, currentUrl, portfolioContext]);
 
   const handleChatSend = () => {
     const sanitized = chatInput.replace(/<[^>]*>?/gm, "").trim();
     if (!sanitized || chatLoading) return;
-    chatSend(sanitized, undefined, currentUrl);
+    chatSend(sanitized, undefined, currentUrl, portfolioContext);
     setChatInput("");
   };
 
   const handleQuickAction = (actionText: string) => {
     if (chatLoading) return;
-    chatSend(actionText, undefined, currentUrl);
+    chatSend(actionText, undefined, currentUrl, portfolioContext);
   };
 
   // Helper to categorize messages dynamically

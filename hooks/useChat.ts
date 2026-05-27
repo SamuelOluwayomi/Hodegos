@@ -292,6 +292,7 @@ function useChatRaw(walletAddress?: string) {
     userMessage: string,
     marketContext?: object,
     pageContext?: string,
+    portfolioContext?: object,
   ) => {
     // Cancel any ongoing request
     if (abortRef.current) {
@@ -347,6 +348,7 @@ function useChatRaw(walletAddress?: string) {
           messages: newMessages.map(m => ({ role: m.role, content: m.content })),
           marketContext,
           pageContext,
+          portfolioContext,
           userLevel: getTierByXP(profile.xp).level,
           aiTone: profile.aiTone,
           userName: profile.userName,
