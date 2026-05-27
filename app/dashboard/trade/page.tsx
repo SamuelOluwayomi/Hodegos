@@ -132,7 +132,7 @@ function DirectExecutionPanel({
       const msg = isMarket ? MsgCreateSpotMarketOrder.fromJSON({
         subaccountId,
         injectiveAddress: address,
-        orderType: side === 'buy' ? 3 : 4, // 3 = buy market, 4 = sell market
+        orderType: side === 'buy' ? 1 : 2, // 1 = buy, 2 = sell (side)
         price: scaledPrice,
         quantity,
         marketId,

@@ -232,7 +232,7 @@ Sign this message to authorize and execute this order on Hodegos Injective DEX.`
       const msg = isMarket ? MsgCreateSpotMarketOrder.fromJSON({
         subaccountId,
         injectiveAddress: address,
-        orderType: tx.side === 'buy' ? 3 : 4,
+        orderType: tx.side === 'buy' ? 1 : 2,
         price: scaledPrice,
         quantity,
         marketId,
