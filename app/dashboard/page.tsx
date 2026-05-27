@@ -238,7 +238,7 @@ export default function DashboardPage() {
           </header>
 
           {/* Main Dashboard Content */}
-          <div className="flex-1 overflow-auto p-6 md:p-8 flex flex-col xl:flex-row gap-8">
+          <div className="flex-1 overflow-y-auto p-6 md:p-8 flex flex-col xl:flex-row gap-8">
 
             {/* Left Content Column */}
             <div className="flex-1 flex flex-col gap-8">
@@ -275,8 +275,16 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* AI Agentic Alerts */}
-              {aiAlerts
+              {/* AI Agentic Alerts — deduplicated: one alert per asset, warning takes priority */}
+              {Object.values(
+                aiAlerts.reduce((acc, alert) => {
+                  const existing = acc[alert.asset];
+                  if (!existing || (existing.severity === 'info' && alert.severity === 'warning')) {
+                    acc[alert.asset] = alert;
+                  }
+                  return acc;
+                }, {} as Record<string, typeof aiAlerts[0]>)
+              )
                 .filter(a => !dismissedAlerts.has(a.asset + a.message))
                 .map((alert) => (
                   <div
@@ -371,7 +379,7 @@ export default function DashboardPage() {
               </div>
 
               {/* Markets Table */}
-              <div className="bg-neo-yellow border-4 border-black flex flex-col mt-2 neo-shadow overflow-hidden">
+              <div className="bg-neo-yellow border-4 border-black flex flex-col mt-2 neo-shadow">
                 {/* Table header / filters */}
                 <div className="flex flex-col sm:flex-row items-center justify-between border-b-4 border-black bg-white px-4 py-3 gap-4">
                   <div className="flex gap-2 font-black text-[10px] uppercase tracking-widest">
@@ -452,7 +460,9 @@ export default function DashboardPage() {
 
             </div>
 
-            {/* Floating AI Assistant removed - now handled globally by AIChatBot in dashboard layout */}
+            {/* AI-Narrated News Briefing */}
+            <NewsSection />
+
           </div>
         </div>
       </div>

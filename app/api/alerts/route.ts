@@ -66,20 +66,20 @@ Portfolio total value: $${totalValueUsd}
 24-hour price movements for held assets:
 ${assetLines}
 
-Your job: Generate 0 to 2 short, actionable, beginner-friendly alert messages based on notable price movements (moves > 4% in either direction) or concentration risk. 
+Your job: Generate 0 to 2 short, actionable, beginner-friendly alert messages based on notable price movements or concentration risk.
 
 Rules:
-- Only generate an alert if there is something genuinely notable (a move of >4% in 24h, or a token making up >65% of the portfolio).
+- NEVER produce more than one alert per asset. If both a price move and concentration risk apply to the same asset, combine them into a single alert message.
+- Only generate an alert if there is something genuinely notable (a price move of >4% in 24h, or a token making up >65% of the portfolio).
 - If nothing notable has happened, return an empty alerts array.
-- Keep each alert under 20 words.
+- Keep each alert under 25 words.
 - Do NOT use emojis or markdown.
 - Be direct, not alarmist.
 
 Respond with ONLY a JSON object in this exact format, no extra text:
 {
   "alerts": [
-    { "asset": "INJ", "severity": "warning", "message": "INJ dropped 8% today. Your position is now worth $41.20." },
-    { "asset": "SOL", "severity": "info", "message": "SOL is up 12% today. Consider taking some profit." }
+    { "asset": "INJ", "severity": "warning", "message": "INJ dropped 8% today. Your position is now worth $41.20." }
   ]
 }
 
