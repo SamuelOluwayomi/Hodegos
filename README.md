@@ -23,7 +23,12 @@ At the core of the platform is an embedded conversational AI that acts as a pers
 - **Educational Quizzes:** The AI conducts dynamic quizzes, automatically parsing answers and awarding XP to gamify the learning process.
 - **Intent Parsing & Transaction Drafting:** Through natural language processing, the AI understands when a user wants to execute a trade. It parses this intent into structured data and automatically drafts the transaction parameters for the user to confirm.
 
-### 2. Market Sentiment Analysis
+### 2. AI-Narrated Market Briefing (News)
+- **Live Aggregation:** Hodegos automatically polls the CryptoPanic API for the latest breaking crypto news across major assets.
+- **Smart Summarization:** Instead of dumping raw articles, the Groq AI reads the headlines and dynamically rewrites them into 2-sentence, jargon-free summaries explicitly tailored for a beginner trader learning the ropes.
+- **Auto-Refresh Loop:** The system maintains a synchronized 30-minute cache and polling loop to ensure news is always fresh without overwhelming the AI limits.
+
+### 3. Market Sentiment Analysis
 - The AI ingests real-time price data for major crypto assets (INJ, ATOM, SOL, WETH, TIA).
 - It generates structured sentiment scores (Bullish, Bearish, Neutral) and provides concise, human-readable market summaries, translating raw data into digestible market intelligence.
 
@@ -34,8 +39,9 @@ At the core of the platform is an embedded conversational AI that acts as a pers
 Hodegos is deeply integrated with the Injective ecosystem using the `@injectivelabs/sdk-ts` and `@injectivelabs/networks` packages.
 
 - **Real-Time Market Data:** The application fetches active spot and perpetual markets directly from Injective's decentralized orderbooks.
+- **Advanced Demo Synchronization:** To provide a flawless educational experience, Hodegos bridges the gap between testnet and mainnet. It pulls real-world Mainnet prices from CoinGecko, dynamically generates realistic candlestick charts anchored to those live prices, and routes real `MsgCreateSpotMarketOrder` transactions to the Injective Testnet—ensuring users experience true market conditions without risking real capital.
 - **Zero-Intimidation Environment:** By leveraging Injective's lightning-fast execution and near-zero gas fees, Hodegos removes the traditional friction associated with on-chain trading.
-- **On-Chain Execution:** After graduating from the simulation phase, users can connect their Web3 wallets (via integrated wallet providers) to execute real spot and perpetual trades directly on the Injective network.
+- **On-Chain Execution:** After graduating from the simulation phase, users can connect their Web3 wallets (via integrated wallet providers like Keplr, Leap, and Ninji) to execute real spot trades directly on the Injective network.
 
 ---
 

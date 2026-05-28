@@ -14,12 +14,19 @@ interface NewsItem {
   publishedAt: string
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
+    const { searchParams } = new URL(req.url);
+    const force = searchParams.get('force') === 'true';
+
     // CryptoPanic public API — no key required for basic access
+    const fetchOptions = force 
+      ? { cache: 'no-store' as RequestCache } 
+      : { next: { revalidate: 1800 } }; // cache for 30 minutes
+
     const newsRes = await fetch(
       'https://cryptopanic.com/api/v1/posts/?auth_token=public&currencies=INJ,BTC,ETH&kind=news&public=true',
-      { next: { revalidate: 600 } } // cache for 10 minutes
+      fetchOptions
     )
 
     let rawArticles: any[] = []

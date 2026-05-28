@@ -104,21 +104,26 @@ export default function NewsSection() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
 
+  const fetchNews = async (force = false) => {
+    try {
+      setIsLoading(true);
+      const res = await fetch(`/api/news${force ? '?force=true' : ''}`);
+      if (!res.ok) throw new Error("Failed to fetch");
+      const data = await res.json();
+      setArticles(data.articles || []);
+    } catch {
+      setError(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchNews = async () => {
-      try {
-        setIsLoading(true);
-        const res = await fetch("/api/news");
-        if (!res.ok) throw new Error("Failed to fetch");
-        const data = await res.json();
-        setArticles(data.articles || []);
-      } catch {
-        setError(true);
-      } finally {
-        setIsLoading(false);
-      }
-    };
     fetchNews();
+    
+    // Refresh news topics every 30 minutes (30 * 60 * 1000 ms)
+    const interval = setInterval(() => fetchNews(), 1800000);
+    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -127,13 +132,27 @@ export default function NewsSection() {
       <div className="flex items-center justify-between border-b-4 border-black pb-3">
         <div className="flex items-center gap-3">
           <h2 className="font-black text-base uppercase tracking-widest">Market Briefing</h2>
-          <div className="bg-neo-orange border-2 border-black px-2 py-0.5 font-black text-[9px] uppercase tracking-widest">
+          <div className="bg-neo-orange border-2 border-black px-2 py-0.5 font-black text-[9px] uppercase tracking-widest hidden sm:block">
             AI Narrated
           </div>
         </div>
-        <span className="font-bold text-[10px] uppercase tracking-wider text-black/40">
-          {articles.length > 0 ? `${articles.length} stories` : ""}
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="font-bold text-[10px] uppercase tracking-wider text-black/40 hidden sm:inline-block">
+            {articles.length > 0 ? `${articles.length} stories` : ""}
+          </span>
+          <button
+            onClick={() => fetchNews(true)}
+            disabled={isLoading}
+            className="flex items-center gap-1.5 bg-white border-2 border-black px-2 py-1 font-black text-[9px] uppercase tracking-widest hover:bg-[#EAE8E0] transition-colors disabled:opacity-50"
+          >
+            <svg className={`w-3 h-3 ${isLoading ? 'animate-spin' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
+              <polyline points="23 4 23 10 17 10"></polyline>
+              <polyline points="1 20 1 14 7 14"></polyline>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+            Refresh
+          </button>
+        </div>
       </div>
 
       {/* Loading skeleton */}
