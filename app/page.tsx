@@ -89,6 +89,13 @@ export default function Home() {
           </button>
           <span className="text-black/40 font-thin">/</span>
           <button 
+            onClick={() => scrollToSection("why-injective")}
+            className="hover:underline underline-offset-4 decoration-2 cursor-pointer"
+          >
+            Why Injective
+          </button>
+          <span className="text-black/40 font-thin">/</span>
+          <button 
             onClick={() => scrollToSection("bounty")}
             className="hover:underline underline-offset-4 decoration-2 cursor-pointer"
           >
@@ -322,6 +329,142 @@ export default function Home() {
 
         </div>
 
+      </section>
+
+      {/* ── Why Injective Section ── */}
+      <section id="why-injective" className="relative border-t-4 border-black bg-black overflow-hidden">
+
+        {/* Subtle grid */}
+        <div
+          className="absolute inset-0 opacity-[0.08] pointer-events-none"
+          style={{
+            backgroundImage: "linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)",
+            backgroundSize: "60px 60px"
+          }}
+        />
+
+        {/* Decorative elements */}
+        <svg className="absolute top-12 right-16 w-6 h-6 opacity-20" viewBox="0 0 24 24" fill="#D0EE51">
+          <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z"/>
+        </svg>
+        <svg className="absolute bottom-20 left-10 w-4 h-4 opacity-15" viewBox="0 0 24 24" fill="none" stroke="#FFD23F" strokeWidth="2">
+          <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z"/>
+        </svg>
+
+        <div className="relative z-10 max-w-6xl mx-auto px-6 lg:px-16 py-20">
+
+          {/* Header */}
+          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 mb-16">
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <Image src="/injective-logo.svg" alt="Injective" width={20} height={20} className="object-contain opacity-60" />
+                <span className="font-black text-[10px] uppercase tracking-[0.2em] text-white/40">The Infrastructure</span>
+              </div>
+              <h2 className="font-black uppercase text-4xl lg:text-6xl leading-[0.93] text-white tracking-tight">
+                Why<br />
+                <span className="relative inline-block">
+                  <span className="relative z-10">Injective?</span>
+                  <div className="absolute bottom-1 left-0 right-0 h-3 lg:h-5 bg-neo-lime z-[-1]" />
+                </span>
+              </h2>
+            </div>
+            <p className="font-bold text-white/50 text-sm max-w-xs leading-relaxed lg:text-right">
+              Hodegos was built specifically for Injective because the chain&apos;s architecture enables things that are impossible on most other networks.
+            </p>
+          </div>
+
+          {/* Stats row */}
+          <div className="grid grid-cols-3 gap-0 border-[3px] border-white/10 mb-12 overflow-hidden">
+            {[
+              { value: "< 1s", label: "Block Finality", sub: "Orders settle in under one second" },
+              { value: "0%", label: "Maker Fees", sub: "No fees on most spot market maker orders" },
+              { value: "100%", label: "On-Chain", sub: "Fully decentralised orderbook, no central server" },
+            ].map((stat, i) => (
+              <div key={i} className={`p-8 ${i < 2 ? "border-r-[3px] border-white/10" : ""}`}>
+                <div className="font-black text-4xl lg:text-5xl text-neo-lime mb-2">{stat.value}</div>
+                <div className="font-black text-xs uppercase tracking-widest text-white mb-1">{stat.label}</div>
+                <div className="font-bold text-[11px] text-white/40 leading-snug">{stat.sub}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Feature cards */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+            {/* Left — tall feature card */}
+            <div className="bg-white/5 border-[3px] border-white/10 p-8 flex flex-col gap-6 hover:border-neo-lime/40 transition-colors duration-300">
+              <div className="w-10 h-10 bg-neo-lime border-2 border-black flex items-center justify-center shrink-0">
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                </svg>
+              </div>
+              <div>
+                <h3 className="font-black uppercase text-xl text-white mb-3 tracking-tight">Native DEX Orderbook</h3>
+                <p className="font-bold text-white/50 text-sm leading-relaxed">
+                  Injective runs a fully on-chain, decentralised orderbook. Every order Hodegos users place goes through the same infrastructure that institutional traders use. There is no intermediary, no custodial risk, and no hidden spread. Hodegos connects to this orderbook directly using the Injective SDK — no bridge, no wrapper.
+                </p>
+              </div>
+              <div className="mt-auto pt-6 border-t border-white/10">
+                <div className="font-black text-[9px] uppercase tracking-widest text-white/30 mb-2">Hodegos uses this for</div>
+                <div className="flex flex-wrap gap-2">
+                  {["MsgCreateSpotMarketOrder", "MsgCreateSpotLimitOrder", "TxGrpcApi broadcast"].map(tag => (
+                    <span key={tag} className="bg-white/5 border border-white/10 px-2 py-1 font-black text-[9px] uppercase tracking-widest text-white/40">{tag}</span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Right — stacked cards */}
+            <div className="flex flex-col gap-6">
+              <div className="bg-neo-lime border-[3px] border-black p-6 flex gap-5 hover:translate-x-1 hover:translate-y-1 transition-transform duration-200">
+                <div className="w-8 h-8 bg-black border-2 border-black flex items-center justify-center shrink-0 mt-0.5">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="#D0EE51" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 6v6l4 2"/>
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="font-black uppercase text-base text-black mb-2 tracking-tight">Sub-Second Execution</h3>
+                  <p className="font-bold text-black/70 text-xs leading-relaxed">
+                    Injective&apos;s Tendermint-based consensus produces blocks in approximately 1 second. When Hodegos users submit a trade, it is confirmed and final before they can second-guess it. For a beginner learning market orders, this removes the anxiety of pending state.
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-white/5 border-[3px] border-white/10 p-6 flex gap-5 hover:border-neo-orange/40 transition-colors duration-300">
+                <div className="w-8 h-8 bg-neo-orange border-2 border-black flex items-center justify-center shrink-0 mt-0.5">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="font-black uppercase text-base text-white mb-2 tracking-tight">Subaccount Architecture</h3>
+                  <p className="font-bold text-white/50 text-xs leading-relaxed">
+                    Injective&apos;s subaccount system allows Hodegos to isolate testnet trading activity from the user&apos;s main wallet. Beginners practice in a contained environment without touching their primary holdings. The same address structure works identically on Mainnet when they are ready.
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-white/5 border-[3px] border-white/10 p-6 flex gap-5 hover:border-neo-lime/40 transition-colors duration-300">
+                <div className="w-8 h-8 bg-white/10 border-2 border-white/20 flex items-center justify-center shrink-0 mt-0.5">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="#D0EE51" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="font-black uppercase text-base text-white mb-2 tracking-tight">Real Markets, Zero Fees</h3>
+                  <p className="font-bold text-white/50 text-xs leading-relaxed">
+                    Injective charges zero maker fees on most spot markets. For a beginner-focused product, this means users are not penalised for learning. Hodegos surfaces this fact directly in the trade panel so users understand what they are paying before they sign.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        {/* Bottom rule */}
+        <div className="border-t-4 border-white/10 relative z-10" />
       </section>
 
       {/* ── Hackathon Section ── */}
