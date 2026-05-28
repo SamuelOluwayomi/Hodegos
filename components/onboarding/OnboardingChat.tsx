@@ -21,6 +21,86 @@ interface OnboardingChatProps {
   hideInput?: boolean;
 }
 
+const renderMarkdown = (text: string) => {
+  if (!text) return null;
+  const lines = text.split('\n');
+  return lines.map((line, i) => {
+    let isBullet = false;
+    let cleanLine = line.trim();
+    if (cleanLine.startsWith('***')) {
+      isBullet = true;
+      cleanLine = cleanLine.substring(1);
+    } else if (cleanLine.startsWith('* ')) {
+      isBullet = true;
+      cleanLine = cleanLine.substring(2);
+    } else if (cleanLine.startsWith('- ')) {
+      isBullet = true;
+      cleanLine = cleanLine.substring(2);
+    }
+
+    if (cleanLine.startsWith('[IMAGE_PLACEHOLDER:') && cleanLine.endsWith(']')) {
+      const desc = cleanLine.slice(19, -1).trim().toLowerCase();
+      let src = "";
+      let alt = "Trading Illustration";
+      
+      if (desc.includes("trading") || desc.includes("intro") || desc.includes("buy")) {
+        src = "/trading_intro.png";
+        alt = "Introduction to Trading";
+      } else if (desc.includes("exchange") || desc.includes("order book")) {
+        src = "/crypto_exchanges.png";
+        alt = "Crypto Exchanges & Order Books";
+      } else if (desc.includes("pair") || desc.includes("pairs")) {
+        src = "/trading_pairs.png";
+        alt = "Trading Pairs";
+      } else if (desc.includes("order") || desc.includes("market") || desc.includes("limit")) {
+        src = "/market_limit.png";
+        alt = "Market vs Limit Orders";
+      } else if (desc.includes("chart") || desc.includes("candle") || desc.includes("basics")) {
+        src = "/charts_basics.png";
+        alt = "Reading Charts & Candlesticks";
+      } else if (desc.includes("risk") || desc.includes("management") || desc.includes("stop loss")) {
+        src = "/risk_management.png";
+        alt = "Risk Management";
+      } else if (desc.includes("spot") || desc.includes("perpetual") || desc.includes(" perp")) {
+        src = "/spot_perpetual.png";
+        alt = "Spot vs Perpetual Trading";
+      } else {
+        src = "/trading_intro.png";
+      }
+      
+      return (
+        <div key={i} className="my-3 border-[3px] border-black bg-white p-2 neo-shadow-sm max-w-md mx-auto text-center">
+          <img src={src} alt={alt} className="w-full h-auto object-cover border-[3px] border-black" />
+          <p className="font-black text-[9px] uppercase tracking-widest text-center mt-2 text-black/60 bg-neo-yellow border-t-2 border-black py-1">
+            {alt}
+          </p>
+        </div>
+      );
+    }
+
+    const parts = cleanLine.split(/(\*\*.*?\*\*)/g);
+    const renderedParts = parts.map((part, j) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return <strong key={j} className="font-black text-black">{part.slice(2, -2)}</strong>;
+      }
+      return <span key={j}>{part}</span>;
+    });
+
+    if (isBullet) {
+      return (
+        <div key={i} className="flex gap-2 mb-1.5 items-start">
+          <span className="text-[12px] leading-none mt-1 font-black text-neo-lime drop-shadow-[1px_1px_0_rgba(0,0,0,1)]">•</span>
+          <div className="flex-1 leading-relaxed">{renderedParts}</div>
+        </div>
+      );
+    }
+    if (cleanLine === '') {
+      return <div key={i} className="h-2"></div>;
+    }
+    return <div key={i} className="mb-2 leading-relaxed last:mb-0">{renderedParts}</div>;
+  });
+};
+
 export default function OnboardingChat({ messages, isLoading, onSendMessage, onRetry, quickActions, hideInput }: OnboardingChatProps) {
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -31,7 +111,7 @@ export default function OnboardingChat({ messages, isLoading, onSendMessage, onR
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, isLoading]);
 
   const handleSend = () => {
     const sanitized = input.replace(/<[^>]*>?/gm, "").trim();
@@ -122,15 +202,18 @@ export default function OnboardingChat({ messages, isLoading, onSendMessage, onR
                         ? "bg-rose-100 text-rose-800 rounded-xl rounded-tl-none shadow-[3px_3px_0px_0px_#000]"
                         : "bg-white rounded-xl rounded-tl-none shadow-[3px_3px_0px_0px_#000]"
                   }`}
-                  style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}
                 >
-                  {cleanContent || (isLoading && i === displayMessages.length - 1 ? (
-                    <span className="flex items-center gap-1">
-                      <span className="w-2 h-2 bg-black rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                      <span className="w-2 h-2 bg-black rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                      <span className="w-2 h-2 bg-black rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
-                    </span>
-                  ) : "")}
+                  {msg.role === "assistant" ? (
+                    cleanContent ? renderMarkdown(cleanContent) : (isLoading && i === displayMessages.length - 1 ? (
+                      <span className="flex items-center gap-1">
+                        <span className="w-2 h-2 bg-black rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                        <span className="w-2 h-2 bg-black rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                        <span className="w-2 h-2 bg-black rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                      </span>
+                    ) : "")
+                  ) : (
+                    <span style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{cleanContent}</span>
+                  )}
 
                   {msg.role === "assistant" && msg.content.includes("Something went wrong") && onRetry && (
                     <div className="mt-2 border-t-2 border-black/10 pt-2 flex items-center">
@@ -155,10 +238,23 @@ export default function OnboardingChat({ messages, isLoading, onSendMessage, onR
               )}
               {quizInThisMsg && quizInThisMsg.type === "explain" && (
                 <ExplainRenderer question={quizInThisMsg} />
-              )}
             </React.Fragment>
           );
         })}
+        {isLoading && displayMessages.length > 0 && displayMessages[displayMessages.length - 1].role === "user" && (
+          <div className="flex flex-col gap-1 items-start">
+            <span className="font-black text-[9px] uppercase tracking-widest text-black/40 mx-1">
+              Hodegos AI
+            </span>
+            <div className="px-4 py-3 text-[13px] font-bold leading-relaxed max-w-[85%] border-[3px] border-black bg-white rounded-xl rounded-tl-none shadow-[3px_3px_0px_0px_#000]">
+              <span className="flex items-center gap-1">
+                <span className="w-2 h-2 bg-black rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                <span className="w-2 h-2 bg-black rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                <span className="w-2 h-2 bg-black rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+              </span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Quick action buttons */}

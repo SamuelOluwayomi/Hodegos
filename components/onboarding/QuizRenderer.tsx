@@ -51,7 +51,12 @@ export function parseQuizQuestion(content: string): QuizQuestion | null {
         const lowerLine = line.toLowerCase();
         if (!lowerLine.includes("please choose") && 
             !lowerLine.includes("remember, you'll get") && 
-            !lowerLine.includes("good luck")) {
+            !lowerLine.includes("good luck") &&
+            !lowerLine.includes("correct answer") &&
+            !lowerLine.includes("correct_answer") &&
+            !lowerLine.includes("answer:") &&
+            !/^\s*answer\s*is/i.test(line) &&
+            !/^\s*correct\s*option/i.test(line)) {
           questionLines.push(line);
         }
       }
