@@ -19,21 +19,33 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const force = searchParams.get('force') === 'true';
 
-    // CryptoPanic public API — no key required for basic access
+    // Fetch from Cointelegraph RSS (No API Key Required)
     const fetchOptions = force 
       ? { cache: 'no-store' as RequestCache } 
       : { next: { revalidate: 1800 } }; // cache for 30 minutes
 
-    const newsRes = await fetch(
-      'https://cryptopanic.com/api/v1/posts/?auth_token=public&currencies=INJ,BTC,ETH&kind=news&public=true',
-      fetchOptions
-    )
+    const newsRes = await fetch('https://cointelegraph.com/rss', fetchOptions)
 
     let rawArticles: any[] = []
 
     if (newsRes.ok) {
-      const newsData = await newsRes.json()
-      rawArticles = (newsData.results || []).slice(0, 10)
+      const xmlText = await newsRes.text()
+      const items = xmlText.match(/<item>[\s\S]*?<\/item>/gi) || []
+      
+      rawArticles = items.slice(0, 10).map((item, index) => {
+        const title = item.match(/<title>(.*?)<\/title>/i)?.[1] || 'No title'
+        let link = item.match(/<link>(.*?)<\/link>/i)?.[1] || ''
+        link = link.replace(/<!\[CDATA\[(.*?)\]\]>/, '$1')
+        const pubDate = item.match(/<pubDate>(.*?)<\/pubDate>/i)?.[1] || new Date().toISOString()
+        
+        return {
+          id: index,
+          title,
+          url: link,
+          source: { title: 'Cointelegraph' },
+          published_at: pubDate
+        }
+      })
     }
 
     // Fallback: use curated static headlines if API is unavailable
