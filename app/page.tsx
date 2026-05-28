@@ -30,6 +30,12 @@ export default function Home() {
   const { ref: whyCard2Ref, inView: whyCard2InView } = useInView({ threshold: 0.1 });
   const { ref: whyCard3Ref, inView: whyCard3InView } = useInView({ threshold: 0.1 });
   const { ref: whyCard4Ref, inView: whyCard4InView } = useInView({ threshold: 0.1 });
+  
+  const { ref: bountyHeadRef, inView: bountyHeadInView } = useInView({ threshold: 0.2 });
+  const { ref: scatterGroupRef, inView: scatterGroupInView } = useInView({ threshold: 0.1, rootMargin: "0px 0px -50px 0px" });
+  
+  const { ref: footerLeftRef, inView: footerLeftInView } = useInView({ threshold: 0.3 });
+  const { ref: footerRightRef, inView: footerRightInView } = useInView({ threshold: 0.3 });
 
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
@@ -214,7 +220,7 @@ export default function Home() {
             
             {/* The Arch Background */}
             <div
-              className="absolute inset-0 neo-border neo-shadow-lg"
+              className="hero-bot-arch absolute inset-0 neo-border neo-shadow-lg"
               style={{
                 borderTopLeftRadius: "9999px",
                 borderTopRightRadius: "9999px",
@@ -226,11 +232,11 @@ export default function Home() {
             <img 
               src="/hero-guide.png" 
               alt="AI Guide" 
-              className="absolute bottom-[5%] left-1/2 -translate-x-1/2 w-auto max-w-none h-[88%] z-20 pointer-events-none drop-shadow-md"
+              className="hero-bot-img absolute bottom-[5%] left-1/2 -translate-x-1/2 w-auto max-w-none h-[88%] z-20 pointer-events-none drop-shadow-md"
             />
 
             {/* The Label Box */}
-            <div className="absolute bottom-3 left-2 right-2 bg-white p-2 text-center z-30" style={{ border: "2.5px solid black", boxShadow: "3px 3px 0 #000" }}>
+            <div className="hero-bot-label absolute bottom-3 left-2 right-2 bg-white p-2 text-center z-30" style={{ border: "2.5px solid black", boxShadow: "3px 3px 0 #000" }}>
               <p className="font-black uppercase" style={{ fontSize: "9px", letterSpacing: "0.05em" }}>Meet your AI Guide</p>
               <p className="font-medium text-black/70 leading-tight mt-0.5" style={{ fontSize: "8px" }}>
                 "Have you traded before? Let's walk through your first spot trade."
@@ -277,11 +283,15 @@ export default function Home() {
           
           {/* Pills */}
           <div ref={featuresPillsRef} className="flex flex-wrap gap-4 mb-8">
-            <div className={`anim-slide-left delay-0 border-[3px] border-black bg-white px-4 py-1.5 font-black text-[11px] uppercase tracking-widest -rotate-3 neo-shadow-sm ${featuresPillsInView ? 'in-view' : ''}`}>
-              Zero Jargon
+            <div className={`anim-slide-left delay-0 ${featuresPillsInView ? 'in-view' : ''}`}>
+              <div className="border-[3px] border-black bg-white px-4 py-1.5 font-black text-[11px] uppercase tracking-widest -rotate-3 neo-shadow-sm">
+                Zero Jargon
+              </div>
             </div>
-            <div className={`anim-slide-left delay-150 border-[3px] border-black bg-neo-lime px-4 py-1.5 font-black text-[11px] uppercase tracking-widest rotate-2 neo-shadow-sm ${featuresPillsInView ? 'in-view' : ''}`}>
-              AI Guided
+            <div className={`anim-slide-left delay-150 ${featuresPillsInView ? 'in-view' : ''}`}>
+              <div className="border-[3px] border-black bg-neo-lime px-4 py-1.5 font-black text-[11px] uppercase tracking-widest rotate-2 neo-shadow-sm">
+                AI Guided
+              </div>
             </div>
           </div>
 
@@ -309,40 +319,48 @@ export default function Home() {
           
           <div className="relative w-full max-w-[550px] h-[550px]">
             {/* Learn Card - Orange Square */}
-            <div ref={card1Ref} className={`anim-slide-right delay-0 absolute top-[8%] left-[2%] w-[48%] bg-neo-orange border-[3px] border-black p-6 neo-shadow-lg -rotate-6 z-20 hover:rotate-0 hover:scale-105 transition-transform duration-300 ${card1InView ? 'in-view' : ''}`}>
-              <div className="w-8 h-8 border-[3px] border-black rounded-full mb-3 flex items-center justify-center font-black text-sm bg-neo-yellow">1</div>
-              <h3 className="font-black uppercase text-xl mb-3 leading-tight">Learn Before You Touch</h3>
-              <p className="font-bold text-black/90 text-xs leading-snug">
-                Start with absolute basics. No intimidating charts. Just clear, AI-guided lessons.
-              </p>
+            <div ref={card1Ref} className={`absolute top-[8%] left-[2%] w-[48%] z-20 anim-slide-right delay-0 ${card1InView ? 'in-view' : ''}`}>
+              <div className="bg-neo-orange border-[3px] border-black p-6 neo-shadow-lg -rotate-6 hover:rotate-0 hover:scale-105 transition-transform duration-300 cursor-default">
+                <div className="w-8 h-8 border-[3px] border-black rounded-full mb-3 flex items-center justify-center font-black text-sm bg-neo-yellow">1</div>
+                <h3 className="font-black uppercase text-xl mb-3 leading-tight">Learn Before You Touch</h3>
+                <p className="font-bold text-black/90 text-xs leading-snug">
+                  Start with absolute basics. No intimidating charts. Just clear, AI-guided lessons.
+                </p>
+              </div>
             </div>
 
             {/* Simulate Card - White Box */}
-            <div ref={card2Ref} className={`anim-slide-right delay-200 absolute top-[0%] right-[2%] w-[48%] bg-white border-[3px] border-black p-6 neo-shadow-lg rotate-[5deg] z-10 hover:rotate-0 hover:scale-105 transition-transform duration-300 ${card2InView ? 'in-view' : ''}`}>
-              <div className="w-8 h-8 border-[3px] border-black rounded-full mb-3 flex items-center justify-center font-black text-sm bg-neo-yellow">2</div>
-              <h3 className="font-black uppercase text-xl mb-3">Simulate & Practice</h3>
-              <p className="font-bold text-black/80 text-xs leading-snug">
-                Practice in a <span className="text-neo-orange">risk-free environment</span>. Execute mock spot and perp trades safely.
-              </p>
+            <div ref={card2Ref} className={`absolute top-[0%] right-[2%] w-[48%] z-10 anim-slide-right delay-200 ${card2InView ? 'in-view' : ''}`}>
+              <div className="bg-white border-[3px] border-black p-6 neo-shadow-lg rotate-[5deg] hover:rotate-0 hover:scale-105 transition-transform duration-300 cursor-default">
+                <div className="w-8 h-8 border-[3px] border-black rounded-full mb-3 flex items-center justify-center font-black text-sm bg-neo-yellow">2</div>
+                <h3 className="font-black uppercase text-xl mb-3">Simulate & Practice</h3>
+                <p className="font-bold text-black/80 text-xs leading-snug">
+                  Practice in a <span className="text-neo-orange">risk-free environment</span>. Execute mock spot and perp trades safely.
+                </p>
+              </div>
             </div>
 
             {/* Execute Card - White Box */}
-            <div ref={card3Ref} className={`anim-slide-right delay-400 absolute bottom-[10%] right-[6%] w-[55%] bg-white border-[3px] border-black p-6 neo-shadow-lg rotate-[-4deg] z-30 hover:rotate-0 hover:scale-105 transition-transform duration-300 ${card3InView ? 'in-view' : ''}`}>
-              <div className="w-8 h-8 border-[3px] border-black rounded-full mb-3 flex items-center justify-center font-black text-sm bg-neo-lime">3</div>
-              <h3 className="font-black uppercase text-xl mb-3">Execute On-Chain</h3>
-              <p className="font-bold text-black/80 text-xs leading-snug">
-                Step into the real market. Built on <span className="text-neo-orange">Injective</span>, giving you fast, zero-intimidation trades.
-              </p>
+            <div ref={card3Ref} className={`absolute bottom-[10%] right-[6%] w-[55%] z-30 anim-slide-right delay-400 ${card3InView ? 'in-view' : ''}`}>
+              <div className="bg-white border-[3px] border-black p-6 neo-shadow-lg rotate-[-4deg] hover:rotate-0 hover:scale-105 transition-transform duration-300 cursor-default">
+                <div className="w-8 h-8 border-[3px] border-black rounded-full mb-3 flex items-center justify-center font-black text-sm bg-neo-lime">3</div>
+                <h3 className="font-black uppercase text-xl mb-3">Execute On-Chain</h3>
+                <p className="font-bold text-black/80 text-xs leading-snug">
+                  Step into the real market. Built on <span className="text-neo-orange">Injective</span>, giving you fast, zero-intimidation trades.
+                </p>
+              </div>
             </div>
 
             {/* Circular Badge */}
-            <div className={`anim-scale delay-500 absolute bottom-[15%] left-[10%] w-36 h-36 bg-neo-lime border-4 border-black rounded-full flex items-center justify-center z-40 rotate-12 neo-shadow-lg hover:rotate-180 transition-transform duration-700 ${card3InView ? 'in-view' : ''}`}>
-              <svg viewBox="0 0 100 100" className="w-full h-full absolute inset-0 animate-spin-slow">
-                <path id="badgeTextPath" d="M 50, 50 m -35, 0 a 35,35 0 1,1 70,0 a 35,35 0 1,1 -70,0" fill="transparent"/>
-                <text fontSize="11" fontWeight="900" fill="black" letterSpacing="1">
-                  <textPath href="#badgeTextPath">★ 100% BEGINNER FRIENDLY</textPath>
-                </text>
-              </svg>
+            <div className={`absolute bottom-[15%] left-[10%] w-36 h-36 z-40 anim-scale delay-500 ${card3InView ? 'in-view' : ''}`}>
+              <div className="w-full h-full bg-neo-lime border-4 border-black rounded-full flex items-center justify-center rotate-12 neo-shadow-lg hover:rotate-180 transition-transform duration-700">
+                <svg viewBox="0 0 100 100" className="w-full h-full absolute inset-0 animate-spin-slow">
+                  <path id="badgeTextPath" d="M 50, 50 m -35, 0 a 35,35 0 1,1 70,0 a 35,35 0 1,1 -70,0" fill="transparent"/>
+                  <text fontSize="11" fontWeight="900" fill="black" letterSpacing="1">
+                    <textPath href="#badgeTextPath">★ 100% BEGINNER FRIENDLY</textPath>
+                  </text>
+                </svg>
+              </div>
             </div>
           </div>
 
@@ -437,15 +455,17 @@ export default function Home() {
 
             {/* Right — stacked cards */}
             <div className="flex flex-col gap-6">
-              <div ref={whyCard2Ref} className={`anim-slide-right delay-100 bg-neo-lime border-[3px] border-black p-6 flex gap-5 hover:translate-x-1 hover:translate-y-1 transition-transform duration-200 ${whyCard2InView ? 'in-view' : ''}`}>
-                <div className="w-8 h-8 bg-black border-2 border-black flex items-center justify-center shrink-0 mt-0.5">
-                  <Timer size={16} weight="fill" color="#D0EE51" />
-                </div>
-                <div>
-                  <h3 className="font-black uppercase text-base text-black mb-2 tracking-tight">Sub-Second Execution</h3>
-                  <p className="font-bold text-black/70 text-xs leading-relaxed">
-                    Injective&apos;s Tendermint-based consensus produces blocks in approximately 1 second. When Hodegos users submit a trade, it is confirmed and final before they can second-guess it. For a beginner learning market orders, this removes the anxiety of pending state.
-                  </p>
+              <div ref={whyCard2Ref} className={`anim-slide-right delay-100 ${whyCard2InView ? 'in-view' : ''}`}>
+                <div className="bg-neo-lime border-[3px] border-black p-6 flex gap-5 hover:translate-x-1 hover:translate-y-1 transition-transform duration-200">
+                  <div className="w-8 h-8 bg-black border-2 border-black flex items-center justify-center shrink-0 mt-0.5">
+                    <Timer size={16} weight="fill" color="#D0EE51" />
+                  </div>
+                  <div>
+                    <h3 className="font-black uppercase text-base text-black mb-2 tracking-tight">Sub-Second Execution</h3>
+                    <p className="font-bold text-black/70 text-xs leading-relaxed">
+                      Injective&apos;s Tendermint-based consensus produces blocks in approximately 1 second. When Hodegos users submit a trade, it is confirmed and final before they can second-guess it. For a beginner learning market orders, this removes the anxiety of pending state.
+                    </p>
+                  </div>
                 </div>
               </div>
 
@@ -494,12 +514,12 @@ export default function Home() {
         />
 
         {/* Section header */}
-        <div className="relative z-10 text-center pt-14 pb-2 px-6">
-          <div className="inline-flex items-center gap-3 mb-4">
+        <div ref={bountyHeadRef} className="relative z-10 text-center pt-14 pb-2 px-6">
+          <div className={`anim-fade delay-0 inline-flex items-center gap-3 mb-4 ${bountyHeadInView ? 'in-view' : ''}`}>
             <Image src="/injective-logo.svg" alt="Injective" width={22} height={22} className="object-contain" />
             <span className="font-black text-[11px] uppercase tracking-[0.2em] text-black/50">Injective Solo AI Builder Sprint</span>
           </div>
-          <h2 className="font-black uppercase text-4xl lg:text-[3.8rem] leading-[0.95] text-black tracking-tight">
+          <h2 className={`anim-slide-up delay-100 font-black uppercase text-4xl lg:text-[3.8rem] leading-[0.95] text-black tracking-tight ${bountyHeadInView ? 'in-view' : ''}`}>
             Hodegos was built<br />
             <span className="relative inline-block">
               <span className="relative z-10">for this sprint.</span>
@@ -510,7 +530,7 @@ export default function Home() {
         </div>
 
         {/* ── Scatter arena ── */}
-        <div className="relative z-10 mx-auto w-full max-w-5xl" style={{ height: "680px" }}>
+        <div ref={scatterGroupRef} className="relative z-10 mx-auto w-full max-w-5xl" style={{ height: "680px" }}>
 
           {/* ── Reading-order arrows — thick, orange, unmistakable ── */}
           <svg className="absolute inset-0 w-full h-full pointer-events-none z-10" viewBox="0 0 1000 680" preserveAspectRatio="none">
@@ -532,166 +552,182 @@ export default function Home() {
           </svg>
 
           {/* ── CARD 1 — Sprint Goal (top-left) ── */}
-          <div className="absolute z-30" style={{ top: "8%", left: "-1%", transform: "rotate(4deg)" }}>
-            <div className="absolute -top-3 -left-3 w-6 h-6 bg-black text-white rounded-full flex items-center justify-center font-black text-[10px] z-40 border-2 border-black">1</div>
-            <div className="bg-white border-[3px] border-black neo-shadow p-4 w-48 hover:rotate-0 transition-transform duration-300 cursor-default">
-              <p className="font-black text-[9px] uppercase tracking-widest text-black/50 mb-1">The Mission</p>
-              <p className="font-bold text-[11px] leading-snug text-black">
-                Build something <span className="font-black">useful, ship it,</span> and make it usable by real users.
-              </p>
+          <div className={`absolute z-30 anim-scale delay-0 ${scatterGroupInView ? 'in-view' : ''}`} style={{ top: "8%", left: "-1%" }}>
+            <div className="relative rotate-[4deg] hover:rotate-0 hover:scale-105 transition-transform duration-300 cursor-default">
+              <div className="absolute -top-3 -left-3 w-6 h-6 bg-black text-white rounded-full flex items-center justify-center font-black text-[10px] z-40 border-2 border-black">1</div>
+              <div className="bg-white border-[3px] border-black neo-shadow p-4 w-48">
+                <p className="font-black text-[9px] uppercase tracking-widest text-black/50 mb-1">The Mission</p>
+                <p className="font-bold text-[11px] leading-snug text-black">
+                  Build something <span className="font-black">useful, ship it,</span> and make it usable by real users.
+                </p>
+              </div>
             </div>
           </div>
 
           {/* ── CARD 2 — Hodegos Bridge (top-center-left) ── */}
-          <div className="absolute z-30" style={{ top: "7%", left: "33%", transform: "rotate(-3deg)" }}>
-            <div className="absolute -top-3 -left-3 w-6 h-6 bg-black text-white rounded-full flex items-center justify-center font-black text-[10px] z-40 border-2 border-black">2</div>
-            <div className="bg-neo-lime border-[3px] border-black neo-shadow-lg p-4 w-48 hover:rotate-0 transition-transform duration-300 cursor-default">
-              <p className="font-black text-[9px] uppercase tracking-widest text-black/50 mb-1">The Idea</p>
-              <p className="font-bold text-[11px] leading-snug text-black">
-                Hodegos is the <span className="font-black">bridge</span> from curiosity to your first on-chain trade.
-              </p>
+          <div className={`absolute z-30 anim-scale delay-100 ${scatterGroupInView ? 'in-view' : ''}`} style={{ top: "7%", left: "33%" }}>
+            <div className="relative -rotate-3 hover:rotate-0 hover:scale-105 transition-transform duration-300 cursor-default">
+              <div className="absolute -top-3 -left-3 w-6 h-6 bg-black text-white rounded-full flex items-center justify-center font-black text-[10px] z-40 border-2 border-black">2</div>
+              <div className="bg-neo-lime border-[3px] border-black neo-shadow-lg p-4 w-48">
+                <p className="font-black text-[9px] uppercase tracking-widest text-black/50 mb-1">The Idea</p>
+                <p className="font-bold text-[11px] leading-snug text-black">
+                  Hodegos is the <span className="font-black">bridge</span> from curiosity to your first on-chain trade.
+                </p>
+              </div>
             </div>
           </div>
 
           {/* ── CARD 3 — Sprint Dates (top-right) ── */}
-          <div className="absolute z-30" style={{ top: "3%", right: "0%", transform: "rotate(5deg)" }}>
-            <div className="absolute -top-3 -left-3 w-6 h-6 bg-black text-white rounded-full flex items-center justify-center font-black text-[10px] z-40 border-2 border-black">3</div>
-            <div className="bg-neo-orange border-[3px] border-black neo-shadow-lg p-4 w-40 hover:rotate-0 transition-transform duration-300 cursor-default">
-              <p className="font-black text-[9px] uppercase tracking-widest text-black/50 mb-1">Sprint Window</p>
-              <p className="font-black text-base leading-tight">May 11 -<br />May 31, 2026</p>
-              <div className="mt-2 inline-block bg-black text-neo-lime px-2 py-0.5 font-black text-[8px] uppercase tracking-wider">ONLINE</div>
+          <div className={`absolute z-30 anim-scale delay-200 ${scatterGroupInView ? 'in-view' : ''}`} style={{ top: "3%", right: "0%" }}>
+            <div className="relative rotate-[5deg] hover:rotate-0 hover:scale-105 transition-transform duration-300 cursor-default">
+              <div className="absolute -top-3 -left-3 w-6 h-6 bg-black text-white rounded-full flex items-center justify-center font-black text-[10px] z-40 border-2 border-black">3</div>
+              <div className="bg-neo-orange border-[3px] border-black neo-shadow-lg p-4 w-40">
+                <p className="font-black text-[9px] uppercase tracking-widest text-black/50 mb-1">Sprint Window</p>
+                <p className="font-black text-base leading-tight">May 11 -<br />May 31, 2026</p>
+                <div className="mt-2 inline-block bg-black text-neo-lime px-2 py-0.5 font-black text-[8px] uppercase tracking-wider">ONLINE</div>
+              </div>
             </div>
           </div>
 
           {/* ── Prize pool — mid-left big stat ── */}
-          <div className="absolute z-30" style={{ top: "32%", left: "-3%", transform: "rotate(-4deg)" }}>
-            <div className="bg-neo-orange border-[3px] border-black neo-shadow-lg p-5 w-36 hover:rotate-0 transition-transform duration-300 cursor-default">
-              <p className="font-black text-[9px] uppercase tracking-widest text-black/60 mb-1">Prize Pool</p>
-              <p className="font-black text-4xl leading-none">$500</p>
-              <p className="font-bold text-[10px] mt-1 opacity-80">USD Total</p>
+          <div className={`absolute z-30 anim-pop delay-300 ${scatterGroupInView ? 'in-view' : ''}`} style={{ top: "32%", left: "-3%" }}>
+            <div className="relative rotate-[-4deg] hover:rotate-0 hover:scale-105 transition-transform duration-300 cursor-default">
+              <div className="bg-neo-orange border-[3px] border-black neo-shadow-lg p-5 w-36">
+                <p className="font-black text-[9px] uppercase tracking-widest text-black/60 mb-1">Prize Pool</p>
+                <p className="font-black text-4xl leading-none">$500</p>
+                <p className="font-bold text-[10px] mt-1 opacity-80">USD Total</p>
+              </div>
             </div>
           </div>
 
           {/* ── CARD 4 — AI Copilot (right-mid) ── */}
-          <div className="absolute z-30" style={{ top: "38%", right: "-1%", transform: "rotate(-3deg)" }}>
-            <div className="absolute -top-3 -left-3 w-6 h-6 bg-black text-white rounded-full flex items-center justify-center font-black text-[10px] z-40 border-2 border-black">4</div>
-            <div className="bg-white border-[3px] border-black neo-shadow-lg p-4 w-52 hover:rotate-0 transition-transform duration-300 cursor-default">
-              <p className="font-black text-[9px] uppercase tracking-widest text-black/50 mb-1">The Product</p>
-              <p className="font-bold text-[11px] leading-snug text-black">
-                An <span className="font-black">AI copilot</span> that walks newcomers through spot trades, step by step, with zero jargon.
-              </p>
+          <div className={`absolute z-30 anim-scale delay-400 ${scatterGroupInView ? 'in-view' : ''}`} style={{ top: "38%", right: "-1%" }}>
+            <div className="relative -rotate-3 hover:rotate-0 hover:scale-105 transition-transform duration-300 cursor-default">
+              <div className="absolute -top-3 -left-3 w-6 h-6 bg-black text-white rounded-full flex items-center justify-center font-black text-[10px] z-40 border-2 border-black">4</div>
+              <div className="bg-white border-[3px] border-black neo-shadow-lg p-4 w-52">
+                <p className="font-black text-[9px] uppercase tracking-widest text-black/50 mb-1">The Product</p>
+                <p className="font-bold text-[11px] leading-snug text-black">
+                  An <span className="font-black">AI copilot</span> that walks newcomers through spot trades, step by step, with zero jargon.
+                </p>
+              </div>
             </div>
           </div>
 
           {/* ── CARD 5 — Injective native (bottom-center-right) ── */}
-          <div className="absolute z-30" style={{ bottom: "14%", right: "29%", transform: "rotate(3deg)" }}>
-            <div className="absolute -top-3 -left-3 w-6 h-6 bg-black text-white rounded-full flex items-center justify-center font-black text-[10px] z-40 border-2 border-black">5</div>
-            <div className="bg-white border-[3px] border-black neo-shadow p-4 w-48 hover:rotate-0 transition-transform duration-300 cursor-default">
-              <p className="font-black text-[9px] uppercase tracking-widest text-black/50 mb-1">The Chain</p>
-              <p className="font-bold text-[11px] leading-snug text-black">
-                Built on <span className="font-black text-neo-orange">Injective</span> — lightning-fast execution and zero gas fees for users.
-              </p>
+          <div className={`absolute z-30 anim-scale delay-500 ${scatterGroupInView ? 'in-view' : ''}`} style={{ bottom: "14%", right: "29%" }}>
+            <div className="relative rotate-3 hover:rotate-0 hover:scale-105 transition-transform duration-300 cursor-default">
+              <div className="absolute -top-3 -left-3 w-6 h-6 bg-black text-white rounded-full flex items-center justify-center font-black text-[10px] z-40 border-2 border-black">5</div>
+              <div className="bg-white border-[3px] border-black neo-shadow p-4 w-48">
+                <p className="font-black text-[9px] uppercase tracking-widest text-black/50 mb-1">The Chain</p>
+                <p className="font-bold text-[11px] leading-snug text-black">
+                  Built on <span className="font-black text-neo-orange">Injective</span> — lightning-fast execution and zero gas fees for users.
+                </p>
+              </div>
             </div>
           </div>
 
           {/* ── CARD 6 — Evaluation (bottom-left) ── */}
-          <div className="absolute z-30" style={{ bottom: "8%", left: "0%", transform: "rotate(-4deg)" }}>
-            <div className="absolute -top-3 -left-3 w-6 h-6 bg-black text-white rounded-full flex items-center justify-center font-black text-[10px] z-40 border-2 border-black">6</div>
-            <div className="bg-neo-lime border-[3px] border-black neo-shadow p-4 w-48 hover:rotate-0 transition-transform duration-300 cursor-default">
-              <p className="font-black text-[9px] uppercase tracking-widest text-black/50 mb-1">Judged On</p>
-              <p className="font-bold text-[11px] leading-snug text-black">
-                <span className="font-black">Usefulness, execution quality</span> and real usability for everyday people.
-              </p>
+          <div className={`absolute z-30 anim-scale delay-600 ${scatterGroupInView ? 'in-view' : ''}`} style={{ bottom: "8%", left: "0%" }}>
+            <div className="relative rotate-[-4deg] hover:rotate-0 hover:scale-105 transition-transform duration-300 cursor-default">
+              <div className="absolute -top-3 -left-3 w-6 h-6 bg-black text-white rounded-full flex items-center justify-center font-black text-[10px] z-40 border-2 border-black">6</div>
+              <div className="bg-neo-lime border-[3px] border-black neo-shadow p-4 w-48">
+                <p className="font-black text-[9px] uppercase tracking-widest text-black/50 mb-1">Judged On</p>
+                <p className="font-bold text-[11px] leading-snug text-black">
+                  <span className="font-black">Usefulness, execution quality</span> and real usability for everyday people.
+                </p>
+              </div>
             </div>
           </div>
 
           {/* ── Category sticker — bottom-right ── */}
-          <div className="absolute z-30" style={{ bottom: "6%", right: "1%", transform: "rotate(4deg)" }}>
-            <div className="bg-black text-white border-[3px] border-black neo-shadow-lg p-4 w-40 hover:rotate-0 transition-transform duration-300 cursor-default">
-              <p className="font-black text-[9px] uppercase tracking-widest text-white/50 mb-1">Category</p>
-              <p className="font-black text-sm leading-tight uppercase">Consumer<br />AI App</p>
-              <p className="font-bold text-[9px] mt-1 text-neo-orange">+ AI Copilot / Trading</p>
+          <div className={`absolute z-30 anim-slide-up delay-700 ${scatterGroupInView ? 'in-view' : ''}`} style={{ bottom: "6%", right: "1%" }}>
+            <div className="relative rotate-[4deg] hover:rotate-0 hover:scale-105 transition-transform duration-300 cursor-default">
+              <div className="bg-black text-white border-[3px] border-black neo-shadow-lg p-4 w-40">
+                <p className="font-black text-[9px] uppercase tracking-widest text-white/50 mb-1">Category</p>
+                <p className="font-black text-sm leading-tight uppercase">Consumer<br />AI App</p>
+                <p className="font-bold text-[9px] mt-1 text-neo-orange">+ AI Copilot / Trading</p>
+              </div>
             </div>
           </div>
 
           {/* ── Decorative accents only ── */}
           {/* 4-point star top-centre */}
-          <svg className="absolute" style={{ top: "6%", left: "46%", width: 16, opacity: 0.55 }} viewBox="0 0 24 24" fill="black">
+          <svg className={`absolute anim-fade delay-300 ${scatterGroupInView ? 'in-view' : ''}`} style={{ top: "6%", left: "46%", width: 16, opacity: 0.55 }} viewBox="0 0 24 24" fill="black">
             <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41Z"/>
           </svg>
           {/* outline star right-upper */}
-          <svg className="absolute" style={{ top: "26%", right: "20%", width: 13, opacity: 0.35 }} viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2">
+          <svg className={`absolute anim-fade delay-500 ${scatterGroupInView ? 'in-view' : ''}`} style={{ top: "26%", right: "20%", width: 13, opacity: 0.35 }} viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2">
             <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41Z"/>
           </svg>
           {/* small filled star bottom-left zone */}
-          <svg className="absolute" style={{ bottom: "32%", left: "26%", width: 11, opacity: 0.45 }} viewBox="0 0 24 24" fill="black">
+          <svg className={`absolute anim-fade delay-600 ${scatterGroupInView ? 'in-view' : ''}`} style={{ bottom: "32%", left: "26%", width: 11, opacity: 0.45 }} viewBox="0 0 24 24" fill="black">
             <path d="M12 0L13.5 10.5L24 12L13.5 13.5L12 24L10.5 13.5L0 12L10.5 10.5Z"/>
           </svg>
           {/* Flower asterisk — far left */}
-          <svg className="absolute opacity-35" style={{ top: "60%", left: "3%", width: 20 }} viewBox="0 0 40 40" fill="none" stroke="black" strokeWidth="2.5" strokeLinecap="round">
+          <svg className={`absolute anim-fade delay-200 ${scatterGroupInView ? 'in-view' : ''}`} style={{ top: "60%", left: "3%", width: 20, opacity: 0.35 }} viewBox="0 0 40 40" fill="none" stroke="black" strokeWidth="2.5" strokeLinecap="round">
             <line x1="20" y1="2" x2="20" y2="38"/><line x1="2" y1="20" x2="38" y2="20"/>
             <line x1="6" y1="6" x2="34" y2="34"/><line x1="34" y1="6" x2="6" y2="34"/>
           </svg>
           {/* Squiggly wave — bottom-left zone */}
-          <svg className="absolute opacity-40" style={{ bottom: "22%", left: "18%", width: 42 }} viewBox="0 0 100 40" fill="none" stroke="black" strokeWidth="3.5" strokeLinecap="round">
+          <svg className={`absolute anim-fade delay-400 ${scatterGroupInView ? 'in-view' : ''}`} style={{ bottom: "22%", left: "18%", width: 42, opacity: 0.4 }} viewBox="0 0 100 40" fill="none" stroke="black" strokeWidth="3.5" strokeLinecap="round">
             <path d="M0 20 Q 12.5 0,25 20 T 50 20 T 75 20 T 100 20"/>
           </svg>
           {/* small orange dot */}
-          <div className="absolute w-3 h-3 rounded-full bg-neo-orange border-2 border-black" style={{ bottom: "34%", right: "25%" }} />
+          <div className={`absolute w-3 h-3 rounded-full bg-neo-orange border-2 border-black anim-scale delay-700 ${scatterGroupInView ? 'in-view' : ''}`} style={{ bottom: "34%", right: "25%" }} />
           {/* Plus — mid-left between card 1 and prize */}
-          <svg className="absolute opacity-35" style={{ top: "28%", left: "14%", width: 13 }} viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="3" strokeLinecap="round">
+          <svg className={`absolute anim-fade delay-100 ${scatterGroupInView ? 'in-view' : ''}`} style={{ top: "28%", left: "14%", width: 13, opacity: 0.35 }} viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="3" strokeLinecap="round">
             <path d="M12 5v14M5 12h14"/>
           </svg>
 
 
           {/* ── Central image ── */}
           <div
-            className="absolute z-20"
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20"
             style={{
-              top: "50%", left: "50%",
-              transform: "translate(-50%, -50%)",
               width: "min(420px, 56%)",
             }}
           >
-            {/* Red offset shadow block */}
-            <div
-              className="absolute inset-0"
-              style={{ background: "#FF2A00", border: "4px solid black", transform: "translate(12px,12px)", borderRadius: 0 }}
-            />
-            {/* Window frame */}
-            <div className="relative bg-[#EAE8E0] border-4 border-black flex flex-col">
-              {/* Window Title Bar */}
-              <div className="h-9 border-b-4 border-black bg-[#E5E5E5] flex items-center px-3 gap-2">
-                <div className="w-3.5 h-3.5 rounded-full border-[2.5px] border-black bg-white" />
-                <div className="w-3.5 h-3.5 rounded-full border-[2.5px] border-black bg-white" />
-                <div className="w-3.5 h-3.5 rounded-full border-[2.5px] border-black bg-white" />
-              </div>
-              <div className="p-3 bg-white">
-                <div className="border-[3px] border-black overflow-hidden relative">
-                  <Image
-                    src="/hack.png"
-                    alt="Injective Solo AI Builder Sprint"
-                    width={420}
-                    height={260}
-                    className="w-full h-auto block"
-                  />
-                  {/* Subtle inner shadow/border overlay on the image */}
-                  <div className="absolute inset-0 border border-black/10 pointer-events-none" />
+            <div className={`anim-pop delay-500 ${scatterGroupInView ? 'in-view' : ''}`}>
+              {/* Red offset shadow block */}
+              <div
+                className="absolute inset-0"
+                style={{ background: "#FF2A00", border: "4px solid black", transform: "translate(12px,12px)", borderRadius: 0 }}
+              />
+              {/* Window frame */}
+              <div className="relative bg-[#EAE8E0] border-4 border-black flex flex-col">
+                {/* Window Title Bar */}
+                <div className="h-9 border-b-4 border-black bg-[#E5E5E5] flex items-center px-3 gap-2">
+                  <div className="w-3.5 h-3.5 rounded-full border-[2.5px] border-black bg-white" />
+                  <div className="w-3.5 h-3.5 rounded-full border-[2.5px] border-black bg-white" />
+                  <div className="w-3.5 h-3.5 rounded-full border-[2.5px] border-black bg-white" />
                 </div>
-              </div>
-              {/* Injective logo circle badge on frame */}
-              <div
-                className="absolute -top-5 -left-5 w-14 h-14 bg-white border-[3px] border-black rounded-full flex items-center justify-center neo-shadow z-30"
-                style={{ transform: "rotate(-8deg)" }}
-              >
-                <Image src="/injective-logo.svg" alt="Injective" width={28} height={28} className="object-contain" />
-              </div>
-              {/* "We're in it" sticker */}
-              <div
-                className="absolute -bottom-4 -right-4 bg-neo-lime border-[3px] border-black px-3 py-1 font-black text-[10px] uppercase tracking-widest neo-shadow z-30"
-                style={{ transform: "rotate(3deg)" }}
-              >
-                ✦ We&apos;re in it
+                <div className="p-3 bg-white">
+                  <div className="border-[3px] border-black overflow-hidden relative">
+                    <Image
+                      src="/hack.png"
+                      alt="Injective Solo AI Builder Sprint"
+                      width={420}
+                      height={260}
+                      className="w-full h-auto block"
+                    />
+                    {/* Subtle inner shadow/border overlay on the image */}
+                    <div className="absolute inset-0 border border-black/10 pointer-events-none" />
+                  </div>
+                </div>
+                {/* Injective logo circle badge on frame */}
+                <div
+                  className="absolute -top-5 -left-5 w-14 h-14 bg-white border-[3px] border-black rounded-full flex items-center justify-center neo-shadow z-30"
+                  style={{ transform: "rotate(-8deg)" }}
+                >
+                  <Image src="/injective-logo.svg" alt="Injective" width={28} height={28} className="object-contain" />
+                </div>
+                {/* "We're in it" sticker */}
+                <div
+                  className="absolute -bottom-4 -right-4 bg-neo-lime border-[3px] border-black px-3 py-1 font-black text-[10px] uppercase tracking-widest neo-shadow z-30"
+                  style={{ transform: "rotate(3deg)" }}
+                >
+                  ✦ We&apos;re in it
+                </div>
               </div>
             </div>
           </div>
@@ -749,7 +785,7 @@ export default function Home() {
         <div className="relative z-10 flex flex-col lg:flex-row gap-12 lg:gap-0 px-6 lg:px-16 py-14">
 
           {/* Left — Project info */}
-          <div className="flex-1 flex flex-col justify-center lg:pr-20">
+          <div ref={footerLeftRef} className={`anim-slide-right delay-0 flex-1 flex flex-col justify-center lg:pr-20 ${footerLeftInView ? 'in-view' : ''}`}>
             <Image src="/main.png" alt="Hodegos" width={140} height={28} className="object-contain mb-5" />
 
             <p className="font-bold text-black/70 text-sm max-w-xs leading-relaxed mb-8">
@@ -761,7 +797,7 @@ export default function Home() {
           </div>
 
           {/* Right — Builder card */}
-          <div className="flex items-center justify-start lg:justify-end">
+          <div ref={footerRightRef} className={`anim-slide-left delay-200 flex items-center justify-start lg:justify-end ${footerRightInView ? 'in-view' : ''}`}>
             <div
               className="bg-white border-[3px] border-black neo-shadow-lg p-6 flex items-center gap-6 max-w-sm w-full"
             >

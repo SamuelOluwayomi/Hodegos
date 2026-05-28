@@ -211,7 +211,17 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 
 Groq API keys are free to obtain at [console.groq.com](https://console.groq.com). Supabase projects are free at [supabase.com](https://supabase.com).
 
-### 3. Run the Development Server
+### 3. Database Setup
+
+To configure the stateful database, you must run the included unified SQL schema.
+
+1. Navigate to your Supabase project dashboard.
+2. Open the **SQL Editor**.
+3. Copy the entire contents of [`database/schema.sql`](./database/schema.sql) and run it.
+
+This single file handles creating all required tables (users, trades, badges, memory, chat_messages, quiz_scores, xp_ledger), configuring the leaderboard view, and setting up initial security policies.
+
+### 4. Run the Development Server
 
 ```bash
 npm run dev

@@ -121,6 +121,9 @@ body {
   .hero-word-3 { animation-delay: 0.16s; }
   .hero-sub    { animation: heroFadeIn 1s 0.35s ease both; }
   .hero-cta    { animation: heroFadeIn 1s 0.55s ease both; }
+  .hero-bot-arch  { animation: heroSlideUp 0.9s 0.25s cubic-bezier(0.16, 1, 0.3, 1) both; }
+  .hero-bot-img   { animation: botSlideUp 0.9s 0.45s cubic-bezier(0.16, 1, 0.3, 1) both; }
+  .hero-bot-label { animation: heroPop 0.8s 0.75s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
 
   /* Scrollbar */
   .custom-scrollbar::-webkit-scrollbar       { width: 6px; }
@@ -156,4 +159,28 @@ body {
 @keyframes heroFadeIn {
   from { opacity: 0; transform: translateY(18px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes botSlideUp {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 60px) skewY(2deg);
+    filter: blur(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0) skewY(0deg);
+    filter: blur(0);
+  }
+}
+
+@keyframes heroPop {
+  from {
+    opacity: 0;
+    transform: scale(0.7) translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
