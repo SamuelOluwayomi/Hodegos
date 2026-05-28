@@ -42,6 +42,7 @@ export default function DashboardPage() {
   // Agentic AI alerts state
   const [aiAlerts, setAiAlerts] = useState<{ asset: string; severity: 'info' | 'warning'; message: string }[]>([]);
   const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(new Set());
+  const hasFetchedAlerts = React.useRef(false);
 
   useEffect(() => {
     if (!address) return;
@@ -56,30 +57,33 @@ export default function DashboardPage() {
             setTokenBalances(data.tokenBalances);
 
             // Trigger AI alert check after portfolio loads (once per session)
-            try {
-              const totalValue = Object.values(data.tokenBalances as Record<string, { amount: number; price: number; value: number }>).reduce((s, t) => s + t.value, 0);
-              const holdings = Object.entries(data.tokenBalances as Record<string, { amount: number; price: number; value: number; name: string }>)
-                .filter(([, t]) => t.amount > 0)
-                .map(([symbol, t]) => ({
-                  symbol,
-                  amount: t.amount,
-                  price: t.price,
-                  valueUsd: t.value,
-                  portfolioPercent: totalValue > 0 ? parseFloat(((t.value / totalValue) * 100).toFixed(1)) : 0,
-                }));
-              const alertRes = await fetch('/api/alerts', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ portfolioContext: { holdings, totalValueUsd: totalValue } }),
-              });
-              if (alertRes.ok) {
-                const alertData = await alertRes.json();
-                if (alertData.alerts?.length) {
-                  setAiAlerts(alertData.alerts);
+            if (!hasFetchedAlerts.current) {
+              hasFetchedAlerts.current = true;
+              try {
+                const totalValue = Object.values(data.tokenBalances as Record<string, { amount: number; price: number; value: number }>).reduce((s, t) => s + t.value, 0);
+                const holdings = Object.entries(data.tokenBalances as Record<string, { amount: number; price: number; value: number; name: string }>)
+                  .filter(([, t]) => t.amount > 0)
+                  .map(([symbol, t]) => ({
+                    symbol,
+                    amount: t.amount,
+                    price: t.price,
+                    valueUsd: t.value,
+                    portfolioPercent: totalValue > 0 ? parseFloat(((t.value / totalValue) * 100).toFixed(1)) : 0,
+                  }));
+                const alertRes = await fetch('/api/alerts', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ portfolioContext: { holdings, totalValueUsd: totalValue } }),
+                });
+                if (alertRes.ok) {
+                  const alertData = await alertRes.json();
+                  if (alertData.alerts?.length) {
+                    setAiAlerts(alertData.alerts);
+                  }
                 }
+              } catch (alertErr) {
+                console.warn('AI alerts fetch error:', alertErr);
               }
-            } catch (alertErr) {
-              console.warn('AI alerts fetch error:', alertErr);
             }
           }
         }
