@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useWallet } from "@/lib/useWallet";
 import WalletConnectModal from "@/components/WalletConnectModal";
+import { Lightning, Timer, ShieldCheck, CurrencyDollar } from "@phosphor-icons/react";
 
 export default function Home() {
   const [walletModalOpen, setWalletModalOpen] = useState(false);
@@ -394,9 +395,7 @@ export default function Home() {
             {/* Left — tall feature card */}
             <div className="bg-white/5 border-[3px] border-white/10 p-8 flex flex-col gap-6 hover:border-neo-lime/40 transition-colors duration-300">
               <div className="w-10 h-10 bg-neo-lime border-2 border-black flex items-center justify-center shrink-0">
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-                </svg>
+                <Lightning size={20} weight="fill" color="black" />
               </div>
               <div>
                 <h3 className="font-black uppercase text-xl text-white mb-3 tracking-tight">Native DEX Orderbook</h3>
@@ -418,10 +417,7 @@ export default function Home() {
             <div className="flex flex-col gap-6">
               <div className="bg-neo-lime border-[3px] border-black p-6 flex gap-5 hover:translate-x-1 hover:translate-y-1 transition-transform duration-200">
                 <div className="w-8 h-8 bg-black border-2 border-black flex items-center justify-center shrink-0 mt-0.5">
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="#D0EE51" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10"/>
-                    <path d="M12 6v6l4 2"/>
-                  </svg>
+                  <Timer size={16} weight="fill" color="#D0EE51" />
                 </div>
                 <div>
                   <h3 className="font-black uppercase text-base text-black mb-2 tracking-tight">Sub-Second Execution</h3>
@@ -433,9 +429,7 @@ export default function Home() {
 
               <div className="bg-white/5 border-[3px] border-white/10 p-6 flex gap-5 hover:border-neo-orange/40 transition-colors duration-300">
                 <div className="w-8 h-8 bg-neo-orange border-2 border-black flex items-center justify-center shrink-0 mt-0.5">
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                  </svg>
+                  <ShieldCheck size={16} weight="fill" color="black" />
                 </div>
                 <div>
                   <h3 className="font-black uppercase text-base text-white mb-2 tracking-tight">Subaccount Architecture</h3>
@@ -447,9 +441,7 @@ export default function Home() {
 
               <div className="bg-white/5 border-[3px] border-white/10 p-6 flex gap-5 hover:border-neo-lime/40 transition-colors duration-300">
                 <div className="w-8 h-8 bg-white/10 border-2 border-white/20 flex items-center justify-center shrink-0 mt-0.5">
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="#D0EE51" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                  </svg>
+                  <CurrencyDollar size={16} weight="fill" color="#D0EE51" />
                 </div>
                 <div>
                   <h3 className="font-black uppercase text-base text-white mb-2 tracking-tight">Real Markets, Zero Fees</h3>
