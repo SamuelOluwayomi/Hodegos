@@ -7,11 +7,29 @@ import { useRouter } from "next/navigation";
 import { useWallet } from "@/lib/useWallet";
 import WalletConnectModal from "@/components/WalletConnectModal";
 import { Lightning, Timer, ShieldCheck, CurrencyDollar } from "@phosphor-icons/react";
+import { useInView } from "@/hooks/useInView";
 
 export default function Home() {
   const [walletModalOpen, setWalletModalOpen] = useState(false);
   const { isConnected, isInitialized } = useWallet();
   const router = useRouter();
+
+  // Scroll animation refs
+  const { ref: featuresRef, inView: featuresInView } = useInView();
+  const { ref: featuresPillsRef, inView: featuresPillsInView } = useInView({ threshold: 0.2 });
+  const { ref: featuresHeadRef, inView: featuresHeadInView } = useInView({ threshold: 0.2 });
+  const { ref: featuresBodyRef, inView: featuresBodyInView } = useInView({ threshold: 0.15 });
+  const { ref: card1Ref, inView: card1InView } = useInView({ threshold: 0.1 });
+  const { ref: card2Ref, inView: card2InView } = useInView({ threshold: 0.1 });
+  const { ref: card3Ref, inView: card3InView } = useInView({ threshold: 0.1 });
+  const { ref: whyHeaderRef, inView: whyHeaderInView } = useInView({ threshold: 0.2 });
+  const { ref: stat1Ref, inView: stat1InView } = useInView({ threshold: 0.3 });
+  const { ref: stat2Ref, inView: stat2InView } = useInView({ threshold: 0.3 });
+  const { ref: stat3Ref, inView: stat3InView } = useInView({ threshold: 0.3 });
+  const { ref: whyCard1Ref, inView: whyCard1InView } = useInView({ threshold: 0.1 });
+  const { ref: whyCard2Ref, inView: whyCard2InView } = useInView({ threshold: 0.1 });
+  const { ref: whyCard3Ref, inView: whyCard3InView } = useInView({ threshold: 0.1 });
+  const { ref: whyCard4Ref, inView: whyCard4InView } = useInView({ threshold: 0.1 });
 
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
@@ -140,8 +158,8 @@ export default function Home() {
             className="font-black uppercase leading-[0.93] mb-[3%] text-black"
             style={{ fontSize: "clamp(1.5rem, 4.2vw, 4rem)" }}
           >
-            Your First<br />
-            <span className="relative inline-block">
+            <span className="hero-word block">Your First</span>
+            <span className="hero-word hero-word-2 relative inline-block">
               Trading
               <svg
                 className="absolute left-0 w-full"
@@ -153,17 +171,17 @@ export default function Home() {
                 <path d="M0 8 Q 50 0 100 8" fill="none" stroke="black" strokeWidth="4"/>
               </svg>
             </span>
-            {" "}<br />Experience
+            <span className="hero-word hero-word-3 block">Experience</span>
           </h1>
 
-          <p className="font-bold text-black mb-1" style={{ fontSize: "clamp(0.7rem, 1.2vw, 1rem)" }}>
+          <p className="hero-sub font-bold text-black mb-1" style={{ fontSize: "clamp(0.7rem, 1.2vw, 1rem)" }}>
             Hodegos. Your guide into trading.
           </p>
-          <p className="font-medium text-black/80 max-w-[90%] mb-[5%]" style={{ fontSize: "clamp(0.65rem, 1vw, 0.9rem)", lineHeight: 1.45 }}>
+          <p className="hero-sub font-medium text-black/80 max-w-[90%] mb-[5%]" style={{ fontSize: "clamp(0.65rem, 1vw, 0.9rem)", lineHeight: 1.45 }}>
             Learn the basics, simulate real trades, and execute on Injective — with an AI companion every step of the way.
           </p>
 
-          <div className="flex flex-wrap gap-3">
+          <div className="hero-cta flex flex-wrap gap-3">
             <button
               onClick={() => setWalletModalOpen(true)}
               className="flex items-center gap-2 bg-neo-lime border-2 border-black rounded-full shadow-[2px_4px_0px_0px_#000] font-bold uppercase tracking-wider hover:translate-x-[2px] hover:translate-y-[4px] hover:shadow-none transition-all cursor-pointer"
@@ -258,16 +276,16 @@ export default function Home() {
         <div className="flex-1 flex flex-col justify-center relative z-10 w-full lg:pr-10 pt-10 lg:pt-0">
           
           {/* Pills */}
-          <div className="flex flex-wrap gap-4 mb-8">
-            <div className="border-[3px] border-black bg-white px-4 py-1.5 font-black text-[11px] uppercase tracking-widest -rotate-3 neo-shadow-sm">
+          <div ref={featuresPillsRef} className="flex flex-wrap gap-4 mb-8">
+            <div className={`anim-slide-left delay-0 border-[3px] border-black bg-white px-4 py-1.5 font-black text-[11px] uppercase tracking-widest -rotate-3 neo-shadow-sm ${featuresPillsInView ? 'in-view' : ''}`}>
               Zero Jargon
             </div>
-            <div className="border-[3px] border-black bg-neo-lime px-4 py-1.5 font-black text-[11px] uppercase tracking-widest rotate-2 neo-shadow-sm">
+            <div className={`anim-slide-left delay-150 border-[3px] border-black bg-neo-lime px-4 py-1.5 font-black text-[11px] uppercase tracking-widest rotate-2 neo-shadow-sm ${featuresPillsInView ? 'in-view' : ''}`}>
               AI Guided
             </div>
           </div>
 
-          <h2 className="font-black uppercase text-6xl lg:text-[5.5rem] leading-[0.9] text-black relative inline-block z-10 tracking-tight mb-8">
+          <h2 ref={featuresHeadRef} className={`anim-slide-up delay-0 font-black uppercase text-6xl lg:text-[5.5rem] leading-[0.9] text-black relative inline-block z-10 tracking-tight mb-8 ${featuresHeadInView ? 'in-view' : ''}`}>
             The<br/>Missing<br/>
             <span className="relative inline-block">
               <span className="relative z-10">Link.</span>
@@ -275,13 +293,13 @@ export default function Home() {
             </span>
           </h2>
           
-          <p className="font-bold text-base lg:text-lg text-black max-w-md leading-relaxed">
+          <p ref={featuresBodyRef} className={`anim-fade delay-200 font-bold text-base lg:text-lg text-black max-w-md leading-relaxed ${featuresBodyInView ? 'in-view' : ''}`}>
             Every trading app assumes you already know what you're doing. We turn your curiosity into custom <span className="text-neo-orange font-black">learning, simulation, and execution</span> paths guided by an AI companion.
           </p>
 
           <button 
             onClick={() => setWalletModalOpen(true)}
-            className="mt-10 self-start bg-neo-orange text-white border-2 border-black rounded-full shadow-[2px_4px_0px_0px_#000] px-10 py-3.5 font-black uppercase tracking-widest text-sm hover:translate-x-[2px] hover:translate-y-[4px] hover:shadow-none transition-all">
+            className={`anim-slide-up delay-300 mt-10 self-start bg-neo-orange text-white border-2 border-black rounded-full shadow-[2px_4px_0px_0px_#000] px-10 py-3.5 font-black uppercase tracking-widest text-sm hover:translate-x-[2px] hover:translate-y-[4px] hover:shadow-none transition-all ${featuresBodyInView ? 'in-view' : ''}`}>
             Login to Start
           </button>
         </div>
@@ -291,7 +309,7 @@ export default function Home() {
           
           <div className="relative w-full max-w-[550px] h-[550px]">
             {/* Learn Card - Orange Square */}
-            <div className="absolute top-[8%] left-[2%] w-[48%] bg-neo-orange border-[3px] border-black p-6 neo-shadow-lg -rotate-6 z-20 hover:rotate-0 hover:scale-105 transition-transform duration-300">
+            <div ref={card1Ref} className={`anim-slide-right delay-0 absolute top-[8%] left-[2%] w-[48%] bg-neo-orange border-[3px] border-black p-6 neo-shadow-lg -rotate-6 z-20 hover:rotate-0 hover:scale-105 transition-transform duration-300 ${card1InView ? 'in-view' : ''}`}>
               <div className="w-8 h-8 border-[3px] border-black rounded-full mb-3 flex items-center justify-center font-black text-sm bg-neo-yellow">1</div>
               <h3 className="font-black uppercase text-xl mb-3 leading-tight">Learn Before You Touch</h3>
               <p className="font-bold text-black/90 text-xs leading-snug">
@@ -300,7 +318,7 @@ export default function Home() {
             </div>
 
             {/* Simulate Card - White Box */}
-            <div className="absolute top-[0%] right-[2%] w-[48%] bg-white border-[3px] border-black p-6 neo-shadow-lg rotate-[5deg] z-10 hover:rotate-0 hover:scale-105 transition-transform duration-300">
+            <div ref={card2Ref} className={`anim-slide-right delay-200 absolute top-[0%] right-[2%] w-[48%] bg-white border-[3px] border-black p-6 neo-shadow-lg rotate-[5deg] z-10 hover:rotate-0 hover:scale-105 transition-transform duration-300 ${card2InView ? 'in-view' : ''}`}>
               <div className="w-8 h-8 border-[3px] border-black rounded-full mb-3 flex items-center justify-center font-black text-sm bg-neo-yellow">2</div>
               <h3 className="font-black uppercase text-xl mb-3">Simulate & Practice</h3>
               <p className="font-bold text-black/80 text-xs leading-snug">
@@ -309,7 +327,7 @@ export default function Home() {
             </div>
 
             {/* Execute Card - White Box */}
-            <div className="absolute bottom-[10%] right-[6%] w-[55%] bg-white border-[3px] border-black p-6 neo-shadow-lg rotate-[-4deg] z-30 hover:rotate-0 hover:scale-105 transition-transform duration-300">
+            <div ref={card3Ref} className={`anim-slide-right delay-400 absolute bottom-[10%] right-[6%] w-[55%] bg-white border-[3px] border-black p-6 neo-shadow-lg rotate-[-4deg] z-30 hover:rotate-0 hover:scale-105 transition-transform duration-300 ${card3InView ? 'in-view' : ''}`}>
               <div className="w-8 h-8 border-[3px] border-black rounded-full mb-3 flex items-center justify-center font-black text-sm bg-neo-lime">3</div>
               <h3 className="font-black uppercase text-xl mb-3">Execute On-Chain</h3>
               <p className="font-bold text-black/80 text-xs leading-snug">
@@ -318,7 +336,7 @@ export default function Home() {
             </div>
 
             {/* Circular Badge */}
-            <div className="absolute bottom-[15%] left-[10%] w-36 h-36 bg-neo-lime border-4 border-black rounded-full flex items-center justify-center z-40 rotate-12 neo-shadow-lg hover:rotate-180 transition-transform duration-700">
+            <div className={`anim-scale delay-500 absolute bottom-[15%] left-[10%] w-36 h-36 bg-neo-lime border-4 border-black rounded-full flex items-center justify-center z-40 rotate-12 neo-shadow-lg hover:rotate-180 transition-transform duration-700 ${card3InView ? 'in-view' : ''}`}>
               <svg viewBox="0 0 100 100" className="w-full h-full absolute inset-0 animate-spin-slow">
                 <path id="badgeTextPath" d="M 50, 50 m -35, 0 a 35,35 0 1,1 70,0 a 35,35 0 1,1 -70,0" fill="transparent"/>
                 <text fontSize="11" fontWeight="900" fill="black" letterSpacing="1">
@@ -355,13 +373,13 @@ export default function Home() {
         <div className="relative z-10 max-w-6xl mx-auto px-6 lg:px-16 py-20">
 
           {/* Header */}
-          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 mb-16">
+          <div ref={whyHeaderRef} className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 mb-16">
             <div>
-              <div className="flex items-center gap-3 mb-4">
+              <div className={`anim-fade delay-0 flex items-center gap-3 mb-4 ${whyHeaderInView ? 'in-view' : ''}`}>
                 <Image src="/injective-logo.svg" alt="Injective" width={20} height={20} className="object-contain opacity-60" />
                 <span className="font-black text-[10px] uppercase tracking-[0.2em] text-white/40">The Infrastructure</span>
               </div>
-              <h2 className="font-black uppercase text-4xl lg:text-6xl leading-[0.93] text-white tracking-tight">
+              <h2 className={`anim-slide-up delay-100 font-black uppercase text-4xl lg:text-6xl leading-[0.93] text-white tracking-tight ${whyHeaderInView ? 'in-view' : ''}`}>
                 Why<br />
                 <span className="relative inline-block">
                   <span className="relative z-10">Injective?</span>
@@ -369,31 +387,35 @@ export default function Home() {
                 </span>
               </h2>
             </div>
-            <p className="font-bold text-white/50 text-sm max-w-xs leading-relaxed lg:text-right">
+            <p className={`anim-slide-right delay-200 font-bold text-white/50 text-sm max-w-xs leading-relaxed lg:text-right ${whyHeaderInView ? 'in-view' : ''}`}>
               Hodegos was built specifically for Injective because the chain&apos;s architecture enables things that are impossible on most other networks.
             </p>
           </div>
 
           {/* Stats row */}
           <div className="grid grid-cols-3 gap-0 border-[3px] border-white/10 mb-12 overflow-hidden">
-            {[
-              { value: "< 1s", label: "Block Finality", sub: "Orders settle in under one second" },
-              { value: "0%", label: "Maker Fees", sub: "No fees on most spot market maker orders" },
-              { value: "100%", label: "On-Chain", sub: "Fully decentralised orderbook, no central server" },
-            ].map((stat, i) => (
-              <div key={i} className={`p-8 ${i < 2 ? "border-r-[3px] border-white/10" : ""}`}>
-                <div className="font-black text-4xl lg:text-5xl text-neo-lime mb-2">{stat.value}</div>
-                <div className="font-black text-xs uppercase tracking-widest text-white mb-1">{stat.label}</div>
-                <div className="font-bold text-[11px] text-white/40 leading-snug">{stat.sub}</div>
-              </div>
-            ))}
+            <div ref={stat1Ref} className={`p-8 border-r-[3px] border-white/10`}>
+              <div className={`anim-pop delay-0 font-black text-4xl lg:text-5xl text-neo-lime mb-2 ${stat1InView ? 'in-view' : ''}`}>&lt; 1s</div>
+              <div className={`anim-fade delay-200 font-black text-xs uppercase tracking-widest text-white mb-1 ${stat1InView ? 'in-view' : ''}`}>Block Finality</div>
+              <div className={`anim-fade delay-300 font-bold text-[11px] text-white/40 leading-snug ${stat1InView ? 'in-view' : ''}`}>Orders settle in under one second</div>
+            </div>
+            <div ref={stat2Ref} className={`p-8 border-r-[3px] border-white/10`}>
+              <div className={`anim-pop delay-100 font-black text-4xl lg:text-5xl text-neo-lime mb-2 ${stat2InView ? 'in-view' : ''}`}>0%</div>
+              <div className={`anim-fade delay-300 font-black text-xs uppercase tracking-widest text-white mb-1 ${stat2InView ? 'in-view' : ''}`}>Maker Fees</div>
+              <div className={`anim-fade delay-400 font-bold text-[11px] text-white/40 leading-snug ${stat2InView ? 'in-view' : ''}`}>No fees on most spot market maker orders</div>
+            </div>
+            <div ref={stat3Ref} className={`p-8`}>
+              <div className={`anim-pop delay-200 font-black text-4xl lg:text-5xl text-neo-lime mb-2 ${stat3InView ? 'in-view' : ''}`}>100%</div>
+              <div className={`anim-fade delay-400 font-black text-xs uppercase tracking-widest text-white mb-1 ${stat3InView ? 'in-view' : ''}`}>On-Chain</div>
+              <div className={`anim-fade delay-500 font-bold text-[11px] text-white/40 leading-snug ${stat3InView ? 'in-view' : ''}`}>Fully decentralised orderbook, no central server</div>
+            </div>
           </div>
 
           {/* Feature cards */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
             {/* Left — tall feature card */}
-            <div className="bg-white/5 border-[3px] border-white/10 p-8 flex flex-col gap-6 hover:border-neo-lime/40 transition-colors duration-300">
+            <div ref={whyCard1Ref} className={`anim-slide-left delay-0 bg-white/5 border-[3px] border-white/10 p-8 flex flex-col gap-6 hover:border-neo-lime/40 transition-colors duration-300 ${whyCard1InView ? 'in-view' : ''}`}>
               <div className="w-10 h-10 bg-neo-lime border-2 border-black flex items-center justify-center shrink-0">
                 <Lightning size={20} weight="fill" color="black" />
               </div>
@@ -415,7 +437,7 @@ export default function Home() {
 
             {/* Right — stacked cards */}
             <div className="flex flex-col gap-6">
-              <div className="bg-neo-lime border-[3px] border-black p-6 flex gap-5 hover:translate-x-1 hover:translate-y-1 transition-transform duration-200">
+              <div ref={whyCard2Ref} className={`anim-slide-right delay-100 bg-neo-lime border-[3px] border-black p-6 flex gap-5 hover:translate-x-1 hover:translate-y-1 transition-transform duration-200 ${whyCard2InView ? 'in-view' : ''}`}>
                 <div className="w-8 h-8 bg-black border-2 border-black flex items-center justify-center shrink-0 mt-0.5">
                   <Timer size={16} weight="fill" color="#D0EE51" />
                 </div>
@@ -427,7 +449,7 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="bg-white/5 border-[3px] border-white/10 p-6 flex gap-5 hover:border-neo-orange/40 transition-colors duration-300">
+              <div ref={whyCard3Ref} className={`anim-slide-right delay-300 bg-white/5 border-[3px] border-white/10 p-6 flex gap-5 hover:border-neo-orange/40 transition-colors duration-300 ${whyCard3InView ? 'in-view' : ''}`}>
                 <div className="w-8 h-8 bg-neo-orange border-2 border-black flex items-center justify-center shrink-0 mt-0.5">
                   <ShieldCheck size={16} weight="fill" color="black" />
                 </div>
@@ -439,7 +461,7 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="bg-white/5 border-[3px] border-white/10 p-6 flex gap-5 hover:border-neo-lime/40 transition-colors duration-300">
+              <div ref={whyCard4Ref} className={`anim-slide-right delay-500 bg-white/5 border-[3px] border-white/10 p-6 flex gap-5 hover:border-neo-lime/40 transition-colors duration-300 ${whyCard4InView ? 'in-view' : ''}`}>
                 <div className="w-8 h-8 bg-white/10 border-2 border-white/20 flex items-center justify-center shrink-0 mt-0.5">
                   <CurrencyDollar size={16} weight="fill" color="#D0EE51" />
                 </div>

@@ -28,46 +28,132 @@ body {
   overflow-x: hidden;
 }
 
-/* Utilities */
+/* ── Utilities ───────────────────────────────────────────────── */
 @layer utilities {
-  .neo-shadow {
-    box-shadow: 4px 4px 0px 0px #000000;
+  .neo-shadow   { box-shadow: 4px 4px 0px 0px #000000; }
+  .neo-shadow-lg { box-shadow: 8px 8px 0px 0px #000000; }
+  .neo-border   { border: 3px solid #000000; }
+  .neo-shadow-sm { box-shadow: 2px 2px 0px 0px #000000; }
+
+  /* Spin / Marquee */
+  .animate-spin-slow { animation: spin 10s linear infinite; }
+  .animate-marquee   { animation: marquee 20s linear infinite; }
+
+  /* ── Scroll-triggered base states ─────────────────────────── */
+  /* Elements start invisible; the .in-view class triggers animation */
+
+  .anim-slide-up {
+    opacity: 0;
+    transform: translateY(48px);
+    transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
   }
-  .neo-shadow-lg {
-    box-shadow: 8px 8px 0px 0px #000000;
+  .anim-slide-up.in-view {
+    opacity: 1;
+    transform: translateY(0);
   }
-  .neo-border {
-    border: 3px solid #000000;
+
+  .anim-slide-left {
+    opacity: 0;
+    transform: translateX(-52px);
+    transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
   }
-  .neo-shadow-sm {
-    box-shadow: 2px 2px 0px 0px #000000;
+  .anim-slide-left.in-view {
+    opacity: 1;
+    transform: translateX(0);
   }
-  .animate-spin-slow {
-    animation: spin 10s linear infinite;
+
+  .anim-slide-right {
+    opacity: 0;
+    transform: translateX(52px);
+    transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
   }
-  .animate-marquee {
-    animation: marquee 20s linear infinite;
+  .anim-slide-right.in-view {
+    opacity: 1;
+    transform: translateX(0);
   }
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
+
+  .anim-fade {
+    opacity: 0;
+    transition: opacity 0.8s ease;
   }
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
+  .anim-fade.in-view { opacity: 1; }
+
+  .anim-scale {
+    opacity: 0;
+    transform: scale(0.88);
+    transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
   }
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background-color: rgba(0,0,0,0.2);
+  .anim-scale.in-view {
+    opacity: 1;
+    transform: scale(1);
   }
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(0,0,0,0.5);
+
+  /* Stat numbers pop with spring */
+  .anim-pop {
+    opacity: 0;
+    transform: scale(0.7) translateY(16px);
+    transition: opacity 0.55s cubic-bezier(0.34, 1.56, 0.64, 1),
+                transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
+  .anim-pop.in-view {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+
+  /* ── Stagger delays ───────────────────────────────────────── */
+  .delay-0   { transition-delay: 0ms !important; }
+  .delay-100 { transition-delay: 100ms !important; }
+  .delay-150 { transition-delay: 150ms !important; }
+  .delay-200 { transition-delay: 200ms !important; }
+  .delay-300 { transition-delay: 300ms !important; }
+  .delay-400 { transition-delay: 400ms !important; }
+  .delay-500 { transition-delay: 500ms !important; }
+  .delay-600 { transition-delay: 600ms !important; }
+  .delay-700 { transition-delay: 700ms !important; }
+
+  /* ── Hero entrance (CSS-only, fires on load) ──────────────── */
+  .hero-word   { display: inline-block; animation: heroSlideUp 0.9s cubic-bezier(0.16, 1, 0.3, 1) both; }
+  .hero-word-2 { animation-delay: 0.08s; }
+  .hero-word-3 { animation-delay: 0.16s; }
+  .hero-sub    { animation: heroFadeIn 1s 0.35s ease both; }
+  .hero-cta    { animation: heroFadeIn 1s 0.55s ease both; }
+
+  /* Scrollbar */
+  .custom-scrollbar::-webkit-scrollbar       { width: 6px; }
+  .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+  .custom-scrollbar::-webkit-scrollbar-thumb { background-color: rgba(0,0,0,0.2); }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover { background-color: rgba(0,0,0,0.5); }
 }
 
+/* ── Keyframes ───────────────────────────────────────────────── */
 @keyframes spin {
   from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  to   { transform: rotate(360deg); }
 }
 
 @keyframes marquee {
-  0% { transform: translateX(0%); }
+  0%   { transform: translateX(0%); }
   100% { transform: translateX(-50%); }
+}
+
+@keyframes heroSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(60px) skewY(4deg);
+    filter: blur(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) skewY(0deg);
+    filter: blur(0);
+  }
+}
+
+@keyframes heroFadeIn {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
