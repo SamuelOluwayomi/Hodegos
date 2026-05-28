@@ -13,7 +13,7 @@ Hodegos perfectly aligns with the Consumer AI App track by abstracting the compl
 
 ---
 
-## 🤖 How AI is Utilized
+## How AI is Utilized
 
 Hodegos leverages the **Groq API** (specifically Llama 3 models) to power two primary AI integrations:
 
@@ -34,7 +34,7 @@ At the core of the platform is an embedded conversational AI that acts as a pers
 
 ---
 
-## ⛓️ Injective Integration
+## Injective Integration
 
 Hodegos is deeply integrated with the Injective ecosystem using the `@injectivelabs/sdk-ts` and `@injectivelabs/networks` packages.
 
@@ -45,7 +45,7 @@ Hodegos is deeply integrated with the Injective ecosystem using the `@injectivel
 
 ---
 
-## 👤 User Journey & Interaction Flow
+## User Journey & Interaction Flow
 
 1. **Onboarding & Assessment:** New users are greeted by the AI, which assesses their current knowledge level (Beginner, Intermediate, Master) and tailors the experience accordingly.
 2. **Learn (Education Phase):** Users receive bite-sized, jargon-free lessons on trading fundamentals (e.g., spot vs. perps, limit vs. market orders) directly through conversational dialogue.
@@ -54,7 +54,7 @@ Hodegos is deeply integrated with the Injective ecosystem using the `@injectivel
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 - **Frontend:** Next.js (App Router), React, Tailwind CSS
 - **AI / LLM:** Groq API (Llama-3.3-70b-versatile, Llama-3.1-8b-instant)
@@ -64,7 +64,7 @@ Hodegos is deeply integrated with the Injective ecosystem using the `@injectivel
 
 ---
 
-## 💻 Local Development Setup
+## Local Development Setup
 
 To run Hodegos locally, follow these steps:
 
@@ -100,7 +100,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
-## 🚀 Future Roadmap
+## Future Roadmap
 - **Portfolio-Aware Risk Alerts:** Proactive AI notifications when a user's simulated or live portfolio becomes overexposed to a single asset.
 - **Injective Orderbook Data:** Pulling live bid/ask spread data from Injective DEXs directly into the AI prompt for more granular, real-time trading advice.
 - **Automated Rebalancing:** Allowing the AI agent to autonomously execute portfolio rebalancing trades based on user-defined parameters.
