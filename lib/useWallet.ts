@@ -82,9 +82,15 @@ export function useWallet() {
       };
 
       if (!provider) {
+        let errorMsg = `${walletId.charAt(0).toUpperCase() + walletId.slice(1)} not detected.`;
+        if (walletId === "ninji") {
+          errorMsg = "Ninji not detected. If installed, please refresh the page, ensure it is unlocked, or check for browser conflicts (like Brave Shields or other active wallet extensions).";
+        } else {
+          errorMsg = `${walletId.charAt(0).toUpperCase() + walletId.slice(1)} not installed. Download at ${downloadLinks[walletId]}`;
+        }
         setState((s) => ({
           ...s,
-          error: `${walletId.charAt(0).toUpperCase() + walletId.slice(1)} not installed. Download at ${downloadLinks[walletId]}`,
+          error: errorMsg,
         }));
         return;
       }
