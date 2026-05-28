@@ -232,7 +232,7 @@ export default function Home() {
             <img 
               src="/hero-guide.png" 
               alt="AI Guide" 
-              className="hero-bot-img absolute bottom-[5%] left-1/2 -translate-x-1/2 w-auto max-w-none h-[88%] z-20 pointer-events-none drop-shadow-md"
+              className="hero-bot-img absolute bottom-[5%] left-1/2 w-auto max-w-none h-[88%] z-20 pointer-events-none drop-shadow-md"
             />
 
             {/* The Label Box */}

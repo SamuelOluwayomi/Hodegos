@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import Image from "next/image";
 import { useWallet, WalletId } from "@/lib/useWallet";
 import { useRouter } from "next/navigation";
 import { X } from "@phosphor-icons/react";
@@ -20,11 +21,9 @@ const WALLETS: {
     description: "Cosmos native · Browser extension",
     recommended: true,
     icon: (
-      <svg viewBox="0 0 40 40" className="w-8 h-8" fill="none">
-        <rect width="40" height="40" rx="8" fill="#2B2B2B" />
-        <path d="M10 10h8v8l6-8h8L22 22l10 10h-8L14 22v10h-8V10z" fill="#7B5AF7" />
-        <path d="M22 20l10 10h-8L14 22" fill="#9F7AFF" opacity="0.6" />
-      </svg>
+      <div className="w-8 h-8 flex items-center justify-center bg-[#7B5AF7] p-1.5">
+        <Image src="/keplr-glyph-white.png" alt="Keplr" width={32} height={32} className="w-full h-full object-contain" />
+      </div>
     ),
   },
   {
@@ -32,11 +31,9 @@ const WALLETS: {
     label: "Leap",
     description: "Cosmos native · Browser extension",
     icon: (
-      <svg viewBox="0 0 40 40" className="w-8 h-8" fill="none">
-        <rect width="40" height="40" rx="8" fill="#1A1A1A" />
-        <circle cx="20" cy="20" r="10" fill="#29CC6A" />
-        <path d="M15 20l4 4 7-8" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
+      <div className="w-8 h-8 flex items-center justify-center bg-[#1A1A1A] p-0.5">
+        <Image src="/leap.png" alt="Leap" width={32} height={32} className="w-full h-full object-contain" />
+      </div>
     ),
   },
   {
@@ -44,29 +41,9 @@ const WALLETS: {
     label: "Ninji",
     description: "Injective native · Browser extension",
     icon: (
-      <svg viewBox="0 0 40 40" className="w-8 h-8" fill="none">
-        <rect width="40" height="40" rx="8" fill="#0A0A2E" />
-        <circle cx="20" cy="20" r="10" fill="#6366F1" />
-        <path d="M15 18l5 6 5-6" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    ),
-  },
-  {
-    id: "metamask",
-    label: "MetaMask",
-    description: "EVM compatible · Browser extension",
-    icon: (
-      <svg viewBox="0 0 40 40" className="w-8 h-8" fill="none">
-        <rect width="40" height="40" rx="8" fill="#1A1A1A" />
-        <path d="M32 8L22 16l2-5z" fill="#E17726" />
-        <path d="M8 8l10 8-2-5z" fill="#E27625" />
-        <path d="M28 27l-3 5 7 2-1-7z" fill="#E27625" />
-        <path d="M9 27l-1 7 7-2-3-5z" fill="#E27625" />
-        <path d="M15 19l-2 4 8 1-1-6z" fill="#F5841F" />
-        <path d="M25 19l-5-1-1 6 8-1z" fill="#F5841F" />
-        <path d="M15 32l5-2-4-4z" fill="#C0AC9D" />
-        <path d="M20 30l5 2-4-4z" fill="#C0AC9D" />
-      </svg>
+      <div className="w-8 h-8 flex items-center justify-center bg-[#0A0A2E] p-0.5">
+        <Image src="/ninji.png" alt="Ninji" width={32} height={32} className="w-full h-full object-contain" />
+      </div>
     ),
   },
 ];
