@@ -132,19 +132,43 @@ const renderMarkdown = (text: string) => {
       cleanLine = cleanLine.substring(2);
     }
 
-    // Handle markdown image syntax: ![alt text](/path/to/image.png)
-    const mdImageMatch = cleanLine.match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
-    if (mdImageMatch) {
-      const alt = mdImageMatch[1] || "Trading Illustration";
-      const src = mdImageMatch[2];
+    // Handle markdown image syntax anywhere in the line: ![alt text](path)
+    // Normalize common relative paths (./public/, ./, public/) to root '/'
+    const mdImageRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
+    const images: Array<{ alt: string; src: string }> = [];
+    let imgMatch: RegExpExecArray | null;
+    while ((imgMatch = mdImageRegex.exec(cleanLine)) !== null) {
+      let alt = imgMatch[1] || 'Trading Illustration'
+      let src = imgMatch[2].trim()
+      // Strip surrounding quotes if present
+      if ((src.startsWith('"') && src.endsWith('"')) || (src.startsWith("'") && src.endsWith("'"))) {
+        src = src.slice(1, -1)
+      }
+      // Normalize common prefixes
+      src = src.replace(/^\.\/public\//, '/').replace(/^public\//, '/').replace(/^\.\//, '/')
+      // If no leading slash, assume public root
+      if (!src.startsWith('/')) src = '/' + src
+      images.push({ alt, src })
+    }
+
+    if (images.length > 0) {
+      // Render all images found in this line stacked
       return (
         <div key={i} className="my-3 border-[3px] border-black bg-white p-2 max-w-md mx-auto text-center">
-          <img src={src} alt={alt} className="w-full h-auto object-cover border-[3px] border-black" />
-          <p className="font-black text-[9px] uppercase tracking-widest text-center mt-2 text-black/60 bg-neo-yellow border-t-2 border-black py-1">
-            {alt}
-          </p>
+          {images.map((im, idx) => (
+            <div key={idx} className="mb-3">
+              <img
+                src={im.src}
+                alt={im.alt}
+                onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/hack.png' }}
+                className="w-full h-auto object-cover border-[3px] border-black" />
+              <p className="font-black text-[9px] uppercase tracking-widest text-center mt-2 text-black/60 bg-neo-yellow border-t-2 border-black py-1">
+                {im.alt}
+              </p>
+            </div>
+          ))}
         </div>
-      );
+      )
     }
 
     // Fallback: legacy [IMAGE_PLACEHOLDER: ...] support
