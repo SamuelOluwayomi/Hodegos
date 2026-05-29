@@ -33,9 +33,10 @@ export async function GET(req: Request) {
       const items = xmlText.match(/<item>[\s\S]*?<\/item>/gi) || []
       
       rawArticles = items.slice(0, 10).map((item, index) => {
-        const title = item.match(/<title>(.*?)<\/title>/i)?.[1] || 'No title'
+        let title = item.match(/<title>(.*?)<\/title>/i)?.[1] || 'No title'
+        title = title.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/, '$1')
         let link = item.match(/<link>(.*?)<\/link>/i)?.[1] || ''
-        link = link.replace(/<!\[CDATA\[(.*?)\]\]>/, '$1')
+        link = link.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/, '$1')
         const pubDate = item.match(/<pubDate>(.*?)<\/pubDate>/i)?.[1] || new Date().toISOString()
         
         return {
