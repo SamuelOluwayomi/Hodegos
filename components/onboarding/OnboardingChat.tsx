@@ -152,20 +152,54 @@ const renderMarkdown = (text: string) => {
     }
 
     if (images.length > 0) {
+      // Hardcoded per-topic image map — prefer exact topic mapping when available
+      const lowerText = text.toLowerCase();
+      const topicMap: Record<string, string> = {
+        '1': '/trading_intro.png',
+        '2': '/crypto_exchanges.png',
+        '3': '/trading_pairs.png',
+        '4': '/market_limit.png',
+        '5': '/risk_management.jpg',
+        '6': '/spot_perpetual.png',
+        '7': '/hero-guide.png'
+      };
+
+      // Detect explicit "Topic N" mentions first
+      const topicMatch = lowerText.match(/topic\s*(?:number\s*)?(\d)/i);
+      const forcedTopic = topicMatch ? topicMatch[1] : null;
+
       return (
         <div key={i} className="my-3 border-[3px] border-black bg-white p-2 max-w-md mx-auto text-center">
-          {images.map((im, idx) => (
-            <div key={idx} className="mb-3">
-              <img
-                src={im.src}
-                alt={im.alt}
-                onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/hero-guide.png' }}
-                className="w-full h-auto object-cover border-[3px] border-black" />
-              <p className="font-black text-[9px] uppercase tracking-widest text-center mt-2 text-black/60 bg-neo-yellow border-t-2 border-black py-1">
-                {im.alt}
-              </p>
-            </div>
-          ))}
+          {images.map((im, idx) => {
+            // default to AI-provided normalized src
+            let srcToUse = im.src;
+            const filename = (im.src.split('?')[0].split('/').pop() || '').toLowerCase();
+
+            // 1) If we detected an explicit topic and have a mapping, use it
+            if (forcedTopic && topicMap[forcedTopic]) {
+              srcToUse = topicMap[forcedTopic];
+            } else {
+              // 2) Fallback to keyword heuristics for reliability
+              if (lowerText.includes('crypto exchange') || lowerText.includes('crypto exchanges') || im.alt.toLowerCase().includes('exchange') || filename.includes('crypto_exchanges')) {
+                srcToUse = topicMap['2'];
+              } else if (lowerText.includes('trading pair') || filename.includes('trading_pairs')) {
+                srcToUse = topicMap['3'];
+              }
+            }
+
+            return (
+              <div key={idx} className="mb-3">
+                <img
+                  src={srcToUse}
+                  alt={im.alt}
+                  onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/hero-guide.png' }}
+                  className="w-full h-auto object-cover border-[3px] border-black" />
+                <p className="font-black text-[9px] uppercase tracking-widest text-center mt-2 text-black/60 bg-neo-yellow border-t-2 border-black py-1">
+                  {im.alt}
+                </p>
+              </div>
+            )
+          })}
         </div>
       )
     }
