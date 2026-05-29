@@ -329,15 +329,34 @@ price: 4.50
 [/TX]
 `
 
-    // Model Fallback Chain
+    const MODEL_START_TIMEOUT_MS = 10000;
+
+    async function createChatStream(model: string, payload: any): Promise<any> {
+      return new Promise(async (resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error(`Model startup timed out after ${MODEL_START_TIMEOUT_MS}ms`));
+        }, MODEL_START_TIMEOUT_MS);
+
+        try {
+          const stream = await groq.chat.completions.create(payload);
+          clearTimeout(timeout);
+          resolve(stream);
+        } catch (err) {
+          clearTimeout(timeout);
+          reject(err);
+        }
+      });
+    }
+
+    // Model Fallback Chain: try the fastest available model first, then fall back.
     const models = ['llama-3.1-8b-instant', 'llama-3.3-70b-versatile'];
-    let stream = null;
+    let stream: any = null;
     let selectedModel = '';
 
     for (const model of models) {
       try {
-        stream = await groq.chat.completions.create({
-          model: model,
+        stream = await createChatStream(model, {
+          model,
           messages: [
             { role: 'system', content: systemPrompt },
             ...messages,
@@ -347,11 +366,10 @@ price: 4.50
         });
         selectedModel = model;
         console.log(`Successfully started chat stream using model: ${model}`);
-        break; // Successfully got the stream, break the loop
+        break;
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : String(err);
-        console.warn(`Failed to create stream using model ${model}:`, errorMessage);
-        // If it's the last model, throw the error
+        console.warn(`Failed to start chat stream on ${model}:`, errorMessage);
         if (model === models[models.length - 1]) {
           throw err;
         }

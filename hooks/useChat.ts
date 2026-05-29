@@ -59,7 +59,7 @@ function loadProfile(walletAddress: string): UserProfile | null {
   return null
 }
 
-const MAX_CHAT_HISTORY_MESSAGES = 12
+const MAX_CHAT_HISTORY_MESSAGES = 8
 
 function saveMessages(walletAddress: string, messages: Message[]) {
   if (typeof window !== 'undefined' && walletAddress) {

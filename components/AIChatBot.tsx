@@ -606,7 +606,7 @@ export default function AIChatBot() {
   return (
     <>
       {isChatOpen ? (
-        <div className="fixed bottom-6 right-6 z-50 w-80 sm:w-96 h-[520px] max-h-[85vh] flex flex-col bg-white border-4 border-black neo-shadow overflow-hidden">
+        <div className="fixed bottom-6 right-6 z-50 w-80 sm:w-96 h-130 max-h-[85vh] flex flex-col bg-white border-4 border-black neo-shadow overflow-hidden">
           {/* Chat Header */}
           <div className="border-b-4 border-black bg-black text-white p-3 flex justify-between items-center shrink-0">
             <div className="flex items-center gap-2">
@@ -693,7 +693,7 @@ export default function AIChatBot() {
               );
             })}
 
-            {chatLoading && (!filteredMessages.length || filteredMessages[filteredMessages.length - 1].role === 'user') && (
+            {chatLoading && (
               <div className="flex flex-col gap-1 items-start animate-pulse">
                 <span className="font-black text-[9px] uppercase tracking-widest text-black/40 ml-1">
                   Hodegos AI is thinking...
