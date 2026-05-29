@@ -238,6 +238,7 @@ export default function OnboardingChat({ messages, isLoading, onSendMessage, onR
               )}
               {quizInThisMsg && quizInThisMsg.type === "explain" && (
                 <ExplainRenderer question={quizInThisMsg} />
+              )}
             </React.Fragment>
           );
         })}
