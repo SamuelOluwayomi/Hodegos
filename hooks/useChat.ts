@@ -308,9 +308,18 @@ function useChatRaw(walletAddress?: string) {
     saveMessages(profile.walletAddress, newMessages)
     setIsLoading(true)
 
-    // Save user message to Supabase (unless it's a system context message)
+    // Push empty assistant placeholder IMMEDIATELY so the typing loader is visible
+    // while we wait for the server response
+    const assistantTimestamp = Date.now()
+    setMessages(prev => {
+      const updated = [...prev, { role: 'assistant' as const, content: '', timestamp: assistantTimestamp }]
+      saveMessages(profile.walletAddress, updated)
+      return updated
+    })
+
+    // Fire-and-forget: save user message to Supabase — never blocks the API call
     if (supabase && profile.walletAddress && !userMessage.startsWith('[SYSTEM]')) {
-      (async () => {
+      void (async () => {
         try {
           let { data: user } = await supabase.from('users').select('id').eq('wallet_address', profile.walletAddress).maybeSingle()
           if (!user) {
@@ -364,13 +373,6 @@ function useChatRaw(walletAddress?: string) {
       const reader = response.body?.getReader()
       const decoder = new TextDecoder()
       let assistantMessage = ''
-      const assistantTimestamp = Date.now()
-
-      setMessages(prev => {
-        const updated = [...prev, { role: 'assistant' as const, content: '', timestamp: assistantTimestamp }]
-        saveMessages(profile.walletAddress, updated)
-        return updated
-      })
 
       while (reader) {
         const { done, value } = await reader.read()
@@ -429,8 +431,13 @@ function useChatRaw(walletAddress?: string) {
       if (err instanceof Error && err.name === 'AbortError') return
       console.error('Chat error:', err)
       setMessages(prev => {
+        // Replace the empty assistant placeholder we pushed at the start,
+        // rather than appending a second bubble after it
+        const withoutPlaceholder = prev[prev.length - 1]?.content === ''
+          ? prev.slice(0, -1)
+          : prev
         const updated = [
-          ...prev,
+          ...withoutPlaceholder,
           { role: 'assistant' as const, content: 'Something went wrong. Please try again.', timestamp: Date.now() }
         ]
         saveMessages(profile.walletAddress, updated)

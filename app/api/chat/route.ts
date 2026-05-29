@@ -17,14 +17,30 @@ const TONE_PRESETS: Record<string, string> = {
   socratic: `Your tone is inquisitive and thought-provoking. Instead of directly explaining, ask guiding questions that lead the user to discover answers themselves. Use the Socratic method. Respond with "What do you think would happen if...?", "Why do you think that is?", "Can you spot the pattern here?" Push them to think critically about trading.`,
 }
 
+// Memory cache for CoinGecko rates to keep API response times fast (<1s)
+const PRICE_CACHE_TTL_MS = Number(process.env.PRICE_CACHE_TTL_MS) || 30000;
+type CacheEntry = { price: number; fetchedAt: number };
+const priceCache = new Map<string, CacheEntry>();
+function getCachedPrice(key: string): number | null {
+  const entry = priceCache.get(key);
+  if (entry && Date.now() - entry.fetchedAt < PRICE_CACHE_TTL_MS) {
+    return entry.price;
+  }
+  return null;
+}
+function setCachedPrice(key: string, price: number) {
+  priceCache.set(key, { price, fetchedAt: Date.now() });
+}
+
 // Detect which asset the user is most likely asking about
-function detectAsset(message: string): string {
+function detectAsset(message: string): string | null {
   const msg = message.toUpperCase();
   if (msg.includes('ATOM')) return 'ATOM/USDT';
   if (msg.includes('WETH') || msg.includes('ETH')) return 'WETH/USDT';
   if (msg.includes('SOL')) return 'SOL/USDT';
   if (msg.includes('TIA')) return 'TIA/USDT';
-  return 'INJ/USDT'; // default
+  if (msg.includes('INJ')) return 'INJ/USDT';
+  return null; // return null so we bypass orderbook fetching for general messages
 }
 
 // Build a human-readable orderbook snippet for the AI
@@ -96,15 +112,35 @@ export async function POST(req: NextRequest) {
     let ethPrice = 2121.63;
 
     try {
-      const priceRes = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=injective-protocol,cosmos,solana,celestia,ethereum&vs_currencies=usd");
-      if (priceRes.ok) {
-        const priceData = await priceRes.json();
-        injPrice = priceData["injective-protocol"]?.usd || injPrice;
-        atomPrice = priceData["cosmos"]?.usd || atomPrice;
-        solPrice = priceData["solana"]?.usd || solPrice;
-        tiaPrice = priceData["celestia"]?.usd || tiaPrice;
-        ethPrice = priceData["ethereum"]?.usd || ethPrice;
+      // Use cache for each asset
+      const assets = ['injective-protocol', 'cosmos', 'solana', 'celestia', 'ethereum'];
+      const priceMap: Record<string, number> = {};
+      // Try to get from cache first
+      assets.forEach(a => {
+        const cached = getCachedPrice(a);
+        if (cached !== null) priceMap[a] = cached;
+      });
+      // Fetch missing assets
+      const missing = assets.filter(a => !(a in priceMap));
+      if (missing.length) {
+        const ids = missing.join(',');
+        const priceRes = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`);
+        if (priceRes.ok) {
+          const priceData = await priceRes.json();
+          missing.forEach(a => {
+            const p = priceData[a]?.usd;
+            if (p !== undefined) {
+              priceMap[a] = p;
+              setCachedPrice(a, p);
+            }
+          });
+        }
       }
+      injPrice = priceMap['injective-protocol'] ?? injPrice;
+      atomPrice = priceMap['cosmos'] ?? atomPrice;
+      solPrice = priceMap['solana'] ?? solPrice;
+      tiaPrice = priceMap['celestia'] ?? tiaPrice;
+      ethPrice = priceMap['ethereum'] ?? ethPrice;
     } catch (err) {
       console.error("Error fetching rates inside chat API:", err);
     }
@@ -114,11 +150,13 @@ export async function POST(req: NextRequest) {
     try {
       const lastUserMessage = messages.filter((m: any) => m.role === 'user').slice(-1)[0]?.content || '';
       const ticker = detectAsset(lastUserMessage);
-      const marketId = FEATURED_MARKET_IDS[ticker];
-      if (marketId) {
-        const priceForMarket = ticker.startsWith('INJ') ? injPrice : ticker.startsWith('ATOM') ? atomPrice : ticker.startsWith('WETH') ? ethPrice : ticker.startsWith('SOL') ? solPrice : tiaPrice;
-        const orderbook = await fetchOrderbook(marketId, priceForMarket);
-        orderbookBlock = buildOrderbookContext(ticker, orderbook.bids, orderbook.asks);
+      if (ticker) {
+        const marketId = FEATURED_MARKET_IDS[ticker];
+        if (marketId) {
+          const priceForMarket = ticker.startsWith('INJ') ? injPrice : ticker.startsWith('ATOM') ? atomPrice : ticker.startsWith('WETH') ? ethPrice : ticker.startsWith('SOL') ? solPrice : tiaPrice;
+          const orderbook = await fetchOrderbook(marketId, priceForMarket);
+          orderbookBlock = buildOrderbookContext(ticker, orderbook.bids, orderbook.asks);
+        }
       }
     } catch (err) {
       console.warn("Could not fetch orderbook for chat context:", err);
@@ -288,7 +326,7 @@ price: 4.50
             { role: 'system', content: systemPrompt },
             ...messages,
           ],
-          max_tokens: 1024,
+          max_tokens: 600,
           stream: true,
         });
         selectedModel = model;
