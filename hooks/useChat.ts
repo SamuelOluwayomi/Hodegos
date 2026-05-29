@@ -216,12 +216,6 @@ function useChatRaw(walletAddress?: string) {
       if (supabase && prev.walletAddress) {
         (async () => {
           try {
-            const { data: user } = await supabase
-              .from('users')
-              .select('id')
-              .eq('wallet_address', prev.walletAddress)
-              .maybeSingle()
-
             const dbPayload = {
               wallet_address: prev.walletAddress,
               user_name: updated.userName,
@@ -235,11 +229,7 @@ function useChatRaw(walletAddress?: string) {
               updated_at: new Date().toISOString()
             }
 
-            if (!user) {
-              await supabase.from('users').insert(dbPayload)
-            } else {
-              await supabase.from('users').update(dbPayload).eq('id', user.id)
-            }
+            await supabase.from('users').upsert(dbPayload, { onConflict: 'wallet_address' })
           } catch (err) {
             console.error('Supabase update error:', err)
           }
