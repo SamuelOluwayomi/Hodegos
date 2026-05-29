@@ -326,7 +326,7 @@ function useChatRaw(walletAddress?: string) {
               onboarding_complete: profile.onboardingComplete,
               onboarding_step: profile.onboardingStep,
               demo_completed: profile.demoCompleted
-            }, { onConflict: 'wallet_address', returning: 'representation' })
+            }, { onConflict: 'wallet_address' })
             .select('id')
             .maybeSingle()
 
