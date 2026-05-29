@@ -114,6 +114,10 @@ export async function POST(req: NextRequest) {
     const { messages, marketContext, pageContext, portfolioContext, userLevel, aiTone, userName, onboardingStep } = await req.json()
 
     const toneSetting = TONE_PRESETS[aiTone] || TONE_PRESETS['friendly']
+    const lastAssistantMessage = messages.filter((m: any) => m.role === 'assistant').slice(-1)[0]?.content || ''
+    const isQuizExplain = lastAssistantMessage.includes('[EXPLAIN]')
+    const isQuizMCQ = lastAssistantMessage.includes('[MCQ]')
+    const maxTokens = isQuizMCQ ? 180 : isQuizExplain ? 420 : 600
 
     // Retrieve real-time rates from CoinGecko dynamically for AI reference context
     let injPrice = 4.99;
@@ -361,7 +365,7 @@ price: 4.50
             { role: 'system', content: systemPrompt },
             ...messages,
           ],
-          max_tokens: 600,
+          max_tokens: maxTokens,
           stream: true,
         });
         selectedModel = model;
@@ -371,7 +375,26 @@ price: 4.50
         const errorMessage = err instanceof Error ? err.message : String(err);
         console.warn(`Failed to start chat stream on ${model}:`, errorMessage);
         if (model === models[models.length - 1]) {
-          throw err;
+          console.warn('Primary model fallback exhausted, trying degraded prompt fallback.');
+          const degradedPrompt = `You are a fast, concise crypto assistant. Answer clearly and directly, with as few words as possible while still being helpful.`;
+          try {
+            stream = await createChatStream('llama-3.1-8b-instant', {
+              model: 'llama-3.1-8b-instant',
+              messages: [
+                { role: 'system', content: degradedPrompt },
+                ...messages,
+              ],
+              max_tokens: Math.min(maxTokens, 220),
+              stream: true,
+            });
+            selectedModel = 'llama-3.1-8b-instant (degraded)';
+            console.log('Successfully started degraded stream fallback with llama-3.1-8b-instant');
+            break;
+          } catch (fallbackErr) {
+            const fallbackMessage = fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr);
+            console.warn('Degraded prompt fallback failed:', fallbackMessage);
+            throw err;
+          }
         }
       }
     }

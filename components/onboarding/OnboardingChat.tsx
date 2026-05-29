@@ -316,7 +316,7 @@ export default function OnboardingChat({ messages, isLoading, onSendMessage, onR
                     <div className="mt-2 border-t-2 border-black/10 pt-2 flex items-center">
                       <button
                         onClick={onRetry}
-                        className="bg-neo-orange text-black border-2 border-black px-3 py-1 font-black text-[10px] uppercase tracking-widest shadow-[2px_2px_0px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all cursor-pointer inline-flex items-center gap-1"
+                        className="bg-neo-orange text-black border-2 border-black px-3 py-1 font-black text-[10px] uppercase tracking-widest shadow-[2px_2px_0px_0px_#000] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none transition-all cursor-pointer inline-flex items-center gap-1"
                       >
                         <ArrowCounterClockwise size={12} weight="bold" /> Try Again / Resend
                       </button>
@@ -362,7 +362,7 @@ export default function OnboardingChat({ messages, isLoading, onSendMessage, onR
             <button
               key={i}
               onClick={() => onSendMessage(action.value)}
-              className={`${action.color} border-[3px] border-black px-3 py-1.5 font-black text-[10px] uppercase tracking-widest shadow-[3px_3px_0px_0px_#000] hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none transition-all`}
+              className={`${action.color} border-[3px] border-black px-3 py-1.5 font-black text-[10px] uppercase tracking-widest shadow-[3px_3px_0px_0px_#000] hover:translate-x-0.75 hover:translate-y-0.75 hover:shadow-none transition-all`}
             >
               {action.label}
             </button>
