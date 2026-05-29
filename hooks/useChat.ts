@@ -4,6 +4,8 @@ import React, { useState, useCallback, useRef, useEffect, createContext, useCont
 import { supabase } from '@/lib/supabase'
 import { getTierByXP } from '@/lib/tiers'
 
+
+
 export interface Message {
   role: 'user' | 'assistant'
   content: string
@@ -264,12 +266,13 @@ function useChatRaw(walletAddress?: string) {
       if (supabase && prev.walletAddress) {
         (async () => {
           try {
-            const { data: user } = await supabase.from('users').select('id').eq('wallet_address', prev.walletAddress).maybeSingle()
-            if (user) {
-              await supabase.from('user_badges').upsert({
-                user_id: user.id,
+            const userId = await ensureUserId(prev.walletAddress, prev)
+            if (userId) {
+              const { error } = await supabase.from('user_badges').upsert({
+                user_id: userId,
                 badge_name: badge
-              }, { onConflict: 'user_id,badge_name', ignoreDuplicates: true })
+              }, { onConflict: 'user_id,badge_name' })
+              if (error) console.error('Supabase badge upsert error:', error)
             }
           } catch (err) {
             console.error('Supabase badge save error:', err)
@@ -316,31 +319,15 @@ function useChatRaw(walletAddress?: string) {
     if (supabase && profile.walletAddress && !userMessage.startsWith('[SYSTEM]')) {
       void (async () => {
         try {
-          const { data: user, error: upsertUserError } = await supabase.from('users')
-            .upsert({
-              wallet_address: profile.walletAddress,
-              user_name: profile.userName,
-              ai_tone: profile.aiTone,
-              trading_level: profile.tradingLevel,
-              xp: profile.xp,
-              onboarding_complete: profile.onboardingComplete,
-              onboarding_step: profile.onboardingStep,
-              demo_completed: profile.demoCompleted
-            }, { onConflict: 'wallet_address' })
-            .select('id')
-            .maybeSingle()
-
-          if (upsertUserError) {
-            console.error('Supabase user upsert error:', upsertUserError)
-          }
-
-          if (user) {
-            await supabase.from('chat_messages').insert({
-              user_id: user.id,
+          const userId = await ensureUserId(profile.walletAddress, profile)
+          if (userId) {
+            const { error: insertErr } = await supabase.from('chat_messages').insert({
+              user_id: userId,
               role: 'user',
               content: userMessage,
               context: profile.onboardingStep || 'onboarding'
             })
+            if (insertErr) console.error('Error inserting chat_messages (user):', insertErr)
           }
         } catch (err) {
           console.error('Error saving user message to Supabase:', err)
@@ -396,14 +383,15 @@ function useChatRaw(walletAddress?: string) {
       if (supabase && profile.walletAddress) {
         (async () => {
           try {
-            const { data: user } = await supabase.from('users').select('id').eq('wallet_address', profile.walletAddress).maybeSingle()
-            if (user) {
-              await supabase.from('chat_messages').insert({
-                user_id: user.id,
+            const userId = await ensureUserId(profile.walletAddress, profile)
+            if (userId) {
+              const { error: insertErr } = await supabase.from('chat_messages').insert({
+                user_id: userId,
                 role: 'assistant',
                 content: assistantMessage,
                 context: profile.onboardingStep || 'onboarding'
               })
+              if (insertErr) console.error('Error inserting chat_messages (assistant):', insertErr)
             }
           } catch (err) {
             console.error('Error saving assistant message to Supabase:', err)
@@ -512,6 +500,37 @@ function useChatRaw(walletAddress?: string) {
       localStorage.removeItem(`hodegos_chat_messages_${walletAddress}`)
     }
   }, [walletAddress])
+  async function ensureUserId(walletAddress: string, profileData: Partial<UserProfile>) {
+    if (!supabase) return null
+    try {
+      const upsertObj: any = {
+        wallet_address: walletAddress,
+      }
+      if (profileData.userName) upsertObj.user_name = profileData.userName
+      if (profileData.aiTone) upsertObj.ai_tone = profileData.aiTone
+      if (typeof profileData.tradingLevel !== 'undefined') upsertObj.trading_level = profileData.tradingLevel
+      if (typeof profileData.xp !== 'undefined') upsertObj.xp = profileData.xp
+      if (typeof profileData.onboardingComplete !== 'undefined') upsertObj.onboarding_complete = profileData.onboardingComplete
+      if (typeof profileData.onboardingStep !== 'undefined') upsertObj.onboarding_step = profileData.onboardingStep
+      if (typeof profileData.demoCompleted !== 'undefined') upsertObj.demo_completed = profileData.demoCompleted
+
+      const { data: user, error } = await supabase
+        .from('users')
+        .upsert(upsertObj, { onConflict: 'wallet_address' })
+        .select('id')
+        .maybeSingle()
+
+      if (error) {
+        console.error('ensureUserId upsert error:', error)
+        return null
+      }
+
+      return user?.id ?? null
+    } catch (err) {
+      console.error('ensureUserId error:', err)
+      return null
+    }
+  }
 
   return {
     messages,
