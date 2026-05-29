@@ -345,9 +345,11 @@ export default function OnboardingChat({ messages, isLoading, onSendMessage, onR
           return (
             <React.Fragment key={i}>
               <div className={`flex flex-col gap-1 ${msg.role === "user" ? "items-end" : "items-start"}`}>
-                <span className="font-black text-[9px] uppercase tracking-widest text-black/40 mx-1">
-                  {msg.role === "user" ? "You" : "Hodegos AI"}
-                </span>
+                {!(msg.role === "assistant" && msg.content === "" && isLoading) && (
+                  <span className="font-black text-[9px] uppercase tracking-widest text-black/40 mx-1">
+                    {msg.role === "user" ? "You" : "Hodegos AI"}
+                  </span>
+                )}
                  <div
                   className={`px-4 py-3 text-[13px] font-bold leading-relaxed max-w-[85%] border-[3px] border-black ${
                     msg.role === "user"
@@ -396,20 +398,6 @@ export default function OnboardingChat({ messages, isLoading, onSendMessage, onR
             </React.Fragment>
           );
         })}
-        {isLoading && displayMessages.length > 0 && displayMessages[displayMessages.length - 1].role === "user" && (
-          <div className="flex flex-col gap-1 items-start">
-            <span className="font-black text-[9px] uppercase tracking-widest text-black/40 mx-1">
-              Hodegos AI
-            </span>
-            <div className="px-4 py-3 text-[13px] font-bold leading-relaxed max-w-[85%] border-[3px] border-black bg-white rounded-xl rounded-tl-none shadow-[3px_3px_0px_0px_#000]">
-              <span className="flex items-center gap-1">
-                <span className="w-2 h-2 bg-black rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                <span className="w-2 h-2 bg-black rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                <span className="w-2 h-2 bg-black rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
-              </span>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Quick action buttons */}
