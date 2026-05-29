@@ -10,7 +10,101 @@ import {
   QuizQuestion,
 } from "./QuizRenderer";
 
-import { ArrowCounterClockwise } from "@phosphor-icons/react";
+import {
+  ArrowCounterClockwise,
+  CheckCircle,
+  XCircle,
+  Warning,
+  Info,
+  TrendUp,
+  TrendDown,
+  ChartLine,
+  ChartBar,
+  Lightning,
+  Star,
+  Trophy,
+  ArrowRight,
+  ArrowUp,
+  ArrowDown,
+  Fire,
+  ThumbsUp,
+  HandWaving,
+  BookOpen,
+  Lightbulb,
+  Target,
+  Coins,
+  Wallet,
+  Question,
+  Smiley,
+  SmileyWink,
+  Lock,
+  ShieldCheck,
+  Scales,
+  Eye,
+  SealCheck,
+  Clock,
+  Notepad,
+  Globe,
+  ArrowsLeftRight,
+} from "@phosphor-icons/react";
+
+// Map of icon names the AI can output via [ICON:Name] to Phosphor components
+const ICON_MAP: Record<string, React.ReactElement> = {
+  CheckCircle:    <CheckCircle    size={16} weight="fill" className="inline text-green-600 align-middle" />,
+  XCircle:        <XCircle        size={16} weight="fill" className="inline text-rose-600 align-middle" />,
+  Warning:        <Warning        size={16} weight="fill" className="inline text-amber-500 align-middle" />,
+  Info:           <Info           size={16} weight="fill" className="inline text-sky-500 align-middle" />,
+  TrendUp:        <TrendUp        size={16} weight="bold" className="inline text-green-600 align-middle" />,
+  TrendDown:      <TrendDown      size={16} weight="bold" className="inline text-rose-600 align-middle" />,
+  ChartLine:      <ChartLine      size={16} weight="bold" className="inline text-black align-middle" />,
+  ChartBar:       <ChartBar       size={16} weight="bold" className="inline text-black align-middle" />,
+  Lightning:      <Lightning      size={16} weight="fill" className="inline text-neo-orange align-middle" />,
+  Star:           <Star           size={16} weight="fill" className="inline text-neo-yellow align-middle" />,
+  Trophy:         <Trophy         size={16} weight="fill" className="inline text-neo-orange align-middle" />,
+  ArrowRight:     <ArrowRight     size={16} weight="bold" className="inline align-middle" />,
+  ArrowUp:        <ArrowUp        size={16} weight="bold" className="inline text-green-600 align-middle" />,
+  ArrowDown:      <ArrowDown      size={16} weight="bold" className="inline text-rose-600 align-middle" />,
+  Fire:           <Fire           size={16} weight="fill" className="inline text-neo-orange align-middle" />,
+  ThumbsUp:       <ThumbsUp       size={16} weight="fill" className="inline text-neo-lime align-middle" />,
+  HandWaving:     <HandWaving     size={16} weight="fill" className="inline text-neo-yellow align-middle" />,
+  BookOpen:       <BookOpen       size={16} weight="bold" className="inline text-black align-middle" />,
+  Lightbulb:      <Lightbulb      size={16} weight="fill" className="inline text-neo-yellow align-middle" />,
+  Target:         <Target         size={16} weight="bold" className="inline text-black align-middle" />,
+  Coins:          <Coins          size={16} weight="fill" className="inline text-neo-orange align-middle" />,
+  Wallet:         <Wallet         size={16} weight="fill" className="inline text-black align-middle" />,
+  Question:       <Question       size={16} weight="fill" className="inline text-sky-500 align-middle" />,
+  Smiley:         <Smiley         size={16} weight="fill" className="inline text-neo-yellow align-middle" />,
+  SmileyWink:     <SmileyWink     size={16} weight="fill" className="inline text-neo-yellow align-middle" />,
+  Lock:           <Lock           size={16} weight="fill" className="inline text-black align-middle" />,
+  ShieldCheck:    <ShieldCheck    size={16} weight="fill" className="inline text-green-600 align-middle" />,
+  Scales:         <Scales         size={16} weight="bold" className="inline text-black align-middle" />,
+  Eye:            <Eye            size={16} weight="bold" className="inline text-black align-middle" />,
+  SealCheck:      <SealCheck      size={16} weight="fill" className="inline text-green-600 align-middle" />,
+  Clock:          <Clock          size={16} weight="bold" className="inline text-black align-middle" />,
+  Notepad:        <Notepad        size={16} weight="bold" className="inline text-black align-middle" />,
+  Globe:          <Globe          size={16} weight="bold" className="inline text-black align-middle" />,
+  ArrowsLeftRight:<ArrowsLeftRight size={16} weight="bold" className="inline text-black align-middle" />,
+};
+
+/** Replace [ICON:Name] tokens in a string with Phosphor icon elements */
+function renderWithIcons(text: string, keyPrefix: string): React.ReactNode[] {
+  const parts = text.split(/\[ICON:([A-Za-z]+)\]/g);
+  const result: React.ReactNode[] = [];
+  parts.forEach((part, idx) => {
+    if (idx % 2 === 1) {
+      // Odd indices are captured icon names
+      const icon = ICON_MAP[part];
+      if (icon) {
+        result.push(React.cloneElement(icon, { key: `${keyPrefix}-icon-${idx}` }));
+      } else {
+        result.push(<span key={`${keyPrefix}-unknown-${idx}`}>[{part}]</span>);
+      }
+    } else if (part) {
+      result.push(<span key={`${keyPrefix}-text-${idx}`}>{part}</span>);
+    }
+  });
+  return result;
+}
 
 interface OnboardingChatProps {
   messages: Message[];
@@ -38,39 +132,13 @@ const renderMarkdown = (text: string) => {
       cleanLine = cleanLine.substring(2);
     }
 
-    const imageMatch = cleanLine.match(/\[IMAGE[-_ ]PLACEHOLDER:\s*(.*?)\]/i);
-    if (imageMatch) {
-      const desc = imageMatch[1].trim().toLowerCase();
-      let src = "";
-      let alt = "Trading Illustration";
-      
-      if (desc.includes("trading") || desc.includes("intro") || desc.includes("buy")) {
-        src = "/trading_intro.png";
-        alt = "Introduction to Trading";
-      } else if (desc.includes("exchange") || desc.includes("order book")) {
-        src = "/crypto_exchanges.png";
-        alt = "Crypto Exchanges & Order Books";
-      } else if (desc.includes("pair") || desc.includes("pairs")) {
-        src = "/trading_pairs.png";
-        alt = "Trading Pairs";
-      } else if (desc.includes("order") || desc.includes("market") || desc.includes("limit")) {
-        src = "/market_limit.png";
-        alt = "Market vs Limit Orders";
-      } else if (desc.includes("chart") || desc.includes("candle") || desc.includes("basics")) {
-        src = "/charts_basics.png";
-        alt = "Reading Charts & Candlesticks";
-      } else if (desc.includes("risk") || desc.includes("management") || desc.includes("stop loss")) {
-        src = "/risk_management.jpg";
-        alt = "Risk Management";
-      } else if (desc.includes("spot") || desc.includes("perpetual") || desc.includes(" perp")) {
-        src = "/spot_perpetual.png";
-        alt = "Spot vs Perpetual Trading";
-      } else {
-        src = "/trading_intro.png";
-      }
-      
+    // Handle markdown image syntax: ![alt text](/path/to/image.png)
+    const mdImageMatch = cleanLine.match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
+    if (mdImageMatch) {
+      const alt = mdImageMatch[1] || "Trading Illustration";
+      const src = mdImageMatch[2];
       return (
-        <div key={i} className="my-3 border-[3px] border-black bg-white p-2 neo-shadow-sm max-w-md mx-auto text-center">
+        <div key={i} className="my-3 border-[3px] border-black bg-white p-2 max-w-md mx-auto text-center">
           <img src={src} alt={alt} className="w-full h-auto object-cover border-[3px] border-black" />
           <p className="font-black text-[9px] uppercase tracking-widest text-center mt-2 text-black/60 bg-neo-yellow border-t-2 border-black py-1">
             {alt}
@@ -79,12 +147,33 @@ const renderMarkdown = (text: string) => {
       );
     }
 
-    const parts = cleanLine.split(/(\*\*.*?\*\*)/g);
-    const renderedParts = parts.map((part, j) => {
+    // Fallback: legacy [IMAGE_PLACEHOLDER: ...] support
+    const imageMatch = cleanLine.match(/\[IMAGE[-_ ]PLACEHOLDER:\s*(.*?)\]/i);
+    if (imageMatch) {
+      const desc = imageMatch[1].trim().toLowerCase();
+      let src = "/trading_intro.png";
+      let alt = "Trading Illustration";
+      if (desc.includes("exchange") || desc.includes("order book")) { src = "/crypto_exchanges.png"; alt = "Crypto Exchanges"; }
+      else if (desc.includes("pair")) { src = "/trading_pairs.png"; alt = "Trading Pairs"; }
+      else if (desc.includes("market") || desc.includes("limit") || desc.includes("order")) { src = "/market_limit.png"; alt = "Market vs Limit Orders"; }
+      else if (desc.includes("risk") || desc.includes("stop loss")) { src = "/risk_management.jpg"; alt = "Risk Management"; }
+      else if (desc.includes("spot") || desc.includes("perpetual")) { src = "/spot_perpetual.png"; alt = "Spot vs Perpetual"; }
+      return (
+        <div key={i} className="my-3 border-[3px] border-black bg-white p-2 max-w-md mx-auto text-center">
+          <img src={src} alt={alt} className="w-full h-auto object-cover border-[3px] border-black" />
+          <p className="font-black text-[9px] uppercase tracking-widest text-center mt-2 text-black/60 bg-neo-yellow border-t-2 border-black py-1">{alt}</p>
+        </div>
+      );
+    }
+
+    // Render bold (**text**) and [ICON:Name] tokens inline
+    const boldParts = cleanLine.split(/(\*\*.*?\*\*)/g);
+    const renderedParts = boldParts.flatMap((part, j): React.ReactNode[] => {
       if (part.startsWith('**') && part.endsWith('**')) {
-        return <strong key={j} className="font-black text-black">{part.slice(2, -2)}</strong>;
+        const inner = part.slice(2, -2);
+        return [<strong key={`b-${i}-${j}`} className="font-black text-black">{renderWithIcons(inner, `b-${i}-${j}`)}</strong>];
       }
-      return <span key={j}>{part}</span>;
+      return renderWithIcons(part, `t-${i}-${j}`);
     });
 
     if (isBullet) {
