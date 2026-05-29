@@ -152,36 +152,20 @@ const renderMarkdown = (text: string) => {
     }
 
     if (images.length > 0) {
-      // Known public assets — only render images that exist in the public/ folder.
-      const PUBLIC_IMAGES = new Set([
-        '/crypto_exchanges.png', '/hero-guide.png', '/main.png', '/market_limit.png', '/risk_management.jpg',
-        '/spot_perpetual.png', '/trading_intro.png', '/trading_pairs.png', '/hack.png', '/me.png'
-      ])
-
       return (
         <div key={i} className="my-3 border-[3px] border-black bg-white p-2 max-w-md mx-auto text-center">
-          {images.map((im, idx) => {
-            const filename = '/' + im.src.split('?')[0].split('/').pop()
-            const srcToUse = PUBLIC_IMAGES.has(filename) ? filename : null
-            return (
-              <div key={idx} className="mb-3">
-                {srcToUse ? (
-                  <img
-                    src={srcToUse}
-                    alt={im.alt}
-                    onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/hero-guide.png' }}
-                    className="w-full h-auto object-cover border-[3px] border-black" />
-                ) : (
-                  <div className="w-full h-40 flex items-center justify-center border-[3px] border-black bg-[#F3F3F3]">
-                    <span className="font-black text-sm text-black/60">{im.alt}</span>
-                  </div>
-                )}
-                <p className="font-black text-[9px] uppercase tracking-widest text-center mt-2 text-black/60 bg-neo-yellow border-t-2 border-black py-1">
-                  {im.alt}
-                </p>
-              </div>
-            )
-          })}
+          {images.map((im, idx) => (
+            <div key={idx} className="mb-3">
+              <img
+                src={im.src}
+                alt={im.alt}
+                onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/hero-guide.png' }}
+                className="w-full h-auto object-cover border-[3px] border-black" />
+              <p className="font-black text-[9px] uppercase tracking-widest text-center mt-2 text-black/60 bg-neo-yellow border-t-2 border-black py-1">
+                {im.alt}
+              </p>
+            </div>
+          ))}
         </div>
       )
     }
