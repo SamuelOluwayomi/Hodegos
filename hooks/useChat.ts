@@ -316,9 +316,8 @@ function useChatRaw(walletAddress?: string) {
     if (supabase && profile.walletAddress && !userMessage.startsWith('[SYSTEM]')) {
       void (async () => {
         try {
-          let { data: user } = await supabase.from('users').select('id').eq('wallet_address', profile.walletAddress).maybeSingle()
-          if (!user) {
-            const { data: newUser } = await supabase.from('users').insert({
+          const { data: user, error: upsertUserError } = await supabase.from('users')
+            .upsert({
               wallet_address: profile.walletAddress,
               user_name: profile.userName,
               ai_tone: profile.aiTone,
@@ -327,9 +326,14 @@ function useChatRaw(walletAddress?: string) {
               onboarding_complete: profile.onboardingComplete,
               onboarding_step: profile.onboardingStep,
               demo_completed: profile.demoCompleted
-            }).select('id').maybeSingle()
-            user = newUser
+            }, { onConflict: 'wallet_address', returning: 'representation' })
+            .select('id')
+            .maybeSingle()
+
+          if (upsertUserError) {
+            console.error('Supabase user upsert error:', upsertUserError)
           }
+
           if (user) {
             await supabase.from('chat_messages').insert({
               user_id: user.id,

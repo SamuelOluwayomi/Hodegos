@@ -6,6 +6,10 @@ const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY?.trim(),
 })
 
+if (!process.env.GROQ_API_KEY?.trim()) {
+  console.warn('GROQ_API_KEY is not configured for app/api/chat/route.ts')
+}
+
 // AI Personality tone presets
 const TONE_PRESETS: Record<string, string> = {
   friendly: `Your tone is warm, encouraging, and conversational. Use casual language and be supportive. Never make the user feel dumb. Celebrate their progress enthusiastically. Use phrases like "Great question!", "You're doing awesome!", "Let's figure this out together!"`,
@@ -100,6 +104,13 @@ Use this data to give personalized, actionable portfolio advice when the user as
 
 export async function POST(req: NextRequest) {
   try {
+    if (!process.env.GROQ_API_KEY?.trim()) {
+      return NextResponse.json(
+        { error: 'GROQ_API_KEY is not configured. Check your environment variables.' },
+        { status: 500 }
+      )
+    }
+
     const { messages, marketContext, pageContext, portfolioContext, userLevel, aiTone, userName, onboardingStep } = await req.json()
 
     const toneSetting = TONE_PRESETS[aiTone] || TONE_PRESETS['friendly']
@@ -376,9 +387,10 @@ price: 4.50
       },
     })
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error)
     console.error('Chat API error:', error)
     return NextResponse.json(
-      { error: 'Failed to process chat request' },
+      { error: `Failed to process chat request: ${errorMessage}` },
       { status: 500 }
     )
   }
