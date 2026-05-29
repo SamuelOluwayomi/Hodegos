@@ -705,9 +705,6 @@ export default function AIChatBot() {
 
             {chatLoading && (
               <div className="flex flex-col gap-1 items-start animate-pulse">
-                <span className="font-black text-[9px] uppercase tracking-widest text-black/40 ml-1">
-                  Hodegos AI is thinking...
-                </span>
                 <div className="p-3 py-4 bg-white border-2 border-black rounded-xl rounded-tl-none neo-shadow-sm max-w-[90%] flex items-center justify-center gap-1.5 w-16">
                   <span className="w-2 h-2 bg-neo-lime border-[1.5px] border-black rounded-full animate-bounce drop-shadow-[1px_1px_0_rgba(0,0,0,1)]" style={{ animationDelay: '0ms' }} />
                   <span className="w-2 h-2 bg-neo-yellow border-[1.5px] border-black rounded-full animate-bounce drop-shadow-[1px_1px_0_rgba(0,0,0,1)]" style={{ animationDelay: '150ms' }} />
