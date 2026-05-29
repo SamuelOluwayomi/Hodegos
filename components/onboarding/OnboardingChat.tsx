@@ -176,7 +176,15 @@ export default function OnboardingChat({ messages, isLoading, onSendMessage, onR
   };
 
   // Filter + process messages for display
-  const displayMessages = messages.filter(m => !m.content.startsWith('[SYSTEM]'));
+  const displayMessages = messages.filter((m, i) => {
+    if (m.content.startsWith('[SYSTEM]')) return false;
+    // Hide empty assistant messages unless it is the last message and we are loading
+    if (m.role === 'assistant' && m.content === '') {
+      const isLast = i === messages.length - 1;
+      return isLast && isLoading;
+    }
+    return true;
+  });
 
   return (
     <div className="flex flex-col h-full">

@@ -164,16 +164,18 @@ export default function OnboardingModal({ open, onClose, walletAddress }: Onboar
 
       actions.push({ label: "I have a question", value: "I have a question about this...", color: "bg-neo-yellow" });
       
-      // Let the user skip to quiz at any point if they feel confident
-      actions.push({
-        label: (
-          <span className="flex items-center gap-1">
-            Quiz Me! <FileText size={12} weight="bold" />
-          </span>
-        ),
-        value: "I think I'm ready for the quiz!",
-        color: "bg-neo-orange"
-      });
+      // Let the user skip to quiz only when they've reached the last topic
+      if (hasReachedLastTopic) {
+        actions.push({
+          label: (
+            <span className="flex items-center gap-1">
+              Quiz Me! <FileText size={12} weight="bold" />
+            </span>
+          ),
+          value: "I think I'm ready for the quiz!",
+          color: "bg-neo-orange"
+        });
+      }
 
       return actions;
     }

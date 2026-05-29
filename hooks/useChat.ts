@@ -61,7 +61,8 @@ function loadProfile(walletAddress: string): UserProfile | null {
 
 function saveMessages(walletAddress: string, messages: Message[]) {
   if (typeof window !== 'undefined' && walletAddress) {
-    localStorage.setItem(`hodegos_chat_messages_${walletAddress}`, JSON.stringify(messages))
+    const clean = messages.filter(m => !(m.role === 'assistant' && m.content === ''))
+    localStorage.setItem(`hodegos_chat_messages_${walletAddress}`, JSON.stringify(clean))
   }
 }
 
@@ -300,8 +301,10 @@ function useChatRaw(walletAddress?: string) {
     }
     abortRef.current = new AbortController()
 
+    const cleanBaseMessages = messages.filter(m => !(m.role === 'assistant' && m.content === ''))
+
     const newMessages: Message[] = [
-      ...messages,
+      ...cleanBaseMessages,
       { role: 'user' as const, content: userMessage, timestamp: Date.now() }
     ]
     setMessages(newMessages)
