@@ -59,6 +59,8 @@ function loadProfile(walletAddress: string): UserProfile | null {
   return null
 }
 
+const MAX_CHAT_HISTORY_MESSAGES = 12
+
 function saveMessages(walletAddress: string, messages: Message[]) {
   if (typeof window !== 'undefined' && walletAddress) {
     const clean = messages.filter(m => !(m.role === 'assistant' && m.content === ''))
@@ -343,11 +345,15 @@ function useChatRaw(walletAddress?: string) {
     }
 
     try {
+      const apiMessages = newMessages
+        .slice(-MAX_CHAT_HISTORY_MESSAGES)
+        .map(m => ({ role: m.role, content: m.content }))
+
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: newMessages.map(m => ({ role: m.role, content: m.content })),
+          messages: apiMessages,
           marketContext,
           pageContext,
           portfolioContext,
