@@ -10,6 +10,15 @@ import { Network, getNetworkEndpoints } from '@injectivelabs/networks';
 import { ArrowClockwise, CheckCircle, HandWaving, X } from "@phosphor-icons/react";
 import { FEATURED_MARKET_IDS } from "@/lib/injective";
 
+function getPageContextLabel(pathname: string) {
+  if (pathname.startsWith('/dashboard/trade')) return 'Trade'
+  if (pathname.startsWith('/dashboard/markets')) return 'Markets'
+  if (pathname.startsWith('/dashboard/portfolio')) return 'Portfolio'
+  if (pathname.startsWith('/dashboard/profile')) return 'Profile'
+  if (pathname.startsWith('/dashboard')) return 'Dashboard'
+  return 'Dashboard'
+}
+
 // ── TYPES AND INTERFACES ──────────────────────────────────────────────────────
 
 interface TxData {
@@ -509,6 +518,7 @@ export default function AIChatBot() {
   } = useChat(address || undefined);
 
   const currentUrl = `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
+  const currentPageLabel = getPageContextLabel(pathname);
 
   // Fetch the user's live portfolio for AI context
   useEffect(() => {
@@ -562,7 +572,7 @@ export default function AIChatBot() {
       if (query) {
         clearMessages();
         setTimeout(() => {
-          chatSend(query, undefined, currentUrl, portfolioContext);
+            chatSend(query, undefined, currentPageLabel, portfolioContext);
         }, 50);
       }
     };
@@ -573,13 +583,13 @@ export default function AIChatBot() {
   const handleChatSend = () => {
     const sanitized = chatInput.replace(/<[^>]*>?/gm, "").trim();
     if (!sanitized || chatLoading) return;
-    chatSend(sanitized, undefined, currentUrl, portfolioContext);
+    chatSend(sanitized, undefined, currentPageLabel, portfolioContext);
     setChatInput("");
   };
 
   const handleQuickAction = (actionText: string) => {
     if (chatLoading) return;
-    chatSend(actionText, undefined, currentUrl, portfolioContext);
+    chatSend(actionText, undefined, currentPageLabel, portfolioContext);
   };
 
   // Helper to categorize messages dynamically
