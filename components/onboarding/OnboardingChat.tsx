@@ -38,8 +38,9 @@ const renderMarkdown = (text: string) => {
       cleanLine = cleanLine.substring(2);
     }
 
-    if (cleanLine.startsWith('[IMAGE_PLACEHOLDER:') && cleanLine.endsWith(']')) {
-      const desc = cleanLine.slice(19, -1).trim().toLowerCase();
+    const imageMatch = cleanLine.match(/\[IMAGE[-_ ]PLACEHOLDER:\s*(.*?)\]/i);
+    if (imageMatch) {
+      const desc = imageMatch[1].trim().toLowerCase();
       let src = "";
       let alt = "Trading Illustration";
       
@@ -59,7 +60,7 @@ const renderMarkdown = (text: string) => {
         src = "/charts_basics.png";
         alt = "Reading Charts & Candlesticks";
       } else if (desc.includes("risk") || desc.includes("management") || desc.includes("stop loss")) {
-        src = "/risk_management.png";
+        src = "/risk_management.jpg";
         alt = "Risk Management";
       } else if (desc.includes("spot") || desc.includes("perpetual") || desc.includes(" perp")) {
         src = "/spot_perpetual.png";
