@@ -684,6 +684,13 @@ export default function AIChatBot() {
               const tx = msg.role === 'assistant' ? parseTxBlock(msg.content) : null;
               const cleanText = tx ? msg.content.replace(tx.raw, '').trim() : msg.content;
 
+              const isLast = i === filteredMessages.length - 1;
+              const showLoaderHere = msg.role === 'assistant' && cleanText === '' && isLast && chatLoading;
+
+              if (msg.role === 'assistant' && cleanText === '' && !showLoaderHere) {
+                return null;
+              }
+
               return (
                 <div key={i} className={`flex flex-col gap-1 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
                   <span className="font-black text-[9px] uppercase tracking-widest text-black/40 ml-1">
@@ -696,15 +703,26 @@ export default function AIChatBot() {
                         : 'bg-white rounded-xl rounded-tl-none neo-shadow-sm'
                     }`}
                   >
-                    {msg.role === 'assistant' ? renderMarkdown(cleanText) : <span style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{cleanText}</span>}
-                    {tx && <TransactionCard tx={tx} address={address} wallet={wallet} msgTimestamp={msg.timestamp} />}
+                    {showLoaderHere ? (
+                      <div className="flex items-center justify-center gap-1.5 w-10 h-4">
+                        <span className="w-2 h-2 bg-neo-lime border-[1.5px] border-black rounded-full animate-bounce drop-shadow-[1px_1px_0_rgba(0,0,0,1)]" style={{ animationDelay: '0ms' }} />
+                        <span className="w-2 h-2 bg-neo-yellow border-[1.5px] border-black rounded-full animate-bounce drop-shadow-[1px_1px_0_rgba(0,0,0,1)]" style={{ animationDelay: '150ms' }} />
+                        <span className="w-2 h-2 bg-neo-orange border-[1.5px] border-black rounded-full animate-bounce drop-shadow-[1px_1px_0_rgba(0,0,0,1)]" style={{ animationDelay: '300ms' }} />
+                      </div>
+                    ) : (
+                      <>
+                        {msg.role === 'assistant' ? renderMarkdown(cleanText) : <span style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{cleanText}</span>}
+                        {tx && <TransactionCard tx={tx} address={address} wallet={wallet} msgTimestamp={msg.timestamp} />}
+                      </>
+                    )}
                   </div>
                 </div>
               );
             })}
 
-            {chatLoading && (
+            {chatLoading && (filteredMessages.length === 0 || filteredMessages[filteredMessages.length - 1].role === 'user') && (
               <div className="flex flex-col gap-1 items-start animate-pulse">
+                <span className="font-black text-[9px] uppercase tracking-widest text-black/40 ml-1">Hodegos AI</span>
                 <div className="p-3 py-4 bg-white border-2 border-black rounded-xl rounded-tl-none neo-shadow-sm max-w-[90%] flex items-center justify-center gap-1.5 w-16">
                   <span className="w-2 h-2 bg-neo-lime border-[1.5px] border-black rounded-full animate-bounce drop-shadow-[1px_1px_0_rgba(0,0,0,1)]" style={{ animationDelay: '0ms' }} />
                   <span className="w-2 h-2 bg-neo-yellow border-[1.5px] border-black rounded-full animate-bounce drop-shadow-[1px_1px_0_rgba(0,0,0,1)]" style={{ animationDelay: '150ms' }} />
