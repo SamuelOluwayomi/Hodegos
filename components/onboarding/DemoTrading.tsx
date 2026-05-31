@@ -59,12 +59,8 @@ export default function DemoTrading({ onComplete, onSkip, canSkip }: DemoTrading
           </div>
         </div>
         {/* Placeholder chart area */}
-        <div className="h-32 border-2 border-dashed border-black/30 rounded flex items-center justify-center bg-white/50">
-          <div className="text-center flex flex-col items-center">
-            <div className="text-black/40 mb-1"><ChartBar size={24} weight="fill" /></div>
-            <p className="font-black text-[10px] uppercase tracking-widest text-black/40">Chart Placeholder</p>
-            <p className="font-bold text-[9px] text-black/30 mt-1">Live chart will appear here</p>
-          </div>
+        <div className="h-32 border-2 border-dashed border-black/30 rounded flex items-center justify-center bg-white/50 overflow-hidden relative">
+          <img src="/main.png" alt="Demo Chart" className="w-full h-full object-cover opacity-80" />
         </div>
       </div>
 
