@@ -9,6 +9,8 @@ import OnboardingModal from "@/components/onboarding/OnboardingModal";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import AskHodegosButton from "@/components/AskHodegosButton";
 import NewsSection from "@/components/NewsSection";
+import TxHistoryPanel from "@/components/TxHistoryPanel";
+import StakingPanel from "@/components/StakingPanel";
 import { useChat } from "@/hooks/useChat";
 import { FEATURED_MARKET_IDS, fetchMarketSummary, formatVolume } from "@/lib/injective";
 import { getTierProgress } from "@/lib/tiers";
@@ -242,10 +244,13 @@ export default function DashboardPage() {
           </header>
 
           {/* Main Dashboard Content */}
-          <div className="flex-1 overflow-y-auto p-6 md:p-8 flex flex-col xl:flex-row gap-8">
+          <div className="flex-1 overflow-y-auto p-6 md:p-8 flex flex-col gap-8">
 
-            {/* Left Content Column */}
-            <div className="flex-1 flex flex-col gap-8">
+            {/* Upper row: Left Content (Stats + Markets + Staking) & Right Content (News) */}
+            <div className="flex flex-col xl:flex-row gap-8">
+
+              {/* Left Content Column */}
+              <div className="flex-1 flex flex-col gap-8">
 
               {/* Header row */}
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 border-b-4 border-black pb-4">
@@ -462,12 +467,22 @@ export default function DashboardPage() {
                 </div>
               </div>
 
+              {/* Staking Panel */}
+              <StakingPanel address={address} injPrice={tokenBalances["INJ"]?.price ?? 4.99} />
+
             </div>
 
             {/* AI-Narrated News Briefing */}
             <NewsSection />
 
           </div>
+
+          {/* Full Width Bottom Section: On-Chain Transaction History */}
+          <div className="w-full">
+            <TxHistoryPanel address={address} />
+          </div>
+
+        </div>
         </div>
       </div>
     </div>

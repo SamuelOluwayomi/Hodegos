@@ -232,9 +232,32 @@ function DirectExecutionPanel({
         console.error("Error logging trade to database:", e);
       }
 
+      // Add to local cache for instant high-fidelity feedback
+      if (typeof window !== "undefined") {
+        try {
+          const localKey = `hodegos_trades_${address}`;
+          const currentLocal = JSON.parse(localStorage.getItem(localKey) || "[]");
+          currentLocal.unshift({
+            txHash: txResponse.txHash,
+            timestamp: new Date().toISOString(),
+            timeAgo: "Just now",
+            category: "trade",
+            label: `${side.toUpperCase()} ${parsedAmount} ${baseAsset}/USDT`,
+            success: true,
+            gasUsed: "200,000",
+            msgCount: 1,
+            explorerUrl: `https://testnet.explorer.injective.network/transaction/${txResponse.txHash}`,
+          });
+          localStorage.setItem(localKey, JSON.stringify(currentLocal.slice(0, 50)));
+        } catch (e) {
+          console.warn("localStorage save error:", e);
+        }
+      }
+
       setTxHash(txResponse.txHash);
       setStatus('success');
       window.dispatchEvent(new CustomEvent("refresh-balances"));
+      window.dispatchEvent(new CustomEvent("refresh-txhistory"));
     } catch (err: any) {
       console.error("Direct execution error:", err);
       setError(err.message || 'Transaction failed.');
@@ -582,6 +605,7 @@ function TradeContent() {
           const tradeAmount = parseFloat(bot.amount) / (bot.type === "grid" ? bot.gridCount : 10);
           const totalCost = tradeAmount * executionPrice;
 
+          const simulatedHash = `sim-bot-${Math.random().toString(36).substring(2, 12)}`;
           await fetch('/api/trades', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -593,12 +617,35 @@ function TradeContent() {
               amount: tradeAmount,
               price: executionPrice,
               total_value: totalCost,
-              tx_hash: `sim-bot-${Math.random().toString(36).substring(2, 12)}`,
+              tx_hash: simulatedHash,
             }),
           });
 
-          // Refresh balances in the UI
+          // Add bot trade to local cache
+          if (typeof window !== "undefined") {
+            try {
+              const localKey = `hodegos_trades_${address}`;
+              const currentLocal = JSON.parse(localStorage.getItem(localKey) || "[]");
+              currentLocal.unshift({
+                txHash: simulatedHash,
+                timestamp: new Date().toISOString(),
+                timeAgo: "Just now",
+                category: "trade",
+                label: `${side.toUpperCase()} ${tradeAmount.toFixed(4)} ${bot.ticker}`,
+                success: true,
+                gasUsed: "—",
+                msgCount: 1,
+                explorerUrl: "#",
+              });
+              localStorage.setItem(localKey, JSON.stringify(currentLocal.slice(0, 50)));
+            } catch (e) {
+              console.warn("localStorage bot save error:", e);
+            }
+          }
+
+          // Refresh balances and transactions in the UI
           window.dispatchEvent(new CustomEvent("refresh-balances"));
+          window.dispatchEvent(new CustomEvent("refresh-txhistory"));
         } catch (e) {
           console.error("DCA/Grid Bot auto trade error:", e);
         }
