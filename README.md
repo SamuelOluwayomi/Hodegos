@@ -8,24 +8,25 @@
 
 ## Overview
 
-**Hodegos** (Greek for "Guide") is an AI-powered trading terminal built natively on the Injective blockchain. It solves a clearly defined problem: the crypto trading environment is hostile to newcomers. Most trading interfaces assume fluency with concepts like orderbooks, slippage, subaccounts, and base/quote denomination — concepts that take months to internalize.
+**Hodegos** (Greek for "Guide") is an AI-powered trading terminal built natively on the Injective blockchain. It solves a clearly defined problem: the crypto trading environment is hostile to newcomers. Most trading interfaces assume fluency with concepts like orderbooks, slippage, leverage, subaccounts, and base/quote denomination — concepts that take months to internalize.
 
-Hodegos removes that barrier. It is a Consumer AI App that layers an intelligent, conversational AI companion on top of a fully functional Injective DEX interface, allowing a complete beginner to learn trading fundamentals, practice without risk, and execute real on-chain spot trades — all in a single product.
+Hodegos removes that barrier. It is a Consumer AI App that layers an intelligent, conversational AI companion on top of a fully functional Injective DEX interface, allowing a complete beginner to learn trading fundamentals, practice without risk, and execute complex trades — all in a single product.
 
-The platform is live, wallet-connected, and functional on Injective Testnet for transactions with Mainnet price data powering all market displays.
+Initially built as a basic spot trading interface, **Hodegos has been upgraded into a comprehensive, multi-mode trading hub**. The terminal now supports four distinct trading modes—**Spot, Perpetual Futures, Automated Trading Bots, and Forex/RWA synthetics**—each fully instrumented with deep, context-aware AI guidance and risk-monitoring copilots.
+
+The platform is live, wallet-connected, and functional on Injective Testnet for transactions, with Mainnet price data powering all market displays.
 
 ---
 
 ## How AI is Used
 
-AI is not a cosmetic feature in Hodegos. It is the core interaction layer. Three distinct AI systems operate within the application:
+AI is not a cosmetic feature in Hodegos. It is the core interaction layer. Five distinct AI systems operate within the application:
 
 ### 1. Hodegos AI Copilot (Conversational Agent)
 
-The primary AI interface is a persistent, context-aware chatbot powered by the Groq API (Llama-3.3-70b-versatile). It is embedded across every page of the dashboard and understands the user's current context: what page they are on, their live portfolio value, their XP level, and their trading history.
+The primary AI interface is a persistent, context-aware chatbot powered by the Groq API (`llama-3.3-70b-versatile`). It is embedded across every page of the dashboard and understands the user's current context: what page they are on, their live portfolio value, their XP level, and their trading history.
 
 Key behaviours:
-
 - **Onboarding and assessment:** On first login, the AI conducts a guided onboarding session. It assesses the user's existing knowledge level through a short conversational quiz, then tailors the tutorial content accordingly.
 - **Contextual education:** The AI answers questions about trading mechanics, Injective-specific features (subaccounts, DEX orderbooks, spot markets, perpetuals), and portfolio strategy using plain language.
 - **Intent-to-transaction parsing:** When the user expresses a trade intent in natural language (for example, "buy 2 INJ"), the AI parses the intent, extracts structured parameters (pair, side, amount, order type), and pre-fills the trade execution panel for user confirmation.
@@ -34,13 +35,23 @@ Key behaviours:
 
 The AI is categorised into tabs within the chat interface: All, Lessons, Trades, and Advisor, each scoping the conversation to a specific domain.
 
-### 2. AI-Narrated Market Briefing
+### 2. Multi-Mode AI Trading Guidance (New)
 
-Hodegos automatically fetches the latest crypto news headlines from the Cointelegraph RSS feed on a 30-minute refresh cycle. Rather than displaying raw article titles, the Groq API (Llama-3.1-8b-instant) rewrites each headline into a two-sentence, jargon-free summary explicitly framed for a beginner trader.
+Hodegos embeds AI guidance directly into the trading execution workflow across **three levels of context-aware interaction**:
+
+| AI Integration Layer | Description | Context Captured |
+|---|---|---|
+| **Dynamic Mode Header** | The main AI chatbot button dynamically changes its label and pre-populated query based on the active tab (Spot, Perp, Bots, or Forex). | Active Tab + Pair |
+| **Top-of-Form Explainer** | A dedicated explainer button at the top of each trading form provides a clear, beginner-friendly breakdown of how that specific trading mode operates with the selected pair. | Leverage, Order Type, Pair |
+| **Inline Pre-Flight Audit** | Active audit buttons (e.g. *"Is this a good Perp trade?"* or *"Audit Bot Parameters"*) capture the exact form state and submit it to the LLM for a simulated risk check before execution. | Entry Price, Leverage, SL/TP levels, Grid Settings, Investment |
+
+### 3. AI-Narrated Market Briefing
+
+Hodegos automatically fetches the latest crypto news headlines from the Cointelegraph RSS feed on a 30-minute refresh cycle. Rather than displaying raw article titles, the Groq API (`llama-3.1-8b-instant`) rewrites each headline into a two-sentence, jargon-free summary explicitly framed for a beginner trader.
 
 The result is a live "Market Briefing" sidebar on the dashboard that gives users market awareness without requiring them to interpret financial news on their own. A manual refresh button is also available for users who want to pull the latest batch immediately.
 
-### 3. AI Agentic Portfolio Alerts
+### 4. AI Agentic Portfolio Alerts
 
 After the user's wallet balances are loaded, an agentic system runs a one-time portfolio evaluation per session. It calls the CoinGecko API to retrieve real 24-hour price change data for every asset the user holds, then submits a structured prompt to the Groq API requesting analysis.
 
@@ -50,9 +61,39 @@ The AI generates 0 to 2 short, actionable alerts based on two conditions:
 
 These alerts appear as dismissable banners on the dashboard and are always grounded in real market data — not simulated figures.
 
-### 4. AI Market Sentiment
+### 5. AI Market Sentiment
 
 On the Markets page, each trading pair has an AI Sentiment panel. The AI ingests the live price and 24-hour change for the selected asset and generates a directional sentiment label (Bullish, Bearish, or Neutral) with a confidence percentage and a one-line human-readable summary. This gives beginners a starting mental model before they read the candlestick chart.
+
+---
+
+## Unified Multi-Mode Trading Suite
+
+The trading interface (`app/dashboard/trade/page.tsx`) has been redesigned into a comprehensive four-tab terminal supporting distinct blockchain and financial instruments:
+
+### 1. Spot Trading
+The standard spot order terminal supporting Market and Limit order types.
+* **Supported Markets:** INJ/USDT, ATOM/USDT, WETH/USDT, SOL/USDT, TIA/USDT.
+* **Execution:** Direct on-chain interactions on Injective Testnet with Mainnet price validation.
+
+### 2. Perpetual Futures (Perp)
+A high-performance perpetuals terminal designed to introduce leverage trading safely.
+* **Leverage Slider:** Adjust leverage dynamically from **1x to 20x** with clear margin requirements.
+* **Stop Loss / Take Profit (SL/TP):** Dedicated risk management inputs with real-time estimated profit and loss calculations.
+* **Dynamic Position Summary:** Live calculations showing position size, required margin, and the **liquidation price** to visually alert users of leverage risk.
+* **Supported Markets:** INJ/USDT-PERP, BTC/USDT-PERP, ETH/USDT-PERP.
+
+### 3. Automated Bots
+A code-free automated trading engine allowing beginners to experience programmatic trading.
+* **Grid Trading Bot:** Enter lower/upper boundaries, grid count, and investment. The terminal dynamically computes grid spacing and size per grid.
+* **DCA (Dollar-Cost Averaging) Bot:** Configure buying frequency (Daily, Weekly, Monthly) and size.
+* **Simulated Execution & Persistence:** Running bots are saved in local storage and trigger simulated buy/sell orders every 12 seconds via the `/api/trades` route.
+* **Active Bot Monitor:** A dedicated dashboard element on both the Trade and Portfolio pages lists active running bots and allows instant termination with one click.
+
+### 4. Forex / RWA (Real World Assets)
+Synthetic fiat currency and commodity trading tracked using **Pyth Network oracle feeds** on Injective.
+* **Supported Markets:** EUR/USDT, GBP/USDT, GOLD/USDT, SILVER/USDT.
+* **Educational Guardrails:** Accompanied by warning banners detailing the mechanics of synthetic assets, oracle settlement, and continuous 24/7 market activity.
 
 ---
 
@@ -61,24 +102,18 @@ On the Markets page, each trading pair has an AI Sentiment panel. The AI ingests
 Hodegos uses the `@injectivelabs/sdk-ts` and `@injectivelabs/networks` packages for all on-chain interactions.
 
 ### Market Data
-
-The application fetches real-time market data — prices, 24-hour highs and lows, 24-hour change percentages, and trading volume — directly from the Injective Mainnet exchange API. This data populates the Markets page, the Terminal dashboard, and all AI prompts that reference price context.
+The application fetches real-time market data — prices, 24-hour highs and lows, 24-hour change percentages, and trading volume — directly from the Injective Mainnet exchange API. This data populates the Markets page, the Terminal dashboard, and all AI prompts that reference price context. Forex/RWA markets leverage Pyth network price feeds.
 
 ### On-Chain Trade Execution
-
 Users connect their Web3 wallet (Keplr, Leap, or Ninji) through the Injective wallet integration layer. The Trade page supports:
-
 - **Spot market orders** via `MsgCreateSpotMarketOrder`
 - **Spot limit orders** via `MsgCreateSpotLimitOrder`
 - **Subaccount management** via `getDefaultSubaccountId`
 - **Transaction signing and broadcasting** via `TxGrpcApi` and `createTxRawFromSigResponse`
 
-All transactions are routed to **Injective Testnet**, giving users real order execution mechanics without financial risk. The supported trading pairs are INJ/USDT, ATOM/USDT, WETH/USDT, SOL/USDT, and TIA/USDT.
-
-Slippage tolerance is configurable per trade (default 5%). Quantity and price values are scaled to the correct Injective decimal representation per asset using the SDK's denomination system.
+All transactions are routed to **Injective Testnet**, giving users real order execution mechanics without financial risk. Slippage tolerance is configurable per trade (default 5%). Quantity and price values are scaled to the correct Injective decimal representation per asset using the SDK's denomination system.
 
 ### Wallet Balance Fetching
-
 Live token balances are fetched from the Injective Testnet chain using `IndexerGrpcAccountPortfolioApi`. Balances are denominated using the correct Injective denom identifiers for each supported asset and converted to human-readable amounts using `denomAmountToChainDenomAmountToFixed`.
 
 ---
@@ -105,14 +140,17 @@ Dashboard — Terminal View
      |       AI sentiment rating per asset
      |       AI "Explain this market" button
      |
-     |---- Trade Page
-     |       Select pair, order type (market or limit)
-     |       Live price display from Injective Mainnet
-     |       AI "Explain trading" button
-     |       Transaction signing and broadcasting to Injective Testnet
+     |---- Trade Page (4-Mode Terminal)
+     |       - Spot Trading (Market & Limit)
+     |       - Perpetual Futures (1x to 20x leverage, dynamic liquidation, SL/TP inputs)
+     |       - Automated Trading Bots (Grid Bot & DCA Bot with simulated real-time trades)
+     |       - Forex / RWA (Synthetic assets: EUR, GBP, GOLD, SILVER via Pyth price feeds)
+     |       - Context-aware AI Guidance at 3 layers (Header, Top-of-Form, Inline Trade Review)
+     |       - Active Bot monitoring & termination controls
      |
      |---- Portfolio Page
      |       Holdings table with live on-chain balances
+     |       Active Perpetual positions & Running Trading Bots
      |       Net P&L, realized and unrealized breakdown
      |       Trade history from Supabase
      |       Analytics: Pie, Bar, and Area charts
@@ -129,7 +167,6 @@ Dashboard — Terminal View
 ## Gamification and Progression System
 
 To sustain engagement, Hodegos implements an XP and tier system stored in Supabase:
-
 - Users earn XP by completing AI onboarding, answering quiz questions correctly, and executing trades.
 - XP is mapped to tiers: Apprentice, Trader, Expert, and Master.
 - Badges are awarded for specific milestones (first trade, onboarding completion, portfolio diversification).
@@ -142,25 +179,25 @@ To sustain engagement, Hodegos implements an XP and tier system stored in Supaba
 ```
 Frontend (Next.js App Router)
   |
-  |-- app/dashboard/page.tsx         Terminal: balances, alerts, news, markets
-  |-- app/dashboard/markets/page.tsx Live candlestick + AI sentiment
-  |-- app/dashboard/trade/page.tsx   Order entry + on-chain execution
-  |-- app/dashboard/portfolio/page.tsx Holdings, P&L, charts, rebalance advisor
-  |-- app/dashboard/profile/page.tsx XP, badges, tier
+  |-- app/dashboard/page.tsx          Terminal: balances, alerts, news, markets
+  |-- app/dashboard/markets/page.tsx  Live candlestick + AI sentiment
+  |-- app/dashboard/trade/page.tsx    4-Mode Trade Panel + SL/TP + Bots + AI Auditing
+  |-- app/dashboard/portfolio/page.tsx Active positions, running bots, P&L charts, rebalance advisor
+  |-- app/dashboard/profile/page.tsx  XP, badges, tier
   |
   |-- app/api/news/route.ts           Fetches Cointelegraph RSS, AI-summarizes via Groq
   |-- app/api/alerts/route.ts         CoinGecko prices + Groq AI alert generation
-  |-- app/api/portfolio/route.ts      Injective Testnet balance fetch via SDK
+  |-- app/api/portfolio/route.ts      Injective Testnet balance fetch + Synthetic configs
   |-- app/api/chat/route.ts           Streaming Groq LLM responses for chatbot
   |-- app/api/markets/summary/route.ts Injective Mainnet market price fetch
-  |-- app/api/trades/route.ts         Supabase trade history read/write
+  |-- app/api/trades/route.ts         Supabase trade history read/write + Bot trade updates
   |
-  |-- lib/injective.ts               Injective SDK wrappers, market IDs, price fetch
-  |-- lib/useWallet.ts               Wallet connection state (Keplr, Leap, Ninji)
-  |-- hooks/useChat.ts               Supabase profile + XP + badge management
+  |-- lib/injective.ts                Injective SDK wrappers, Perp/Forex market metadata, price fetch
+  |-- lib/useWallet.ts                Wallet connection state (Keplr, Leap, Ninji)
+  |-- hooks/useChat.ts                Supabase profile + XP + badge management
   |
 Backend / Data
-  |-- Groq API (LLM)                 llama-3.3-70b-versatile, llama-3.1-8b-instant
+  |-- Groq API (LLM)                  llama-3.3-70b-versatile, Llama-3.1-8b-instant
   |-- Injective SDK                  @injectivelabs/sdk-ts, @injectivelabs/networks
   |-- Supabase                       User profiles, XP tracking, trade history
   |-- CoinGecko API                  Real-time 24h price change for alert generation
@@ -179,6 +216,7 @@ Backend / Data
 | Styling | Tailwind CSS |
 | AI / LLM | Groq API — Llama-3.3-70b-versatile and Llama-3.1-8b-instant |
 | Blockchain SDK | @injectivelabs/sdk-ts, @injectivelabs/networks |
+| Oracles | Pyth Network Feed |
 | Database | Supabase (PostgreSQL) |
 | Charts | Recharts (portfolio analytics), TradingView embedded widget |
 | Icons | Phosphor Icons |
@@ -263,11 +301,11 @@ Spot market and limit order execution on Injective Testnet with live Mainnet pri
 
 The following are planned improvements beyond the sprint scope:
 
-- **Injective Orderbook Integration:** Pull live bid/ask spread data from Injective's on-chain orderbook directly into the AI prompt for real-time depth-aware trade recommendations.
-- **Automated Portfolio Rebalancing:** Allow the AI agent to autonomously execute a series of market orders to restore a user-defined target allocation, with a confirmation step before any transactions are signed.
-- **Perpetuals Trading Support:** Extend the trade execution panel to support Injective perpetual markets, including margin and leverage input with AI-guided risk warnings.
-- **Multi-Wallet Portfolio Tracking:** Allow users to add read-only wallet addresses for portfolio tracking without requiring connection.
-- **Mobile Responsive Layout:** Fully responsive dashboard optimised for mobile browsers.
+* **Injective Orderbook Integration:** Pull live bid/ask spread data from Injective's on-chain orderbook directly into the AI prompt for real-time depth-aware trade recommendations.
+* **Automated Portfolio Rebalancing:** Allow the AI agent to autonomously execute a series of market orders to restore a user-defined target allocation, with a confirmation step before any transactions are signed.
+* **On-Chain Bot Smart Contracts:** Move simulated grid/DCA trading bots into fully automated on-chain smart contracts running directly on Injective.
+* **Multi-Wallet Portfolio Tracking:** Allow users to add read-only wallet addresses for portfolio tracking without requiring connection.
+* **Mobile Responsive Layout:** Fully responsive dashboard optimised for mobile browsers.
 
 ---
 

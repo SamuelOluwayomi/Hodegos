@@ -9,6 +9,7 @@ import DashboardSidebar from "@/components/DashboardSidebar";
 import AskHodegosButton from "@/components/AskHodegosButton";
 import { useChat } from "@/hooks/useChat";
 import { getTierByXP } from "@/lib/tiers";
+import { FEATURED_MARKET_IDS, BASE_PRICES } from "@/lib/injective";
 import {
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip,
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -27,6 +28,10 @@ const TOKEN_COLORS: Record<string, string> = {
   WETH: "#7C3AED",   // purple
   SOL: "#06B6D4",    // cyan
   TIA: "#F472B6",    // pink
+  EUR: "#10B981",    // emerald
+  GBP: "#3B82F6",    // blue
+  GOLD: "#F59E0B",   // gold
+  SILVER: "#9CA3AF", // silver
 };
 
 const TOKEN_CSS_CLASSES: Record<string, string> = {
@@ -36,6 +41,10 @@ const TOKEN_CSS_CLASSES: Record<string, string> = {
   WETH: "bg-[#7C3AED]",
   SOL: "bg-[#06B6D4]",
   TIA: "bg-[#F472B6]",
+  EUR: "bg-[#10B981]",
+  GBP: "bg-[#3B82F6]",
+  GOLD: "bg-[#F59E0B]",
+  SILVER: "bg-[#9CA3AF]",
 };
 
 interface TokenBalance {
@@ -89,6 +98,16 @@ export default function PortfolioPage() {
 
   const [trades, setTrades] = useState<any[]>([]);
   const [tradesLoading, setTradesLoading] = useState(true);
+  const [activeBots, setActiveBots] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && address) {
+      const cached = localStorage.getItem(`hodegos_active_bots_${address}`);
+      if (cached) {
+        setActiveBots(JSON.parse(cached));
+      }
+    }
+  }, [address]);
 
   useEffect(() => {
     if (!address) return;
@@ -150,12 +169,15 @@ export default function PortfolioPage() {
 
   // Build asset list from tokenBalances + completed trades (subaccount logic)
   const assets = useMemo(() => {
-    const order = ["INJ", "USDT", "ATOM", "WETH", "SOL", "TIA"];
+    const order = ["INJ", "USDT", "ATOM", "WETH", "SOL", "TIA", "EUR", "GBP", "GOLD", "SILVER"];
     
     // Calculate total net assets from simulated trades that exist in the subaccount
     const subaccountHoldings: Record<string, number> = {};
     
     trades.forEach(trade => {
+      // Ignore perp trades for standard spot holdings
+      if (trade.pair.includes('-PERP')) return;
+
       const baseAsset = trade.pair.split('/')[0];
       const quoteAsset = trade.pair.split('/')[1] || "USDT";
       const amount = parseFloat(trade.amount);
@@ -166,7 +188,9 @@ export default function PortfolioPage() {
       
       if (trade.side === 'buy') {
         subaccountHoldings[baseAsset] += amount;
+        subaccountHoldings[quoteAsset] -= totalCost;
       } else if (trade.side === 'sell') {
+        subaccountHoldings[baseAsset] -= amount;
         subaccountHoldings[quoteAsset] += totalCost;
       }
     });
@@ -191,6 +215,70 @@ export default function PortfolioPage() {
         };
       });
   }, [tokenBalances, trades]);
+
+  // Aggregate active perp positions
+  const activePositions = useMemo(() => {
+    const perpTrades = trades.filter(t => t.pair.includes('-PERP'));
+    const positionsByTicker: Record<string, { ticker: string; size: number; entryPrice: number; totalCost: number; side: 'long' | 'short' }> = {};
+
+    perpTrades.forEach(trade => {
+      const ticker = trade.pair.split(' ')[0]; // base ticker like INJ/USDT-PERP
+      const amount = parseFloat(trade.amount);
+      const price = parseFloat(trade.price);
+      
+      if (!positionsByTicker[ticker]) {
+        positionsByTicker[ticker] = { ticker, size: 0, entryPrice: 0, totalCost: 0, side: 'long' };
+      }
+      
+      const pos = positionsByTicker[ticker];
+      
+      // Calculate net position sizing using buy = long and sell = short
+      if (trade.side === 'buy') {
+        const newSize = pos.side === 'long' ? pos.size + amount : pos.size - amount;
+        if (newSize >= 0) {
+          pos.side = 'long';
+          pos.totalCost = (pos.side === 'long' ? pos.totalCost : 0) + (amount * price);
+          pos.size = newSize;
+          pos.entryPrice = pos.size > 0 ? pos.totalCost / pos.size : 0;
+        } else {
+          pos.side = 'short';
+          pos.size = Math.abs(newSize);
+          pos.totalCost = pos.size * price;
+          pos.entryPrice = price;
+        }
+      } else {
+        const newSize = pos.side === 'short' ? pos.size + amount : pos.size - amount;
+        if (newSize >= 0) {
+          pos.side = 'short';
+          pos.totalCost = (pos.side === 'short' ? pos.totalCost : 0) + (amount * price);
+          pos.size = newSize;
+          pos.entryPrice = pos.size > 0 ? pos.totalCost / pos.size : 0;
+        } else {
+          pos.side = 'long';
+          pos.size = Math.abs(newSize);
+          pos.totalCost = pos.size * price;
+          pos.entryPrice = price;
+        }
+      }
+    });
+
+    return Object.values(positionsByTicker)
+      .filter(p => p.size > 0.0001)
+      .map(p => {
+        const baseAsset = p.ticker.split('/')[0];
+        const marketId = FEATURED_MARKET_IDS[`${baseAsset}/USDT-PERP`] || 'perp-inj-usdt';
+        const livePrice = tokenBalances[baseAsset]?.price || BASE_PRICES[marketId] || p.entryPrice;
+        const pnl = p.side === 'long'
+          ? (livePrice - p.entryPrice) * p.size
+          : (p.entryPrice - livePrice) * p.size;
+          
+        return {
+          ...p,
+          currentPrice: livePrice,
+          pnl,
+        };
+      });
+  }, [trades, tokenBalances]);
   const totalValue = useMemo(() => assets.reduce((sum, a) => sum + a.value, 0), [assets]);
 
   // Compute realized & unrealized P&L and trading stats dynamically
@@ -516,6 +604,98 @@ export default function PortfolioPage() {
                       </tbody>
                     </table>
                   </div>
+                  
+                  {/* Active Positions */}
+                  {activePositions.length > 0 && (
+                    <div className="mt-8 mb-6">
+                      <h2 className="font-black text-sm uppercase tracking-widest mb-4">Active Perpetual Positions</h2>
+                      <div className="border-4 border-black overflow-hidden neo-shadow bg-white">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="bg-[#EAE8E0] border-b-4 border-black font-black text-[10px] uppercase tracking-widest">
+                              <th className="p-4 text-left border-r-2 border-black">Position</th>
+                              <th className="p-4 text-right border-r-2 border-black">Size</th>
+                              <th className="p-4 text-right border-r-2 border-black">Entry Price</th>
+                              <th className="p-4 text-right border-r-2 border-black">Mark Price</th>
+                              <th className="p-4 text-right">Unrealized PnL</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {activePositions.map((pos) => (
+                              <tr key={pos.ticker} className="border-b-2 border-black last:border-b-0 hover:bg-[#EAE8E0]/50 transition-colors">
+                                <td className="p-4 border-r-2 border-black">
+                                  <div className="flex items-center gap-3">
+                                    <span className={`font-black text-[10px] uppercase px-2 py-0.5 border-2 border-black ${
+                                      pos.side === 'long' ? 'bg-neo-lime' : 'bg-neo-orange'
+                                    }`}>
+                                      {pos.side}
+                                    </span>
+                                    <span className="font-black text-sm">{pos.ticker}</span>
+                                  </div>
+                                </td>
+                                <td className="p-4 border-r-2 border-black text-right font-black text-sm">
+                                  {pos.size.toFixed(4)}
+                                </td>
+                                <td className="p-4 border-r-2 border-black text-right font-black text-sm">
+                                  ${pos.entryPrice.toFixed(2)}
+                                </td>
+                                <td className="p-4 border-r-2 border-black text-right font-black text-sm">
+                                  ${pos.currentPrice.toFixed(2)}
+                                </td>
+                                <td className={`p-4 text-right font-black text-sm ${pos.pnl >= 0 ? 'text-green-700' : 'text-red-600'}`}>
+                                  {pos.pnl >= 0 ? '+' : ''}${pos.pnl.toFixed(2)}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Active Bots */}
+                  {activeBots.length > 0 && (
+                    <div className="mt-8 mb-6">
+                      <h2 className="font-black text-sm uppercase tracking-widest mb-4">Active Trading Bots</h2>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {activeBots.map((bot) => (
+                          <div key={bot.id} className="border-4 border-black bg-white p-4 neo-shadow flex justify-between items-center">
+                            <div>
+                              <div className="flex items-center gap-2 mb-1.5">
+                                <span className="bg-neo-yellow border-2 border-black px-2 py-0.5 font-black text-[9px] uppercase tracking-widest">
+                                  {bot.type} Bot
+                                </span>
+                                <span className="font-black text-xs uppercase">{bot.ticker}</span>
+                              </div>
+                              <div className="text-[10px] font-bold text-black/60 space-y-0.5">
+                                {bot.type === 'grid' ? (
+                                  <>
+                                    <p>Range: ${parseFloat(bot.gridLower).toFixed(2)} - ${parseFloat(bot.gridUpper).toFixed(2)}</p>
+                                    <p>Grids: {bot.gridCount} • Size: {bot.amount} {bot.ticker.split('/')[0]}</p>
+                                  </>
+                                ) : (
+                                  <>
+                                    <p>Interval: {bot.dcaInterval} • Size: {bot.amount} {bot.ticker.split('/')[0]}</p>
+                                  </>
+                                )}
+                                <p className="text-[9px] uppercase tracking-wider text-green-600 mt-1 font-black">Running & Trading...</p>
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => {
+                                const newBots = activeBots.filter(b => b.id !== bot.id);
+                                setActiveBots(newBots);
+                                localStorage.setItem(`hodegos_active_bots_${address}`, JSON.stringify(newBots));
+                              }}
+                              className="px-2.5 py-1.5 border-2 border-black bg-[#EAE8E0] hover:bg-neo-orange font-black text-[9px] uppercase tracking-widest transition-colors"
+                            >
+                              Stop Bot
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Allocation chart (visual bar) */}

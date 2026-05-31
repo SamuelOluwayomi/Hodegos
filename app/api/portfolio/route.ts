@@ -44,6 +44,34 @@ const TOKEN_CONFIG: Record<string, { denom: string; decimals: number; coingeckoI
     defaultPrice: 0.40,
     name: "Celestia",
   },
+  EUR: {
+    denom: "synthetic/eur",
+    decimals: 4,
+    coingeckoId: "euro",
+    defaultPrice: 1.0852,
+    name: "Synthetic Euro",
+  },
+  GBP: {
+    denom: "synthetic/gbp",
+    decimals: 4,
+    coingeckoId: "british-pound-sterling",
+    defaultPrice: 1.2643,
+    name: "Synthetic British Pound",
+  },
+  GOLD: {
+    denom: "synthetic/gold",
+    decimals: 2,
+    coingeckoId: "gold",
+    defaultPrice: 2342.50,
+    name: "Synthetic Gold Ounce",
+  },
+  SILVER: {
+    denom: "synthetic/silver",
+    decimals: 2,
+    coingeckoId: "silver",
+    defaultPrice: 28.30,
+    name: "Synthetic Silver Ounce",
+  },
 };
 
 export async function GET(request: Request) {
