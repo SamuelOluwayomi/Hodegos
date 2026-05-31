@@ -12,7 +12,7 @@ interface Transaction {
   category: "trade" | "transfer" | "staking" | "governance" | "contract" | "other";
   label: string;
   success: boolean;
-  gasUsed: string;
+  gasUsed: string | number;
   msgCount: number;
   explorerUrl: string;
 }
