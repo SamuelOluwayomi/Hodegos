@@ -473,7 +473,7 @@ function ExecutionChoiceModal({
   );
 }
 
-// ── MAIN TRADE CONTENT ────────────────────────────────────────────────────────
+// MAIN TRADE CONTENT 
 
 function TradeContent() {
   const searchParams = useSearchParams();
