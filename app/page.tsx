@@ -11,8 +11,28 @@ import { useInView } from "@/hooks/useInView";
 
 export default function Home() {
   const [walletModalOpen, setWalletModalOpen] = useState(false);
+  const [showMobileWarning, setShowMobileWarning] = useState(false);
   const { isConnected, isInitialized } = useWallet();
   const router = useRouter();
+
+  // Set warning to true on mount if on mobile/small screen size
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const handleResize = () => {
+        if (window.innerWidth < 768) {
+          const dismissed = sessionStorage.getItem("mobile-warning-dismissed");
+          if (!dismissed) {
+            setShowMobileWarning(true);
+          }
+        } else {
+          setShowMobileWarning(false);
+        }
+      };
+      handleResize();
+      window.addEventListener("resize", handleResize);
+      return () => window.removeEventListener("resize", handleResize);
+    }
+  }, []);
 
   // Scroll animation refs
   const { ref: featuresRef, inView: featuresInView } = useInView();
@@ -65,17 +85,17 @@ export default function Home() {
       ></div>
 
       {/* Hero Frame */}
-      <div className="h-dvh flex flex-col shrink-0">
+      <div className="min-h-dvh md:h-dvh flex flex-col md:shrink-0 w-full relative">
 
       {/* Navbar */}
       <header
-        className="sticky top-0 w-full flex items-center px-6 shrink-0 bg-[#EAE8E0] z-100 border-b-4 border-black"
+        className="sticky top-0 w-full flex items-center px-4 md:px-6 shrink-0 bg-[#EAE8E0] z-100 border-b-4 border-black"
         style={{ height: "76px" }}
       >
         {/* Beta Bookmark */}
-        <div className="absolute left-8 top-0 z-50 cursor-pointer group">
+        <div className="absolute left-4 md:left-8 top-0 z-50 cursor-pointer group">
           <svg
-            className="w-10 h-[128px] group-hover:translate-y-1 transition-transform"
+            className="w-8 md:w-10 h-[100px] md:h-[128px] group-hover:translate-y-1 transition-transform"
             viewBox="0 0 28 90"
             fill="none"
           >
@@ -91,10 +111,10 @@ export default function Home() {
         </div>
 
         {/* Logo Group */}
-        <div className="flex items-center gap-3 ml-20 shrink-0">
-          <Image src="/main.png" alt="Hodegos" width={150} height={30} className="object-contain" priority />
-          <div className="h-6 w-[2px] bg-black" />
-          <Image src="/injective-logo.svg" alt="Injective" width={26} height={26} className="object-contain" />
+        <div className="flex items-center gap-2 md:gap-3 ml-14 md:ml-20 shrink-0">
+          <Image src="/main.png" alt="Hodegos" width={150} height={30} className="w-[100px] md:w-[150px] h-auto object-contain" priority />
+          <div className="h-5 md:h-6 w-[2px] bg-black" />
+          <Image src="/injective-logo.svg" alt="Injective" width={26} height={26} className="w-5 md:w-[26px] h-auto object-contain" />
         </div>
 
         {/* Navigation Links */}
@@ -131,7 +151,7 @@ export default function Home() {
         {/* Call to Action */}
         <button
           onClick={() => setWalletModalOpen(true)}
-          className="ml-auto flex items-center gap-1 px-5 py-2 bg-neo-orange text-white border-2 border-black rounded-full shadow-[2px_4px_0px_0px_#000] font-black uppercase tracking-wider text-[11px] hover:translate-x-[2px] hover:translate-y-[4px] hover:shadow-none transition-all shrink-0 whitespace-nowrap"
+          className="ml-auto flex items-center gap-1 px-3 py-1.5 md:px-5 md:py-2 bg-neo-orange text-white border-2 border-black rounded-full shadow-[2px_4px_0px_0px_#000] font-black uppercase tracking-wider text-[10px] md:text-[11px] hover:translate-x-[2px] hover:translate-y-[4px] hover:shadow-none transition-all shrink-0 whitespace-nowrap"
         >
           Get Started
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
@@ -141,10 +161,13 @@ export default function Home() {
       </header>
 
       {/* Hero Content */}
-      <main className="flex-1 flex min-h-0 overflow-hidden">
+      <main className="flex-1 flex flex-col md:flex-row min-h-0 md:overflow-hidden">
 
         {/* Left Section */}
-        <div className="w-[55%] shrink-0 flex flex-col justify-center border-r-4 border-black relative overflow-hidden" style={{ padding: "2.5% 5%", background: "linear-gradient(135deg, #FF9B3F 0%, #FF2A00 100%)" }}>
+        <div 
+          className="w-full md:w-[55%] shrink-0 flex flex-col justify-center border-b-4 md:border-b-0 md:border-r-4 border-black relative overflow-hidden px-6 py-12 md:px-[5%] md:py-[2.5%]"
+          style={{ background: "linear-gradient(135deg, #FF9B3F 0%, #FF2A00 100%)" }}
+        >
 
           {/* Stars */}
           <svg className="absolute top-[8%] right-[6%] w-5 h-5" viewBox="0 0 24 24" fill="black">
@@ -162,7 +185,7 @@ export default function Home() {
           {/* Headline */}
           <h1
             className="font-black uppercase leading-[0.93] mb-[3%] text-black"
-            style={{ fontSize: "clamp(1.5rem, 4.2vw, 4rem)" }}
+            style={{ fontSize: "clamp(2.25rem, 4.2vw, 4rem)" }}
           >
             <span className="hero-word block">Your First</span>
             <span className="hero-word hero-word-2 relative inline-block">
@@ -180,10 +203,10 @@ export default function Home() {
             <span className="hero-word hero-word-3 block">Experience</span>
           </h1>
 
-          <p className="hero-sub font-bold text-black mb-1" style={{ fontSize: "clamp(0.7rem, 1.2vw, 1rem)" }}>
+          <p className="hero-sub font-bold text-black mb-1" style={{ fontSize: "clamp(0.9rem, 1.2vw, 1rem)" }}>
             Hodegos. Your guide into trading.
           </p>
-          <p className="hero-sub font-medium text-black/80 max-w-[90%] mb-[5%]" style={{ fontSize: "clamp(0.65rem, 1vw, 0.9rem)", lineHeight: 1.45 }}>
+          <p className="hero-sub font-medium text-black/80 max-w-[90%] mb-[5%]" style={{ fontSize: "clamp(0.8rem, 1vw, 0.9rem)", lineHeight: 1.45 }}>
             Learn the basics, simulate real trades, and execute on Injective — with an AI companion every step of the way.
           </p>
 
@@ -191,7 +214,7 @@ export default function Home() {
             <button
               onClick={() => setWalletModalOpen(true)}
               className="flex items-center gap-2 bg-neo-lime border-2 border-black rounded-full shadow-[2px_4px_0px_0px_#000] font-bold uppercase tracking-wider hover:translate-x-[2px] hover:translate-y-[4px] hover:shadow-none transition-all cursor-pointer"
-              style={{ fontSize: "clamp(0.6rem, 0.9vw, 0.8rem)", padding: "10px 22px" }}
+              style={{ fontSize: "clamp(0.7rem, 0.9vw, 0.8rem)", padding: "10px 22px" }}
             >
               Start Trading
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -202,7 +225,7 @@ export default function Home() {
         </div>
 
         {/* Right Section */}
-        <div className="flex-1 bg-neo-lime relative flex items-center justify-center overflow-hidden">
+        <div className="flex-1 bg-neo-lime relative flex items-center justify-center overflow-hidden py-12 md:py-0 min-h-[380px] md:min-h-0">
 
           {/* Dot grid */}
           <div
@@ -216,7 +239,7 @@ export default function Home() {
           </svg>
 
           {/* Arch Container */}
-          <div className="relative z-10 w-[min(56%,280px)] h-[88%]">
+          <div className="relative z-10 w-[240px] md:w-[min(56%,280px)] h-[340px] md:h-[88%]">
             
             {/* The Arch Background */}
             <div
@@ -295,7 +318,7 @@ export default function Home() {
             </div>
           </div>
 
-          <h2 ref={featuresHeadRef} className={`anim-slide-up delay-0 font-black uppercase text-6xl lg:text-[5.5rem] leading-[0.9] text-black relative inline-block z-10 tracking-tight mb-8 ${featuresHeadInView ? 'in-view' : ''}`}>
+          <h2 ref={featuresHeadRef} className={`anim-slide-up delay-0 font-black uppercase text-5xl sm:text-6xl lg:text-[5.5rem] leading-[0.9] text-black relative inline-block z-10 tracking-tight mb-8 ${featuresHeadInView ? 'in-view' : ''}`}>
             The<br/>Missing<br/>
             <span className="relative inline-block">
               <span className="relative z-10">Link.</span>
@@ -315,12 +338,12 @@ export default function Home() {
         </div>
 
         {/* About Right - Scattered Cards */}
-        <div className="flex-[1.2] relative w-full min-h-[600px] mt-16 lg:mt-0 flex items-center justify-center">
+        <div className="flex-[1.2] relative w-full lg:min-h-[600px] mt-16 lg:mt-0 flex items-center justify-center">
           
-          <div className="relative w-full max-w-[550px] h-[550px]">
+          <div className="relative w-full max-w-[550px] h-auto lg:h-[550px] flex flex-col lg:block gap-8 lg:gap-0 px-4 lg:px-0">
             {/* Learn Card - Orange Square */}
-            <div ref={card1Ref} className={`absolute top-[8%] left-[2%] w-[48%] z-20 anim-slide-right delay-0 ${card1InView ? 'in-view' : ''}`}>
-              <div className="bg-neo-orange border-[3px] border-black p-6 neo-shadow-lg -rotate-6 hover:rotate-0 hover:scale-105 transition-transform duration-300 cursor-default">
+            <div ref={card1Ref} className={`relative lg:absolute lg:top-[8%] lg:left-[2%] w-full lg:w-[48%] z-20 anim-slide-right delay-0 ${card1InView ? 'in-view' : ''}`}>
+              <div className="bg-neo-orange border-[3px] border-black p-6 neo-shadow-lg -rotate-2 lg:-rotate-6 hover:rotate-0 hover:scale-105 transition-transform duration-300 cursor-default">
                 <div className="w-8 h-8 border-[3px] border-black rounded-full mb-3 flex items-center justify-center font-black text-sm bg-neo-yellow">1</div>
                 <h3 className="font-black uppercase text-xl mb-3 leading-tight">Learn Before You Touch</h3>
                 <p className="font-bold text-black/90 text-xs leading-snug">
@@ -330,8 +353,8 @@ export default function Home() {
             </div>
 
             {/* Simulate Card - White Box */}
-            <div ref={card2Ref} className={`absolute top-[0%] right-[2%] w-[48%] z-10 anim-slide-right delay-200 ${card2InView ? 'in-view' : ''}`}>
-              <div className="bg-white border-[3px] border-black p-6 neo-shadow-lg rotate-[5deg] hover:rotate-0 hover:scale-105 transition-transform duration-300 cursor-default">
+            <div ref={card2Ref} className={`relative lg:absolute lg:top-[0%] lg:right-[2%] w-full lg:w-[48%] z-10 anim-slide-right delay-200 ${card2InView ? 'in-view' : ''}`}>
+              <div className="bg-white border-[3px] border-black p-6 neo-shadow-lg rotate-2 lg:rotate-[5deg] hover:rotate-0 hover:scale-105 transition-transform duration-300 cursor-default">
                 <div className="w-8 h-8 border-[3px] border-black rounded-full mb-3 flex items-center justify-center font-black text-sm bg-neo-yellow">2</div>
                 <h3 className="font-black uppercase text-xl mb-3">Simulate & Practice</h3>
                 <p className="font-bold text-black/80 text-xs leading-snug">
@@ -341,8 +364,8 @@ export default function Home() {
             </div>
 
             {/* Execute Card - White Box */}
-            <div ref={card3Ref} className={`absolute bottom-[10%] right-[6%] w-[55%] z-30 anim-slide-right delay-400 ${card3InView ? 'in-view' : ''}`}>
-              <div className="bg-white border-[3px] border-black p-6 neo-shadow-lg rotate-[-4deg] hover:rotate-0 hover:scale-105 transition-transform duration-300 cursor-default">
+            <div ref={card3Ref} className={`relative lg:absolute lg:bottom-[10%] lg:right-[6%] w-full lg:w-[55%] z-30 anim-slide-right delay-400 ${card3InView ? 'in-view' : ''}`}>
+              <div className="bg-white border-[3px] border-black p-6 neo-shadow-lg -rotate-2 lg:rotate-[-4deg] hover:rotate-0 hover:scale-105 transition-transform duration-300 cursor-default">
                 <div className="w-8 h-8 border-[3px] border-black rounded-full mb-3 flex items-center justify-center font-black text-sm bg-neo-lime">3</div>
                 <h3 className="font-black uppercase text-xl mb-3">Execute On-Chain</h3>
                 <p className="font-bold text-black/80 text-xs leading-snug">
@@ -352,7 +375,7 @@ export default function Home() {
             </div>
 
             {/* Circular Badge */}
-            <div className={`absolute bottom-[15%] left-[10%] w-36 h-36 z-40 anim-scale delay-500 ${card3InView ? 'in-view' : ''}`}>
+            <div className={`relative lg:absolute mx-auto lg:mx-0 lg:bottom-[15%] lg:left-[10%] w-36 h-36 z-40 anim-scale delay-500 ${card3InView ? 'in-view' : ''}`}>
               <div className="w-full h-full bg-neo-lime border-4 border-black rounded-full flex items-center justify-center rotate-12 neo-shadow-lg hover:rotate-180 transition-transform duration-700">
                 <svg viewBox="0 0 100 100" className="w-full h-full absolute inset-0 animate-spin-slow">
                   <path id="badgeTextPath" d="M 50, 50 m -35, 0 a 35,35 0 1,1 70,0 a 35,35 0 1,1 -70,0" fill="transparent"/>
@@ -411,13 +434,13 @@ export default function Home() {
           </div>
 
           {/* Stats row */}
-          <div className="grid grid-cols-3 gap-0 border-[3px] border-white/10 mb-12 overflow-hidden">
-            <div ref={stat1Ref} className={`p-8 border-r-[3px] border-white/10`}>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border-[3px] border-white/10 mb-12 overflow-hidden">
+            <div ref={stat1Ref} className={`p-8 border-b-[3px] md:border-b-0 md:border-r-[3px] border-white/10`}>
               <div className={`anim-pop delay-0 font-black text-4xl lg:text-5xl text-neo-lime mb-2 ${stat1InView ? 'in-view' : ''}`}>&lt; 1s</div>
               <div className={`anim-fade delay-200 font-black text-xs uppercase tracking-widest text-white mb-1 ${stat1InView ? 'in-view' : ''}`}>Block Finality</div>
               <div className={`anim-fade delay-300 font-bold text-[11px] text-white/40 leading-snug ${stat1InView ? 'in-view' : ''}`}>Orders settle in under one second</div>
             </div>
-            <div ref={stat2Ref} className={`p-8 border-r-[3px] border-white/10`}>
+            <div ref={stat2Ref} className={`p-8 border-b-[3px] md:border-b-0 md:border-r-[3px] border-white/10`}>
               <div className={`anim-pop delay-100 font-black text-4xl lg:text-5xl text-neo-lime mb-2 ${stat2InView ? 'in-view' : ''}`}>0%</div>
               <div className={`anim-fade delay-300 font-black text-xs uppercase tracking-widest text-white mb-1 ${stat2InView ? 'in-view' : ''}`}>Maker Fees</div>
               <div className={`anim-fade delay-400 font-bold text-[11px] text-white/40 leading-snug ${stat2InView ? 'in-view' : ''}`}>No fees on most spot market maker orders</div>
@@ -529,8 +552,8 @@ export default function Home() {
 
         </div>
 
-        {/* ── Scatter arena ── */}
-        <div ref={scatterGroupRef} className="relative z-10 mx-auto w-full max-w-5xl" style={{ height: "680px" }}>
+        {/* ── Scatter arena (Desktop/Tablet) ── */}
+        <div ref={scatterGroupRef} className="hidden lg:block relative z-10 mx-auto w-full max-w-5xl" style={{ height: "680px" }}>
 
           {/* ── Reading-order arrows — thick, orange, unmistakable ── */}
           <svg className="absolute inset-0 w-full h-full pointer-events-none z-10" viewBox="0 0 1000 680" preserveAspectRatio="none">
@@ -745,6 +768,135 @@ export default function Home() {
           </div>
         </div>
 
+        {/* ── Mobile/Tablet Scatter Arena Alternative ── */}
+        <div className="lg:hidden relative z-10 mx-auto w-full px-6 pb-12 flex flex-col gap-6">
+          {/* Central Image Container (Featured Banner) */}
+          <div className="relative w-full max-w-[420px] mx-auto z-20">
+            {/* Red offset shadow block */}
+            <div
+              className="absolute inset-0"
+              style={{ background: "#FF2A00", border: "4px solid black", transform: "translate(8px,8px)", borderRadius: 0 }}
+            />
+            {/* Window frame */}
+            <div className="relative bg-[#EAE8E0] border-4 border-black flex flex-col">
+              {/* Window Title Bar */}
+              <div className="h-9 border-b-4 border-black bg-[#E5E5E5] flex items-center px-3 gap-2">
+                <div className="w-3 h-3 rounded-full border-2 border-black bg-white" />
+                <div className="w-3 h-3 rounded-full border-2 border-black bg-white" />
+                <div className="w-3 h-3 rounded-full border-2 border-black bg-white" />
+              </div>
+              <div className="p-3 bg-white">
+                <div className="border-[3px] border-black overflow-hidden relative">
+                  <Image
+                    src="/hack.png"
+                    alt="Injective Solo AI Builder Sprint"
+                    width={420}
+                    height={260}
+                    className="w-full h-auto block"
+                  />
+                  <div className="absolute inset-0 border border-black/10 pointer-events-none" />
+                </div>
+              </div>
+              {/* Injective logo circle badge */}
+              <div
+                className="absolute -top-3 -left-3 w-10 h-10 bg-white border-2 border-black rounded-full flex items-center justify-center neo-shadow z-30"
+              >
+                <Image src="/injective-logo.svg" alt="Injective" width={20} height={20} className="object-contain" />
+              </div>
+              {/* "We're in it" sticker */}
+              <div
+                className="absolute -bottom-3 -right-3 bg-neo-lime border-2 border-black px-2 py-0.5 font-black text-[8px] uppercase tracking-widest neo-shadow z-30"
+              >
+                ✦ We&apos;re in it
+              </div>
+            </div>
+          </div>
+
+          {/* Cards Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+            
+            {/* CARD 1 — Sprint Goal */}
+            <div className="bg-white border-[3px] border-black neo-shadow p-4 relative">
+              <div className="absolute -top-3 -left-2 w-5 h-5 bg-black text-white rounded-full flex items-center justify-center font-black text-[9px] border-2 border-black">1</div>
+              <p className="font-black text-[9px] uppercase tracking-widest text-black/50 mb-1">The Mission</p>
+              <p className="font-bold text-[11px] leading-snug text-black">
+                Build something <span className="font-black">useful, ship it,</span> and make it usable by real users.
+              </p>
+            </div>
+
+            {/* CARD 2 — Hodegos Bridge */}
+            <div className="bg-neo-lime border-[3px] border-black neo-shadow p-4 relative">
+              <div className="absolute -top-3 -left-2 w-5 h-5 bg-black text-white rounded-full flex items-center justify-center font-black text-[9px] border-2 border-black">2</div>
+              <p className="font-black text-[9px] uppercase tracking-widest text-black/50 mb-1">The Idea</p>
+              <p className="font-bold text-[11px] leading-snug text-black">
+                Hodegos is the <span className="font-black">bridge</span> from curiosity to your first on-chain trade.
+              </p>
+            </div>
+
+            {/* CARD 3 — Sprint Dates */}
+            <div className="bg-neo-orange border-[3px] border-black neo-shadow p-4 relative">
+              <div className="absolute -top-3 -left-2 w-5 h-5 bg-black text-white rounded-full flex items-center justify-center font-black text-[9px] border-2 border-black">3</div>
+              <p className="font-black text-[9px] uppercase tracking-widest text-black/50 mb-1">Sprint Window</p>
+              <p className="font-black text-sm leading-tight text-black">May 11 - May 31, 2026</p>
+              <div className="mt-2 inline-block bg-black text-neo-lime px-2 py-0.5 font-black text-[8px] uppercase tracking-wider">ONLINE</div>
+            </div>
+
+            {/* Prize pool */}
+            <div className="bg-neo-orange border-[3px] border-black neo-shadow p-4 relative">
+              <p className="font-black text-[9px] uppercase tracking-widest text-black/60 mb-1">Prize Pool</p>
+              <p className="font-black text-3xl leading-none text-black">$500</p>
+              <p className="font-bold text-[9px] mt-1 opacity-80 text-black">USD Total</p>
+            </div>
+
+            {/* CARD 4 — AI Copilot */}
+            <div className="bg-white border-[3px] border-black neo-shadow p-4 relative">
+              <div className="absolute -top-3 -left-2 w-5 h-5 bg-black text-white rounded-full flex items-center justify-center font-black text-[9px] border-2 border-black">4</div>
+              <p className="font-black text-[9px] uppercase tracking-widest text-black/50 mb-1">The Product</p>
+              <p className="font-bold text-[11px] leading-snug text-black">
+                An <span className="font-black">AI copilot</span> that walks newcomers through spot trades, step by step, with zero jargon.
+              </p>
+            </div>
+
+            {/* CARD 5 — Injective native */}
+            <div className="bg-white border-[3px] border-black neo-shadow p-4 relative">
+              <div className="absolute -top-3 -left-2 w-5 h-5 bg-black text-white rounded-full flex items-center justify-center font-black text-[9px] border-2 border-black">5</div>
+              <p className="font-black text-[9px] uppercase tracking-widest text-black/50 mb-1">The Chain</p>
+              <p className="font-bold text-[11px] leading-snug text-black">
+                Built on <span className="font-black text-neo-orange">Injective</span> — lightning-fast execution and zero gas fees for users.
+              </p>
+            </div>
+
+            {/* CARD 6 — Evaluation */}
+            <div className="bg-neo-lime border-[3px] border-black neo-shadow p-4 relative">
+              <div className="absolute -top-3 -left-2 w-5 h-5 bg-black text-white rounded-full flex items-center justify-center font-black text-[9px] border-2 border-black">6</div>
+              <p className="font-black text-[9px] uppercase tracking-widest text-black/50 mb-1">Judged On</p>
+              <p className="font-bold text-[11px] leading-snug text-black">
+                <span className="font-black">Usefulness, execution quality</span> and real usability for everyday people.
+              </p>
+            </div>
+
+            {/* Category sticker */}
+            <div className="bg-black text-white border-[3px] border-black neo-shadow p-4 relative">
+              <p className="font-black text-[9px] uppercase tracking-widest text-white/50 mb-1">Category</p>
+              <p className="font-black text-xs leading-tight uppercase">Consumer AI App</p>
+              <p className="font-bold text-[8px] mt-1 text-neo-orange">+ AI Copilot / Trading</p>
+            </div>
+
+          </div>
+
+          {/* Tiny details: spinning badge at bottom of mobile view */}
+          <div className="flex justify-center mt-4">
+            <div className="w-20 h-20 bg-black border-2 border-black rounded-full flex items-center justify-center neo-shadow animate-spin-slow">
+              <svg viewBox="0 0 100 100" width="100%" height="100%">
+                <path id="hbp2-mobile" d="M50,50 m-36,0 a36,36 0 1,1 72,0 a36,36 0 1,1 -72,0" fill="transparent"/>
+                <text fontSize="10.5" fontWeight="900" fill="#FFD23F" letterSpacing="1.5">
+                  <textPath href="#hbp2-mobile">★ Bounty ★ 2026 ★</textPath>
+                </text>
+              </svg>
+            </div>
+          </div>
+        </div>
+
         {/* View Hackathon CTA */}
         <div className="relative z-10 flex justify-center pb-14">
           <a
@@ -797,9 +949,9 @@ export default function Home() {
           </div>
 
           {/* Right — Builder card */}
-          <div ref={footerRightRef} className={`anim-slide-left delay-200 flex items-center justify-start lg:justify-end ${footerRightInView ? 'in-view' : ''}`}>
+          <div ref={footerRightRef} className={`anim-slide-left delay-200 flex items-center justify-start lg:justify-end w-full lg:w-auto ${footerRightInView ? 'in-view' : ''}`}>
             <div
-              className="bg-white border-[3px] border-black neo-shadow-lg p-6 flex items-center gap-6 max-w-sm w-full"
+              className="bg-white border-[3px] border-black neo-shadow-lg p-4 sm:p-6 flex flex-col sm:flex-row items-center gap-4 sm:gap-6 max-w-sm sm:max-w-md w-full"
             >
               {/* Photo */}
               <div className="shrink-0 relative">
@@ -891,6 +1043,36 @@ export default function Home() {
         open={walletModalOpen}
         onClose={() => setWalletModalOpen(false)}
       />
+
+      {/* Mobile-Only Desktop Warning Notification */}
+      {showMobileWarning && (
+        <div className="fixed bottom-4 left-4 right-4 md:hidden bg-neo-yellow border-4 border-black p-4 z-999 shadow-[4px_4px_0px_0px_#000] flex flex-col gap-3">
+          <div className="flex items-start gap-3">
+            <div className="bg-black text-neo-yellow p-1.5 border border-black shrink-0">
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M21 2H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h7l-2 3v1h8v-1l-2-3h7c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H3V4h18v12z"/>
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h4 className="font-black text-xs uppercase tracking-wider text-black">Desktop Recommended</h4>
+              <p className="font-bold text-[10.5px] leading-snug text-black/80 mt-0.5">
+                Hodegos is fully optimized for desktop screens. The full trading dashboard, charting, and AI companion require a larger viewport to operate correctly.
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-2 justify-end">
+            <button
+              onClick={() => {
+                setShowMobileWarning(false);
+                sessionStorage.setItem("mobile-warning-dismissed", "true");
+              }}
+              className="bg-black text-white font-black text-[10px] uppercase tracking-widest px-3 py-1.5 border-2 border-black hover:bg-white hover:text-black transition-colors"
+            >
+              Understand
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
